@@ -75,13 +75,29 @@ def _get_usim_aid(reader_num: int) -> str:
 
 
 def _extract_json(stdout: str) -> dict | None:
-    json_start = stdout.find('{')
-    if json_start < 0:
-        return None
-    try:
-        return json.loads(stdout[json_start:])
-    except json.JSONDecodeError:
-        return None
+    """Extract the last JSON object or array from stdout."""
+    last_json = None
+    i = 0
+    while i < len(stdout):
+        if stdout[i] in ('{', '['):
+            bracket = stdout[i]
+            close = '}' if bracket == '{' else ']'
+            depth = 0
+            start = i
+            while i < len(stdout):
+                if stdout[i] == bracket:
+                    depth += 1
+                elif stdout[i] == close:
+                    depth -= 1
+                    if depth == 0:
+                        try:
+                            last_json = json.loads(stdout[start:i+1])
+                        except json.JSONDecodeError:
+                            pass
+                        break
+                i += 1
+        i += 1
+    return last_json
 
 
 @app.route('/')
@@ -213,35 +229,34 @@ def verify_adm():
         if not adm_hex:
             return jsonify({'success': False, 'error': '⚠️ Invalid ADM value'})
 
-        key_ref = _ADM_KEY_REF.get(adm_type, '0a')
-        usim_aid = _get_usim_aid(reader)
+        cmd = f"verify_adm --pin-is-hex --adm-type {adm_type} {adm_hex}"
+        print(f"[verify_adm] cmd: {cmd}")
+        result = _run_pysim(reader, [cmd], timeout=15)
+        # Print APDU trace lines
+        for line in result.stdout.split('\n'):
+            if line.startswith('INFO: ->') or line.startswith('INFO: <-'):
+                print(f"[verify_adm] {line}")
 
-        # SELECT ADF.USIM + VERIFY ADM via raw APDU
-        select_apdu = f"00a4040410{usim_aid}"
-        verify_apdu = f"002000{key_ref}08{adm_hex}"
-
-        result = _run_pysim_raw(reader, [select_apdu, verify_apdu], timeout=15)
-        sw = _parse_sw(result)
-
-        if sw == '9000':
+        if "EXCEPTION" not in result.stdout and "EXCEPTION" not in result.stderr:
             session['adm_verified'] = True
+            print(f"[verify_adm] SUCCESS")
             return jsonify({'success': True})
 
-        # Map SW to error message
-        sw_messages = {
-            '6983': 'Authentication/PIN method blocked',
-            '6982': 'Security status not satisfied',
-            '6a88': 'Referenced data not found',
-            '6b00': 'Wrong parameters P1-P2',
-        }
-        sw_desc = sw_messages.get(sw, '')
-        if sw.startswith('63c'):
-            tries = int(sw[3], 16)
-            sw_desc = f'{tries} tries remaining'
-        err = f"⚠️ {sw}: {sw_desc}" if sw_desc else f"⚠️ SW: {sw}"
-        return jsonify({'success': False, 'error': err})
+        err = result.stderr if "EXCEPTION" in result.stderr else result.stdout
+        error_line = err
+        for line in err.split('\n'):
+            line = line.strip()
+            if 'SW match failed' in line or 'EXCEPTION' in line:
+                error_line = line
+                break
+        sw_m = re.search(r'got (\w{4}):\s*(.+)', error_line)
+        if sw_m:
+            error_line = f"⚠️ {sw_m.group(1)}: {sw_m.group(2).strip()}"
+        print(f"[verify_adm] FAILED: {error_line[:200]}")
+        return jsonify({'success': False, 'error': error_line[:300]})
 
     except Exception as e:
+        print(f"[verify_adm] EXCEPTION: {e}")
         return jsonify({'success': False, 'error': str(e)})
 
 
@@ -389,6 +404,86 @@ def read_ef():
         return jsonify({'success': False, 'error': str(e)})
 
 
+@app.route('/sim/read_failed', methods=['POST'])
+def read_failed():
+    """Re-read files that failed with 6982 after ADM verification."""
+    try:
+        reader = session.get('reader', 0)
+        adm_hex = request.json.get('adm', '')
+        adm_type = request.json.get('adm_type', 'ADM1')
+        paths = request.json.get('paths', [])
+
+        if not adm_hex or not paths:
+            return jsonify({'success': False, 'error': 'Missing ADM or paths'})
+
+        results = {}
+        for file_path in paths:
+            try:
+                structure = request.json.get('structures', {}).get(file_path, 'transparent')
+
+                # Read raw
+                cmds = [f"verify_adm --pin-is-hex --adm-type {adm_type} {adm_hex}"]
+                cmds.extend(_path_to_select_cmds(file_path))
+                if structure in ('linear_fixed', 'cyclic'):
+                    cmds.append("read_records")
+                else:
+                    cmds.append("read_binary")
+
+                result = _run_pysim(reader, cmds, timeout=30)
+                stdout = result.stdout
+
+                raw_bytes = None
+                if structure in ('linear_fixed', 'cyclic'):
+                    records = []
+                    for line in stdout.split('\n'):
+                        line = line.strip()
+                        if line and all(c in '0123456789abcdefABCDEF' for c in line):
+                            records.append(line)
+                    if records:
+                        raw_bytes = records
+                else:
+                    for line in stdout.split('\n'):
+                        line = line.strip()
+                        if line and all(c in '0123456789abcdefABCDEF' for c in line) and len(line) >= 2:
+                            raw_bytes = line
+                            break
+
+                if not raw_bytes:
+                    print(f"[re-read] {file_path}: no data")
+                    continue
+
+                # Read decoded
+                cmds2 = [f"verify_adm --pin-is-hex --adm-type {adm_type} {adm_hex}"]
+                cmds2.extend(_path_to_select_cmds(file_path))
+                if structure in ('linear_fixed', 'cyclic'):
+                    cmds2.append("read_records_decoded")
+                else:
+                    cmds2.append("read_binary_decoded")
+
+                result2 = _run_pysim(reader, cmds2, timeout=30)
+                body = _extract_json(result2.stdout)
+                print(f"[re-read] {file_path}: decoded body={'found' if body else 'None'}, stdout2_len={len(result2.stdout)}")
+                if body is None and result2.stdout:
+                    # Log more to debug
+                    print(f"[re-read] {file_path}: stdout2[:500]={result2.stdout[:500]}")
+                    print(f"[re-read] {file_path}: stdout2[-300:]={result2.stdout[-300:]}")
+                if result2.stderr:
+                    print(f"[re-read] {file_path}: stderr2={result2.stderr[:200]}")
+
+                entry = {'bytes': raw_bytes}
+                if body is not None:
+                    entry['body'] = body
+                results[file_path] = entry
+                print(f"[re-read] {file_path}: OK")
+            except Exception as e:
+                print(f"[re-read] {file_path}: {e}")
+
+        return jsonify({'success': True, 'results': results})
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
 @app.route('/sim/write_ef', methods=['POST'])
 def write_ef():
     try:
@@ -403,37 +498,27 @@ def write_ef():
         if not file_path or not hex_data:
             return jsonify({'success': False, 'error': '⚠️ Missing path or hex data'})
 
-        # If ADM provided, verify via raw APDU first (card retains auth state)
+        # If ADM provided, include verify in the command chain
         adm_hex = _prepare_adm(adm) if adm else ''
-        if adm_hex:
-            key_ref = _ADM_KEY_REF.get(adm_type, '0a')
-            usim_aid = _get_usim_aid(reader)
-            select_apdu = f"00a4040410{usim_aid}"
-            verify_apdu = f"002000{key_ref}08{adm_hex}"
-            vresult = _run_pysim_raw(reader, [select_apdu, verify_apdu], timeout=15)
-            vsw = _parse_sw(vresult)
-            if vsw != '9000':
-                sw_messages = {
-                    '6983': 'Authentication/PIN method blocked',
-                    '6982': 'Security status not satisfied',
-                    '6a88': 'Referenced data not found',
-                    '6b00': 'Wrong parameters P1-P2',
-                }
-                sw_desc = sw_messages.get(vsw, '')
-                if vsw.startswith('63c'):
-                    tries = int(vsw[3], 16)
-                    sw_desc = f'{tries} tries remaining'
-                err = f"⚠️ {vsw}: {sw_desc}" if sw_desc else f"⚠️ SW: {vsw}"
-                return jsonify({'success': False, 'error': err})
 
-        # Now write via normal pySim (card auth state persists on same reader)
-        cmds = _path_to_select_cmds(file_path)
+        cmds = []
+        if adm_hex:
+            cmds.append(f"verify_adm --pin-is-hex --adm-type {adm_type} {adm_hex}")
+
+        # Navigate to the file
+        cmds.extend(_path_to_select_cmds(file_path))
         if structure in ('linear_fixed', 'cyclic') and record_nr > 0:
             cmds.append(f"update_record {record_nr} {hex_data}")
         else:
             cmds.append(f"update_binary {hex_data}")
 
-        result = _run_pysim(reader, cmds, timeout=30, apdu_trace=True)
+        write_cmd = 'update_record' if (structure in ('linear_fixed', 'cyclic') and record_nr > 0) else 'update_binary'
+        print(f"[{write_cmd}] cmds: {cmds}")
+        result = _run_pysim(reader, cmds, timeout=30)
+        # Print APDU trace lines
+        for line in result.stdout.split('\n'):
+            if line.startswith('INFO: ->') or line.startswith('INFO: <-'):
+                print(f"[{write_cmd}] {line}")
 
         stdout = result.stdout
         stderr = result.stderr

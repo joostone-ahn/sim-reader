@@ -50,7 +50,7 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
 .rec-table td:first-child{text-align:center;width:80px;white-space:nowrap;color:#667eea;font-weight:600}
 .overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;justify-content:center;align-items:center}
 .overlay.show{display:flex}
-.popup{background:white;border-radius:10px;width:710px;max-height:80vh;overflow:auto;box-shadow:0 8px 32px rgba(0,0,0,0.3)}
+.popup{background:white;border-radius:10px;width:710px;max-height:80vh;overflow:auto;box-shadow:0 8px 32px rgba(0,0,0,0.3);resize:both;min-width:400px;min-height:200px}
 .search-ph::placeholder{color:rgba(255,255,255,0.4);font-style:italic}
 </style>
 </head>
@@ -59,7 +59,7 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
     <div class="header" style="display:flex;align-items:center;justify-content:space-between"><h1>📖 SIM Card Reader</h1><span style="font-size:0.68rem;color:#888;font-weight:400">© 2026 JUSEOK AHN &lt;ajs3013@lguplus.co.kr&gt; All rights reserved.</span></div>
     <div class="card" style="margin-bottom:8px">
         <div style="padding:10px 12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-            <button class="btn btn-primary" onclick="connectReader()" style="min-width:130px;white-space:nowrap;height:32px">🔌 Connect</button>
+            <button class="btn btn-primary" onclick="connectReader()" style="width:160px;white-space:nowrap;height:32px">🔌 Connect</button>
             <span id="connectStatus"></span>
             <div class="sim-info-cards" id="simInfo" style="display:none;flex:1">
                 <div class="info-card"><div class="info-label">ICCID</div><div class="info-value" id="infoIccid">-</div></div>
@@ -70,8 +70,8 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
         </div>
     </div>
     <div class="card" style="padding:12px;margin-bottom:8px">
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
-            <button class="btn btn-primary" onclick="readAllFiles()" style="min-width:130px;white-space:nowrap;height:32px">📂 Read All Files</button>
+        <div style="display:flex;gap:12px;align-items:center;margin-bottom:10px">
+            <button class="btn btn-primary" id="btnReadAll" onclick="readAllFiles()" disabled style="width:160px;white-space:nowrap;height:32px">📂 Read All Files</button>
             <span id="readStatus" class="status"></span>
             <button class="btn btn-success" id="btnExport" onclick="exportData()" disabled style="margin-left:auto;min-width:130px;white-space:nowrap;height:32px">📥 Export</button>
         </div>
@@ -102,8 +102,9 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
                     <div class="panel-title">
                         <span>📄 Raw Data</span>
                         <div style="margin-left:auto;display:flex;gap:6px">
-                            <button id="btnDecode" onclick="openDecodePopup()" disabled style="padding:4px 14px;font-size:0.76rem;font-weight:600;border:none;border-radius:5px;cursor:pointer;background:rgba(255,255,255,0.2);color:rgba(255,255,255,0.9);min-width:84px;height:30px;transition:all 0.2s">🔍 Decoding</button>
-                            <button id="btnWrite" onclick="openWritePopup()" disabled style="padding:4px 14px;font-size:0.76rem;font-weight:600;border:none;border-radius:5px;cursor:pointer;background:rgba(255,255,255,0.2);color:rgba(255,255,255,0.9);min-width:84px;height:30px;transition:all 0.2s">✏️ Write</button>
+                            <button id="btnRead" onclick="openReadPopup()" style="display:none;padding:4px 14px;font-size:0.76rem;font-weight:600;border:none;border-radius:5px;cursor:pointer;background:rgba(255,255,255,0.2);color:rgba(255,255,255,0.9);width:100px;height:30px;transition:all 0.2s;align-items:center;justify-content:center">📖 Read</button>
+                            <button id="btnDecode" onclick="openDecodePopup()" disabled style="padding:4px 14px;font-size:0.76rem;font-weight:600;border:none;border-radius:5px;cursor:pointer;background:rgba(255,255,255,0.2);color:rgba(255,255,255,0.9);width:100px;height:30px;transition:all 0.2s">🔍 Decoding</button>
+                            <button id="btnWrite" onclick="openWritePopup()" disabled style="padding:4px 14px;font-size:0.76rem;font-weight:600;border:none;border-radius:5px;cursor:pointer;background:rgba(255,255,255,0.2);color:rgba(255,255,255,0.9);width:100px;height:30px;transition:all 0.2s">✏️ Write</button>
                         </div>
                     </div>
                     <div id="rawDataBox" class="data-pre" style="flex:1;overflow:auto"></div>
@@ -127,9 +128,27 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
 </div>
 </div>
 
+<!-- Read Popup -->
+<div id="readOverlay" class="overlay" onclick="if(event.target===this)closeReadPopup()">
+<div class="popup" style="width:640px">
+    <div class="panel-title" style="border-radius:10px 10px 0 0">
+        <span>📖 Read EF</span>
+        <span id="readEfName" style="margin-left:8px;font-weight:400;font-size:0.78rem;opacity:0.9"></span>
+        <button onclick="closeReadPopup()" style="margin-left:auto;background:none;border:none;color:white;font-size:1.1rem;cursor:pointer">✕</button>
+    </div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
+        <div id="readAuthRow">
+            <div style="font-size:0.76rem;font-weight:600;color:#555;margin-bottom:4px">Verification <span id="readAuthNote" style="font-weight:400;color:#888"></span></div>
+            <div id="readAuthFields"></div>
+            <div id="readAuthDetail" style="display:none;margin-top:4px;font-size:0.72rem;color:#c0392b;text-align:left"></div>
+        </div>
+    </div>
+</div>
+</div>
+
 <!-- Write Popup -->
 <div id="writeOverlay" class="overlay" onclick="if(event.target===this)closeWritePopup()">
-<div class="popup">
+<div class="popup" style="width:640px">
     <div class="panel-title" style="border-radius:10px 10px 0 0">
         <span>✏️ Write EF</span>
         <span id="writeEfName" style="margin-left:8px;font-weight:400;font-size:0.78rem;opacity:0.9"></span>
@@ -141,33 +160,36 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
             <div id="writeAuthFields"></div>
             <div id="writeAuthDetail" style="display:none;margin-top:4px;font-size:0.72rem;color:#c0392b;text-align:right"></div>
         </div>
+        <div id="writeAuthSep" style="display:none;border-top:1px solid #ddd"></div>
         <div id="writeRecordRow" style="display:none">
             <div style="font-size:0.76rem;font-weight:600;color:#555;margin-bottom:4px">Record Number</div>
             <select id="writeRecordSelect" onchange="onWriteRecordChange()" style="padding:4px 8px;border:1px solid #ddd;border-radius:6px;font-size:0.78rem;font-family:Consolas,monospace"></select>
         </div>
         <div id="writeHexRow">
             <div style="font-size:0.76rem;font-weight:600;color:#555;margin-bottom:4px">Hex Data <span id="writeEfSize" style="font-weight:400;color:#888"></span></div>
-            <textarea id="writeHexInput" rows="4" style="width:100%;font-family:Consolas,monospace;font-size:0.82rem;padding:8px;border:1px solid #ddd;border-radius:6px;resize:vertical" oninput="checkWriteChanged()"></textarea>
+            <div style="position:relative">
+                <textarea id="writeHexInput" rows="12" style="width:100%;font-family:Consolas,monospace;font-size:0.82rem;padding:8px 8px 20px 8px;border:1px solid #ddd;border-radius:6px;resize:vertical" oninput="checkWriteChanged()"></textarea>
+                <span id="writeHexCount" style="position:absolute;right:10px;bottom:8px;font-size:0.66rem;color:#bbb"></span>
+            </div>
             <div style="display:flex;align-items:center;margin-top:4px">
-                <span style="margin-left:auto;display:flex;align-items:center;gap:6px">
-                    <span id="writeHexCount" style="font-size:0.70rem;color:#aaa"></span>
-                    <button id="writeRestoreBtn" onclick="restoreOrigHex()" disabled style="padding:2px 8px;font-size:0.70rem;border:1px solid #ccc;border-radius:4px;background:white;color:#888;cursor:pointer">↩ Restore</button>
+                <span style="display:flex;align-items:center;gap:6px">
+                    <button class="btn btn-primary" id="writeSubmitBtn" onclick="submitWrite()" disabled style="padding:4px 10px;font-size:0.72rem;font-weight:600;min-width:80px">✏️ Write</button>
+                    <span id="writeStatus" style="font-size:0.72rem"></span>
+                </span>
+                <span style="margin-left:auto">
+                    <button class="btn" id="writeRestoreBtn" onclick="restoreOrigHex()" disabled style="padding:4px 10px;font-size:0.72rem;border:1px solid #ccc;border-radius:4px;background:white;color:#555">↩ Restore</button>
                 </span>
             </div>
         </div>
         <div id="writeTlvNotice" style="display:none;background:#fff3cd;padding:8px 12px;border-radius:6px;font-size:0.76rem;color:#856404">
             ⚠️ BER-TLV type EF — Write not yet supported (TBD)
         </div>
-        <div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">
-            <span id="writeStatus" style="font-size:0.72rem;color:#c0392b"></span>
-            <button class="btn btn-primary" id="writeSubmitBtn" onclick="submitWrite()" disabled style="min-width:120px">✏️ Write</button>
-        </div>
     </div>
 </div>
 </div>
 
 <script>
-let dumpData=null,selectedPath=null,selectedFd=null,sortedEntries=[],writeOrigHex='',writeExpectedSize=0,writeVerified=false;
+let dumpData=null,selectedPath=null,selectedFd=null,sortedEntries=[],writeOrigHex='',writeExpectedSize=0,writeVerified=false,verifiedAdm='',verifiedAdmType='';
 async function api(u,b){try{const r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b||{})});return await r.json();}catch(e){console.error('API error:',u,e);return{success:false,error:e.message};}}
 function setStatus(id,t,c){const e=document.getElementById(id);e.className='status status-'+c;e.textContent=t;}
 
@@ -179,6 +201,9 @@ async function connectReader(){
         document.getElementById('infoImsi').textContent=r.info.imsi||'-';
         document.getElementById('infoMsisdn').textContent=r.info.msisdn||'-';
         document.getElementById('infoHplmn').textContent=r.info.hplmn||'-';
+        // Reset verify state and enable Read All Files
+        writeVerified=false;verifiedAdm='';verifiedAdmType='';
+        document.getElementById('btnReadAll').disabled=false;
     }else{setStatus('connectStatus','❌ '+r.error,'err');}
 }
 
@@ -266,6 +291,9 @@ function renderFileList(){
             var isEf=getFt(selectedFd)==='EF';
             document.getElementById('btnWrite').disabled=!isEf;
             document.getElementById('btnDecode').disabled=!isEf;
+            // Show Read button only for 6982 error files
+            var is6982=selectedFd.error&&selectedFd.error.sw_actual==='6982';
+            document.getElementById('btnRead').style.display=is6982?'inline-flex':'none';
         };
         tbody.appendChild(tr);
     }
@@ -364,6 +392,117 @@ function getUpdateCondition(path){
     return null;
 }
 
+/* === Read Popup === */
+async function doReadEf(admHex, admType){
+    var st=getStruct(selectedFd);
+    var structure=st||'transparent';
+    var structures={};
+    structures[selectedPath]=structure;
+    var r=await api('/sim/read_failed',{adm:admHex,adm_type:admType,paths:[selectedPath],structures:structures});
+    if(r.success&&r.results&&r.results[selectedPath]){
+        var rd=r.results[selectedPath];
+        if(rd.bytes){
+            selectedFd.bytes=rd.bytes;
+            if(rd.body)selectedFd.body=rd.body;
+            delete selectedFd.error;
+            showDetail(selectedPath,selectedFd);
+            renderFileList();
+            // Hide Read button since file is now read
+            document.getElementById('btnRead').style.display='none';
+            return true;
+        }
+    }
+    return false;
+}
+
+function openReadPopup(){
+    if(!selectedFd)return;
+    // If already verified, read directly without popup
+    if(writeVerified&&verifiedAdm&&verifiedAdmType){
+        document.body.style.cursor='wait';
+        document.getElementById('btnRead').style.opacity='0.5';
+        doReadEf(verifiedAdm,verifiedAdmType).then(function(ok){
+            document.body.style.cursor='';
+            if(ok){
+                document.getElementById('btnRead').style.display='none';
+                showDetail(selectedPath,selectedFd);
+            }else{
+                document.getElementById('btnRead').style.opacity='1';
+            }
+        });
+        return;
+    }
+    // Show popup with verify UI
+    document.getElementById('readEfName').textContent=selectedPath;
+    document.getElementById('readAuthDetail').style.display='none';
+    var cond=getUpdateCondition(selectedPath);
+    var note=document.getElementById('readAuthNote');
+    if(cond&&cond.type==='adm'){
+        note.textContent='(ARR: '+cond.value+' required)';
+    }else{
+        note.textContent='';
+    }
+    var keys=cond&&cond.value?cond.value.split(' | '):['ADM1'];
+    var fieldsHtml='';
+    for(var ki=0;ki<keys.length;ki++){
+        var k=keys[ki].trim();
+        fieldsHtml+='<div style="display:flex;align-items:center;gap:6px;background:#f0f2f5;border-radius:6px;padding:4px 8px'+(ki>0?';margin-top:6px':'')+'">'+
+            '<span style="font-size:0.72rem;font-weight:600;color:#888;min-width:42px">'+k+'</span>'+
+            '<input type="text" class="input-sm read-auth-input" data-key="'+k+'" placeholder="16-digit hex" oninput="updateReadAuthCount(this)" style="border:none;background:transparent;flex:1">'+
+            '<span class="read-auth-count" style="font-size:0.66rem;color:#bbb;white-space:nowrap">(0/16)</span>'+
+            '</div>'+
+            '<div style="display:flex;align-items:center;gap:6px;margin-top:4px">'+
+            '<button class="btn btn-dark read-auth-btn" onclick="readVerifyAuth(this)" disabled style="padding:4px 10px;font-size:0.72rem;min-width:80px">🔐 Verify</button>'+
+            '<span class="read-auth-status" style="font-size:0.72rem"></span>'+
+            '</div>';
+    }
+    document.getElementById('readAuthFields').innerHTML=fieldsHtml;
+    document.getElementById('readOverlay').classList.add('show');
+}
+function closeReadPopup(){document.getElementById('readOverlay').classList.remove('show');}
+
+function updateReadAuthCount(input){
+    var val=input.value.replace(/\s/g,'');
+    var count=val.length;
+    var box=input.parentElement;
+    var counter=box.querySelector('.read-auth-count');
+    if(counter)counter.textContent='('+count+'/16)';
+    var nextRow=box.nextElementSibling;
+    var btn=nextRow.querySelector('.read-auth-btn');
+    if(btn)btn.disabled=!(count===16&&/^[0-9a-fA-F]+$/.test(val));
+}
+
+async function readVerifyAuth(btn){
+    var row=btn.parentElement;
+    var box=row.previousElementSibling;
+    var input=box.querySelector('.read-auth-input');
+    var status=row.querySelector('.read-auth-status');
+    var a=input.value.trim();
+    status.innerHTML='<span style="color:#888">⏳ Verifying...</span>';
+    var detail=document.getElementById('readAuthDetail');
+    detail.style.display='none';
+    var r=await api('/sim/verify_adm',{adm:a,adm_type:input.getAttribute('data-key')});
+    if(r.success){
+        writeVerified=true;
+        verifiedAdm=a;
+        verifiedAdmType=input.getAttribute('data-key');
+        input.readOnly=true;
+        btn.disabled=true;
+        status.innerHTML='<span style="color:#888">⏳ Reading...</span>';
+        var ok=await doReadEf(a,input.getAttribute('data-key'));
+        if(ok){
+            status.innerHTML='<span class="status status-ok">✅ Done</span>';
+            setTimeout(function(){closeReadPopup();showDetail(selectedPath,selectedFd);},1000);
+        }else{
+            status.innerHTML='<span style="color:#c0392b">⚠️ Read failed</span>';
+        }
+    }else{
+        status.innerHTML='';
+        detail.textContent=r.error||'Unknown error';
+        detail.style.display='block';
+    }
+}
+
 /* === Write Popup === */
 function openWritePopup(){
     if(!selectedFd){alert('Select a file first');return;}
@@ -373,12 +512,12 @@ function openWritePopup(){
     document.getElementById('writeStatus').textContent='';
     document.getElementById('writeSubmitBtn').disabled=true;
     document.getElementById('writeAuthDetail').style.display='none';
-    writeVerified=false;
-    // ARR info
+    // Preserve verify state if same ADM type was already verified
     var cond=getUpdateCondition(selectedPath);
     var authRow=document.getElementById('writeAuthRow');
     if(cond&&cond.type==='adm'){
         authRow.style.display='block';
+        document.getElementById('writeAuthSep').style.display='block';
         document.getElementById('writeAuthNote').textContent='(ARR: '+cond.value+' required)';
         // Build auth fields dynamically
         var keys=cond.value.split(' | ');
@@ -387,15 +526,36 @@ function openWritePopup(){
             var k=keys[ki].trim();
             fieldsHtml+='<div style="display:flex;align-items:center;gap:6px;background:#f0f2f5;border-radius:6px;padding:4px 8px'+(ki>0?';margin-top:6px':'')+'">'+
                 '<span style="font-size:0.72rem;font-weight:600;color:#888;min-width:42px">'+k+'</span>'+
-                '<input type="text" class="input-sm write-auth-input" data-key="'+k+'" placeholder="16-digit hex" oninput="updateAuthDigitCount(this)" style="border:none;background:transparent;width:170px;flex:1">'+
-                '<span class="write-auth-count" style="font-size:0.70rem;color:#aaa;min-width:36px;text-align:right">(0/16)</span>'+
-                '<button class="btn btn-dark write-auth-btn" onclick="writeVerifyAuth(this)" disabled style="padding:4px 10px;font-size:0.72rem">Verify</button>'+
+                '<input type="text" class="input-sm write-auth-input" data-key="'+k+'" placeholder="16-digit hex" oninput="updateAuthDigitCount(this)" style="border:none;background:transparent;flex:1">'+
+                '<span class="write-auth-count" style="font-size:0.66rem;color:#bbb;white-space:nowrap">(0/16)</span>'+
+                '</div>'+
+                '<div style="display:flex;align-items:center;gap:6px;margin-top:4px">'+
+                '<button class="btn btn-dark write-auth-btn" onclick="writeVerifyAuth(this)" disabled style="padding:4px 10px;font-size:0.72rem;min-width:80px">🔐 Verify</button>'+
                 '<span class="write-auth-status" style="font-size:0.72rem"></span>'+
                 '</div>';
         }
         document.getElementById('writeAuthFields').innerHTML=fieldsHtml;
+        // Restore verified state if same ADM type
+        if(writeVerified&&verifiedAdm&&verifiedAdmType){
+            var inp=document.querySelector('.write-auth-input[data-key="'+verifiedAdmType+'"]');
+            if(inp){
+                inp.value=verifiedAdm;
+                inp.readOnly=true;
+                var box=inp.parentElement;
+                var cnt=box.querySelector('.write-auth-count');
+                if(cnt)cnt.textContent='(16/16)';
+                var nextRow=box.nextElementSibling;
+                if(nextRow){
+                    var vbtn=nextRow.querySelector('.write-auth-btn');
+                    if(vbtn)vbtn.disabled=true;
+                    var vst=nextRow.querySelector('.write-auth-status');
+                    if(vst)vst.innerHTML='<span class="status status-ok">✅ Done</span>';
+                }
+            }
+        }
     }else{
         authRow.style.display='none';
+        document.getElementById('writeAuthSep').style.display='none';
     }
     var isTlv=st==='ber_tlv';
     var isLf=st==='linear_fixed'||st==='cyclic';
@@ -439,6 +599,7 @@ function onWriteRecordChange(){
 function checkWriteChanged(){
     var cur=document.getElementById('writeHexInput').value.toUpperCase().replace(/\s/g,'');
     var changed=cur!==writeOrigHex;
+    document.getElementById('writeStatus').innerHTML='';
     var sizeOk=true;
     var needsAuth=document.getElementById('writeAuthRow').style.display!=='none';
     var authOk=!needsAuth||writeVerified;
@@ -447,8 +608,6 @@ function checkWriteChanged(){
     // Update Restore button
     var restoreBtn=document.getElementById('writeRestoreBtn');
     restoreBtn.disabled=!changed;
-    restoreBtn.style.borderColor=changed?'#c0392b':'#ccc';
-    restoreBtn.style.color=changed?'#c0392b':'#888';
     // Size validation
     if(writeExpectedSize>0&&cur.length!==writeExpectedSize){
         sizeOk=false;
@@ -465,63 +624,35 @@ function restoreOrigHex(){
 function updateAuthDigitCount(input){
     var val=input.value.replace(/\s/g,'');
     var count=val.length;
-    var counter=input.parentElement.querySelector('.write-auth-count');
+    var box=input.parentElement;
+    var counter=box.querySelector('.write-auth-count');
     if(counter)counter.textContent='('+count+'/16)';
-    var btn=input.parentElement.querySelector('.write-auth-btn');
+    var nextRow=box.nextElementSibling;
+    var btn=nextRow.querySelector('.write-auth-btn');
     if(btn)btn.disabled=!(count===16&&/^[0-9a-fA-F]+$/.test(val));
 }
 
 async function writeVerifyAuth(btn){
     var row=btn.parentElement;
-    var input=row.querySelector('.write-auth-input');
+    var box=row.previousElementSibling;
+    var input=box.querySelector('.write-auth-input');
     var status=row.querySelector('.write-auth-status');
     var a=input.value.trim();
-    status.textContent='';
+    status.innerHTML='<span style="color:#888">⏳ Verifying...</span>';
     var detail=document.getElementById('writeAuthDetail');
-    detail.textContent='⏳ Verifying...';
-    detail.style.display='block';
-    detail.style.color='#888';
+    detail.style.display='none';
     var r=await api('/sim/verify_adm',{adm:a,adm_type:input.getAttribute('data-key')});
     if(r.success){
         detail.style.display='none';
         detail.style.color='#c0392b';
-        status.innerHTML='<span class="status status-ok">✅ Verified</span>';
+        status.innerHTML='<span class="status status-ok">✅ Done</span>';
         writeVerified=true;
+        verifiedAdm=a;
+        verifiedAdmType=input.getAttribute('data-key');
+        input.readOnly=true;
+        btn.disabled=true;
         document.getElementById('writeHexInput').readOnly=false;
         checkWriteChanged();
-        // If current file had no data (read error), try reading it now
-        if(selectedFd&&(!selectedFd.bytes||selectedFd.error)){
-            detail.textContent='⏳ Reading file...';
-            detail.style.display='block';
-            detail.style.color='#888';
-            var st=getStruct(selectedFd);
-            var rr=await api('/sim/read_ef',{path:selectedPath,structure:st});
-            if(rr.success&&rr.bytes){
-                selectedFd.bytes=rr.bytes;
-                if(rr.body)selectedFd.body=rr.body;
-                delete selectedFd.error;
-                // Update hex input
-                var isLf=st==='linear_fixed'||st==='cyclic';
-                if(isLf&&Array.isArray(rr.bytes)){
-                    writeOrigHex=String(rr.bytes[0]||'').toUpperCase().replace(/\s/g,'');
-                    // Rebuild record selector
-                    var sel=document.getElementById('writeRecordSelect');sel.innerHTML='';
-                    for(var i=0;i<rr.bytes.length;i++){var o=document.createElement('option');o.value=i;o.textContent='Record '+(i+1);sel.appendChild(o);}
-                }else{
-                    writeOrigHex=(typeof rr.bytes==='string'?rr.bytes:'').toUpperCase().replace(/\s/g,'');
-                }
-                document.getElementById('writeHexInput').value=writeOrigHex;
-                checkWriteChanged();
-                // Update File List and Raw Data panel
-                showDetail(selectedPath,selectedFd);
-                renderFileList();
-                detail.style.display='none';
-                status.innerHTML='<span class="status status-ok">✅ Verified & Read</span>';
-            }else{
-                detail.style.display='none';
-                status.innerHTML='<span class="status status-ok">✅ Verified</span>';
-            }
-        }
     }else{
         status.innerHTML='';
         var detail=document.getElementById('writeAuthDetail');
@@ -529,6 +660,8 @@ async function writeVerifyAuth(btn){
         detail.style.color='#c0392b';
         detail.style.display='block';
         writeVerified=false;
+        verifiedAdm='';
+        verifiedAdmType='';
         checkWriteChanged();
     }
 }
@@ -545,7 +678,7 @@ async function submitWrite(){
     var st=getStruct(selectedFd);
     var isLf=st==='linear_fixed'||st==='cyclic';
     var recNr=isLf?parseInt(document.getElementById('writeRecordSelect').value)+1:0;
-    document.getElementById('writeStatus').textContent='⏳ Writing...';
+    document.getElementById('writeStatus').innerHTML='<span style="color:#888">⏳ Writing...</span>';
     document.getElementById('writeSubmitBtn').disabled=true;
     // Get adm_type from the first auth input
     var admType='ADM1';
@@ -553,8 +686,9 @@ async function submitWrite(){
     if(firstInput)admType=firstInput.getAttribute('data-key')||'ADM1';
     var r=await api('/sim/write_ef',{path:selectedPath,hex:hex,adm:adm,adm_type:admType,record_nr:recNr,structure:st});
     if(r.success){
-        document.getElementById('writeStatus').innerHTML='<span class="status status-ok">✅ Written</span>';
         writeOrigHex=hex.toUpperCase();
+        checkWriteChanged();
+        document.getElementById('writeStatus').innerHTML='<span class="status status-ok">✅ Done</span>';
         if(isLf&&selectedFd.bytes&&Array.isArray(selectedFd.bytes)){
             selectedFd.bytes[recNr-1]=hex;
         }else{

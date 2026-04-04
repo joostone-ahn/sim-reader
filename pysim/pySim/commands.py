@@ -377,7 +377,9 @@ class SimCardCommands:
                 'd6%04x%02x' % (offset + chunk_offset, chunk_len) + \
                 data[chunk_offset*2: (chunk_offset+chunk_len)*2]
             try:
+                print("INFO: -> %s %s" % (pdu[:10], pdu[10:]))
                 chunk_data, chunk_sw = self.send_apdu_checksw(pdu)
+                print("INFO: <- %s: %s" % (chunk_sw, chunk_data))
             except Exception as e:
                 e.add_note('failed to write chunk (chunk_offset %d, chunk_len %d)' % (chunk_offset, chunk_len))
                 raise e
@@ -460,7 +462,9 @@ class SimCardCommands:
                 pass
 
         pdu = (self.cla_byte + 'dc%02x04%02x' % (rec_no, rec_length)) + data
+        print("INFO: -> %s %s" % (pdu[:10], pdu[10:]))
         res = self.send_apdu_checksw(pdu)
+        print("INFO: <- %s: %s" % (res[1], res[0]))
         if verify:
             self.__verify_record(ef, rec_no, data)
         return res
@@ -674,7 +678,10 @@ class SimCardCommands:
                 code : chv code as hex string
         """
         fc = rpad(b2h(code), 16)
-        data, sw = self.send_apdu(self.cla_byte + '2000' + ('%02X' % chv_no) + '08' + fc)
+        pdu = self.cla_byte + '2000' + ('%02X' % chv_no) + '08' + fc
+        print("INFO: -> %s %s" % (pdu[:10], pdu[10:]))
+        data, sw = self.send_apdu(pdu)
+        print("INFO: <- %s: %s" % (sw, data))
         self._chv_process_sw('verify', chv_no, code, sw)
         return (data, sw)
 
