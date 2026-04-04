@@ -39,6 +39,8 @@ Your browser will automatically open `http://127.0.0.1:8082`.
 
 ## CLI Mode (Advanced)
 
+> ⚠️ A PC/SC compatible smart card reader with a SIM card inserted must be connected to your PC before running.
+
 For terminal-based usage without the GUI:
 
 ```bash
