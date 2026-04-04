@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIM Card Reader</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;color:#333}
+.container{max-width:100%;padding:10px 12px}
+.header{background:rgba(255,255,255,0.95);border-radius:10px;padding:10px 24px;margin-bottom:8px;box-shadow:0 4px 16px rgba(0,0,0,0.1)}
+.header h1{font-size:1.3rem;color:#2c3e50;font-weight:700}
+.btn{padding:6px 14px;border:none;border-radius:6px;cursor:pointer;font-size:0.78rem;font-weight:600;transition:all 0.2s;display:inline-flex;align-items:center;justify-content:center;gap:4px}
+.btn-primary{background:linear-gradient(45deg,#667eea,#764ba2);color:white}
+.btn-primary:hover{transform:translateY(-1px)}
+.btn-danger{background:linear-gradient(45deg,#e74c3c,#c0392b);color:white}
+.btn-success{background:linear-gradient(45deg,#27ae60,#2ecc71);color:white}
+.btn-dark{background:linear-gradient(45deg,#333,#555);color:white}
+.btn-warning{background:linear-gradient(45deg,#e67e22,#f39c12);color:white}
+.btn:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+.input-sm{padding:5px 10px;border:1px solid #ddd;border-radius:6px;font-size:0.78rem;font-family:Consolas,monospace}
+.input-sm:focus{outline:none;border-color:#667eea}
+.status{font-size:0.74rem;padding:3px 8px;border-radius:4px}
+.status-ok{background:#d4edda;color:#155724}
+.status-err{background:#f8d7da;color:#721c24}
+.status-warn{background:#fff3cd;color:#856404}
+.sim-info-cards{display:flex;gap:10px}
+.info-card{flex:1;background:linear-gradient(135deg,#f8f9fa,#e9ecef);border-radius:6px;padding:4px 14px;border-left:3px solid #667eea;display:flex;align-items:center;gap:8px}
+.info-label{font-size:0.68rem;color:#888;font-weight:600;text-transform:uppercase;white-space:nowrap}
+.info-value{font-size:0.85rem;font-family:Consolas,monospace;color:#2c3e50;font-weight:700}
+.card{background:rgba(255,255,255,0.95);border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);overflow:hidden}
+.panel-title{background:linear-gradient(45deg,#667eea,#764ba2);color:white;padding:10px 12px;font-size:0.85rem;font-weight:700;display:flex;align-items:center}
+.file-table{width:100%;border-collapse:collapse;font-size:0.76rem}
+.file-table thead th{background:#a8c4e0;color:#1a3a5c;padding:4px 6px;position:sticky;top:0;z-index:2;font-weight:600;font-size:0.72rem;border-right:1px solid #eee;text-align:center}
+.file-table thead th:last-child{border-right:none}
+.file-table tbody tr{border-bottom:1px solid #eee;cursor:pointer}
+.file-table tbody tr:hover{background:#eef2ff}
+.file-table tbody tr.selected{outline:2px solid #667eea}
+.file-table tbody tr.df-row{background:#d4edda}
+.file-table td{padding:3px 8px;font-family:Consolas,monospace;font-size:0.74rem;border-right:1px solid #eee}
+.file-table td:last-child{border-right:none}
+#fileListScroll:focus{outline:none}
+.file-table .cc{text-align:center}
+.file-table .cr{text-align:right;padding-right:12px}
+.file-table .col-err{color:#c0392b;font-size:0.72rem}
+.data-pre{font-family:Consolas,monospace;font-size:0.78rem;white-space:pre-wrap;word-break:break-all;color:#333;background:#f8f9fa;padding:8px;margin:0}
+.rec-table{width:100%;border-collapse:collapse;font-size:0.76rem}
+.rec-table th{background:#a8c4e0;color:#1a3a5c;padding:4px 6px;font-size:0.72rem;position:sticky;top:0;white-space:nowrap}
+.rec-table td{padding:3px 8px;font-family:Consolas,monospace;font-size:0.74rem;border-bottom:1px solid #eee}
+.rec-table td:first-child{text-align:center;width:80px;white-space:nowrap;color:#667eea;font-weight:600}
+.overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;justify-content:center;align-items:center}
+.overlay.show{display:flex}
+.popup{background:white;border-radius:10px;width:710px;max-height:80vh;overflow:auto;box-shadow:0 8px 32px rgba(0,0,0,0.3)}
+.search-ph::placeholder{color:rgba(255,255,255,0.4);font-style:italic}
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="header" style="display:flex;align-items:center;justify-content:space-between"><h1>📖 SIM Card Reader</h1><span style="font-size:0.68rem;color:#888;font-weight:400">© 2026 JUSEOK AHN &lt;ajs3013@lguplus.co.kr&gt; All rights reserved.</span></div>
+    <div class="card" style="margin-bottom:8px">
+        <div style="padding:10px 12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <button class="btn btn-primary" onclick="connectReader()" style="min-width:130px;white-space:nowrap;height:32px">🔌 Connect</button>
+            <span id="connectStatus"></span>
+            <div class="sim-info-cards" id="simInfo" style="display:none;flex:1">
+                <div class="info-card"><div class="info-label">ICCID</div><div class="info-value" id="infoIccid">-</div></div>
+                <div class="info-card"><div class="info-label">IMSI</div><div class="info-value" id="infoImsi">-</div></div>
+                <div class="info-card"><div class="info-label">MSISDN</div><div class="info-value" id="infoMsisdn">-</div></div>
+            </div>
+        </div>
+    </div>
+    <div class="card" style="padding:12px;margin-bottom:8px">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+            <button class="btn btn-primary" onclick="readAllFiles()" style="min-width:130px;white-space:nowrap;height:32px">📂 Read All Files</button>
+            <span id="readStatus" class="status"></span>
+            <button class="btn btn-success" id="btnExport" onclick="exportData()" disabled style="margin-left:auto;min-width:130px;white-space:nowrap;height:32px">📥 Export</button>
+        </div>
+        <div id="panelContainer" style="display:flex;height:calc(100vh - 210px)">
+            <div id="leftPanel" class="card" style="flex:5;display:flex;flex-direction:column;min-width:200px">
+                <div class="panel-title">
+                    <span>🗂️ File List</span>
+                    <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
+                        <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.2);border-radius:5px;padding:4px 10px;height:30px;width:250px">
+                            <span style="font-size:0.76rem;font-weight:600;color:rgba(255,255,255,0.9);white-space:nowrap;min-width:56px">Search</span>
+                            <input type="text" id="fileFilter" oninput="applyFilter();toggleFilterClear()" placeholder="FID or File Name" style="border:none;background:transparent;color:white;font-size:0.78rem;font-family:Consolas,monospace;flex:1;min-width:0;outline:none" class="search-ph">
+                            <span id="filterClear" onclick="clearFilter()" style="display:none;color:white;cursor:pointer;font-size:1rem;line-height:1;font-weight:700;flex-shrink:0">✕</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="fileListScroll" style="flex:1;overflow:auto" tabindex="0">
+                    <table class="file-table"><thead><tr>
+                        <th style="width:14%">Level 1</th><th style="width:14%">Level 2</th><th style="width:14%">Level 3</th>
+                        <th style="width:7%">FID</th><th style="width:6%">Type</th><th style="width:7%">EF Type</th><th style="width:6%">Size</th><th style="width:5%">Rec#</th>
+                    </tr></thead><tbody id="fileListBody"></tbody></table>
+                </div>
+            </div>
+            <div id="resizer" style="width:8px;cursor:col-resize;background:transparent;flex-shrink:0;display:flex;align-items:center;justify-content:center">
+                <div style="width:3px;height:40px;background:#ccc;border-radius:2px"></div>
+            </div>
+            <div id="rightPanel" style="flex:5;display:flex;flex-direction:column;min-height:0;min-width:200px">
+                <div class="card" style="flex:1;display:flex;flex-direction:column;min-height:0">
+                    <div class="panel-title">
+                        <span>📄 Raw Data</span>
+                        <div style="margin-left:auto;display:flex;gap:6px">
+                            <button id="btnDecode" onclick="openDecodePopup()" disabled style="padding:4px 14px;font-size:0.76rem;font-weight:600;border:none;border-radius:5px;cursor:pointer;background:rgba(255,255,255,0.2);color:rgba(255,255,255,0.9);min-width:84px;height:30px;transition:all 0.2s">🔍 Decoding</button>
+                            <button id="btnWrite" onclick="openWritePopup()" disabled style="padding:4px 14px;font-size:0.76rem;font-weight:600;border:none;border-radius:5px;cursor:pointer;background:rgba(255,255,255,0.2);color:rgba(255,255,255,0.9);min-width:84px;height:30px;transition:all 0.2s">✏️ Write</button>
+                        </div>
+                    </div>
+                    <div id="rawDataBox" class="data-pre" style="flex:1;overflow:auto"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Decode Popup -->
+<div id="decodeOverlay" class="overlay" onclick="if(event.target===this)closeDecodePopup()">
+<div class="popup" style="width:710px">
+    <div class="panel-title" style="border-radius:10px 10px 0 0">
+        <span>🔍 Decoded JSON</span>
+        <span id="decodeEfName" style="margin-left:8px;font-weight:400;font-size:0.78rem;opacity:0.9"></span>
+        <button onclick="closeDecodePopup()" style="margin-left:auto;background:none;border:none;color:white;font-size:1.1rem;cursor:pointer">✕</button>
+    </div>
+    <div style="padding:12px;max-height:calc(80vh - 50px);overflow:auto">
+        <pre id="decodeJsonBox" class="data-pre" style="min-height:100px"></pre>
+    </div>
+</div>
+</div>
+
+<!-- Write Popup -->
+<div id="writeOverlay" class="overlay" onclick="if(event.target===this)closeWritePopup()">
+<div class="popup">
+    <div class="panel-title" style="border-radius:10px 10px 0 0">
+        <span>✏️ Write EF</span>
+        <span id="writeEfName" style="margin-left:8px;font-weight:400;font-size:0.78rem;opacity:0.9"></span>
+        <button onclick="closeWritePopup()" style="margin-left:auto;background:none;border:none;color:white;font-size:1.1rem;cursor:pointer">✕</button>
+    </div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
+        <div>
+            <div style="font-size:0.76rem;font-weight:600;color:#555;margin-bottom:4px">ADM1 Verification</div>
+            <div style="display:flex;align-items:center;gap:6px;background:#f0f2f5;border-radius:6px;padding:4px 8px">
+                <span style="font-size:0.72rem;font-weight:600;color:#888">ADM1</span>
+                <input type="text" id="writeAdmInput" class="input-sm" placeholder="hex or ascii" style="border:none;background:transparent;width:170px;flex:1">
+                <button class="btn btn-dark" onclick="writeVerifyAdm()" style="padding:4px 10px;font-size:0.72rem">Verify</button>
+                <span id="writeAdmStatus" style="font-size:0.72rem"></span>
+            </div>
+        </div>
+        <div id="writeRecordRow" style="display:none">
+            <div style="font-size:0.76rem;font-weight:600;color:#555;margin-bottom:4px">Record Number</div>
+            <select id="writeRecordSelect" onchange="onWriteRecordChange()" style="padding:4px 8px;border:1px solid #ddd;border-radius:6px;font-size:0.78rem;font-family:Consolas,monospace"></select>
+        </div>
+        <div id="writeHexRow">
+            <div style="font-size:0.76rem;font-weight:600;color:#555;margin-bottom:4px">Hex Data <span id="writeEfType" style="font-weight:400;color:#888"></span></div>
+            <textarea id="writeHexInput" rows="4" style="width:100%;font-family:Consolas,monospace;font-size:0.82rem;padding:8px;border:1px solid #ddd;border-radius:6px;resize:vertical" oninput="checkWriteChanged()"></textarea>
+            <div style="font-size:0.68rem;color:#999;margin-top:2px">Edit hex bytes above. Spaces are ignored.</div>
+        </div>
+        <div id="writeTlvNotice" style="display:none;background:#fff3cd;padding:8px 12px;border-radius:6px;font-size:0.76rem;color:#856404">
+            ⚠️ BER-TLV type EF — Write not yet supported (TBD)
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+            <button class="btn btn-primary" id="writeSubmitBtn" onclick="submitWrite()" disabled style="min-width:120px">✏️ Write</button>
+            <span id="writeStatus" style="font-size:0.74rem"></span>
+        </div>
+    </div>
+</div>
+</div>
+
+<script>
+let dumpData=null,selectedPath=null,selectedFd=null,sortedEntries=[],writeAdmOk=false,writeOrigHex='';
+async function api(u,b){try{const r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b||{})});return await r.json();}catch(e){console.error('API error:',u,e);return{success:false,error:e.message};}}
+function setStatus(id,t,c){const e=document.getElementById(id);e.className='status status-'+c;e.textContent=t;}
+
+async function connectReader(){
+    setStatus('connectStatus','Connecting...','warn');
+    const r=await api('/sim/connect',{reader:0});
+    if(r.success){setStatus('connectStatus','✅ Connected','ok');document.getElementById('simInfo').style.display='flex';
+        document.getElementById('infoIccid').textContent=r.info.iccid||'-';
+        document.getElementById('infoImsi').textContent=r.info.imsi||'-';
+        document.getElementById('infoMsisdn').textContent=r.info.msisdn||'-';
+    }else{setStatus('connectStatus','❌ '+r.error,'err');}
+}
+
+const SMAP={transparent:'TF',linear_fixed:'LF',cyclic:'CF',ber_tlv:'BER-TLV',no_info_given:''};
+function pathCols(fd){
+    const p=fd.path||[];let d=p[0]==='MF'?p.slice(1):p;
+    if(p.length===1&&p[0]==='MF')d=['MF'];
+    while(d.length<3)d.push('');return d.slice(0,3);
+}
+function getStruct(fd){var fdb=((fd.fcp||{}).file_descriptor||{}).file_descriptor_byte||{};return fdb.structure||'';}
+function getFid(fd){return((fd.fcp||{}).file_identifier||'').toUpperCase();}
+function getFt(fd){var fdb=((fd.fcp||{}).file_descriptor||{}).file_descriptor_byte||{};return fdb.file_type==='df'?'DF':(fdb.file_type?'EF':'');}
+
+function sortKey(path,fd){
+    var group;
+    if(path==='MF')group='0';
+    else if(path.startsWith('MF/EF.'))group='0b';
+    else if(path.startsWith('MF/ADF.USIM'))group='1';
+    else if(path.startsWith('MF/ADF.ISIM'))group='2';
+    else if(path.startsWith('MF/DF.GSM'))group='3';
+    else if(path.startsWith('MF/DF.TELECOM'))group='4';
+    else if(path.startsWith('MF/DF.'))group='5';
+    else group='6';
+    var parts=path.split('/'),depth=parts.length;
+    var fid=((fd.fcp||{}).file_identifier||'ffff').toLowerCase();
+    var sub='0_'+fid;
+    if(group>='1'&&group<='4'){
+        if(depth===2){sub='0_0000';}
+        else if(depth===3&&!parts[2].startsWith('DF.')){sub='1_'+fid;}
+        else{var subDf=parts[2]||'';if(depth===3){sub='2_'+subDf+'_0000';}else{sub='2_'+subDf+'_'+fid;}}
+    }
+    return group+'_'+sub;
+}
+
+async function readAllFiles(){
+    setStatus('readStatus','⏳ Reading... (may take a few seconds)','warn');
+    var startTime=Date.now();
+    try{
+        var r=await api('/sim/read_all',{});
+        var elapsed=((Date.now()-startTime)/1000).toFixed(1);
+        console.log('read_all response success=',r.success,'files=',r.data?Object.keys(r.data.files).length:'N/A');
+        if(r.success){dumpData=r.data;sortedEntries=Object.entries(r.data.files).sort(function(a,b){return sortKey(a[0],a[1]).localeCompare(sortKey(b[0],b[1]));});
+            renderFileList();var t=sortedEntries.length;
+            setStatus('readStatus','✅ '+t+' files (elapsed '+elapsed+'s)','ok');
+            document.getElementById('btnExport').disabled=false;
+        }else{setStatus('readStatus','❌ '+(r.error||'Unknown error'),'err');}
+    }catch(ex){console.error('readAllFiles error:',ex);setStatus('readStatus','❌ JS Error: '+ex.message,'err');}
+}
+
+function applyFilter(){
+    renderFileList();
+}
+function toggleFilterClear(){
+    var v=document.getElementById('fileFilter').value;
+    document.getElementById('filterClear').style.display=v?'inline':'none';
+}
+function clearFilter(){
+    document.getElementById('fileFilter').value='';
+    document.getElementById('filterClear').style.display='none';
+    applyFilter();
+}
+
+function renderFileList(){
+    var tbody=document.getElementById('fileListBody');tbody.innerHTML='';
+    var q=(document.getElementById('fileFilter').value||'').trim().toUpperCase();
+    for(var i=0;i<sortedEntries.length;i++){
+        var path=sortedEntries[i][0],fd=sortedEntries[i][1];
+        var fid=getFid(fd),ft=getFt(fd),st=ft==='DF'?'':SMAP[getStruct(fd)]||'';
+        var fcp=fd.fcp||{},size=fcp.file_size||'',numRec=(fcp.file_descriptor||{}).num_of_rec||'';
+        var err=fd.error?(fd.error.sw_actual?fd.error.sw_actual+': '+fd.error.message:'ERR: '+fd.error.message):'';
+        var cols=pathCols(fd);
+        // filter
+        if(q){var name=(cols[0]+' '+cols[1]+' '+cols[2]).toUpperCase();if(name.indexOf(q)<0&&fid.indexOf(q)<0)continue;}
+        var tr=document.createElement('tr');
+        if(ft==='DF')tr.className='df-row';
+        if(fd.error && !fd.bytes)tr.style.color='#aaa';
+        tr.innerHTML='<td>'+cols[0]+'</td><td>'+cols[1]+'</td><td>'+cols[2]+'</td><td class="cc">'+fid+'</td><td class="cc">'+ft+'</td><td class="cc">'+st+'</td><td class="cr">'+size+'</td><td class="cr">'+numRec+'</td>';
+        tr.setAttribute('data-idx',i);
+        tr.onclick=function(){
+            document.querySelectorAll('#fileListBody tr.selected').forEach(function(r){r.classList.remove('selected');});
+            this.classList.add('selected');
+            var idx=parseInt(this.getAttribute('data-idx'));
+            selectedPath=sortedEntries[idx][0];selectedFd=sortedEntries[idx][1];
+            showDetail(selectedPath,selectedFd);
+            var isEf=getFt(selectedFd)==='EF';
+            document.getElementById('btnWrite').disabled=!isEf;
+            document.getElementById('btnDecode').disabled=!isEf;
+        };
+        tbody.appendChild(tr);
+    }
+}
+
+function showDetail(path,fd){
+    var rawBox=document.getElementById('rawDataBox');
+    if(fd.error&&!fd.bytes){rawBox.style.padding='8px';rawBox.innerHTML='<span style="color:#c0392b">'+(fd.error.sw_actual||'ERR')+': '+(fd.error.message||'')+'</span>';}
+    else if(fd.bytes){
+        var b=fd.bytes;
+        if(Array.isArray(b)){
+            var html='<table class="rec-table" style="margin:0"><thead><tr><th>Record #</th><th style="text-align:left">Hex Data</th></tr></thead><tbody>';
+            b.forEach(function(r,i){html+='<tr><td>'+(i+1)+'</td><td>'+String(r).toUpperCase()+'</td></tr>';});
+            html+='</tbody></table>';rawBox.style.padding='0';rawBox.innerHTML=html;
+        }else if(typeof b==='string'){rawBox.style.padding='8px';rawBox.innerHTML='<pre class="data-pre">'+b.toUpperCase()+'</pre>';}
+        else{rawBox.style.padding='8px';rawBox.innerHTML='<pre class="data-pre">'+JSON.stringify(b,null,2)+'</pre>';}
+    }else{rawBox.style.padding='8px';rawBox.innerHTML='<span style="color:#999">(no data)</span>';}
+}
+
+function syntaxHL(obj){
+    var j=JSON.stringify(obj,null,2);
+    return j.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/"([^"]+)"(?=\s*:)/g,'<span style="color:#9c27b0">"$1"</span>')
+        .replace(/:\s*"([^"]*)"/g,': <span style="color:#2e7d32">"$1"</span>')
+        .replace(/:\s*(\d+\.?\d*)/g,': <span style="color:#1565c0">$1</span>')
+        .replace(/:\s*(true|false)/g,': <span style="color:#e65100">$1</span>')
+        .replace(/:\s*(null)/g,': <span style="color:#757575">$1</span>');
+}
+
+/* === Decode Popup === */
+function openDecodePopup(){
+    if(!selectedFd)return;
+    document.getElementById('decodeEfName').textContent=selectedPath;
+    var box=document.getElementById('decodeJsonBox');
+    if(selectedFd.body!==undefined&&selectedFd.body!==null){box.innerHTML=syntaxHL(selectedFd.body);}
+    else if(selectedFd.error&&selectedFd.bytes){box.innerHTML='<span style="color:#e67e22">Decoding error: '+(selectedFd.error.message||'')+'</span>';}
+    else{box.innerHTML='<span style="color:#999">'+(selectedFd.error?'':'(no decoded data)')+'</span>';}
+    document.getElementById('decodeOverlay').classList.add('show');
+}
+function closeDecodePopup(){document.getElementById('decodeOverlay').classList.remove('show');}
+
+/* === Write Popup === */
+function openWritePopup(){
+    if(!selectedFd){alert('Select a file first');return;}
+    var st=getStruct(selectedFd),ft=getFt(selectedFd);
+    if(ft!=='EF'){alert('Can only write to EF files');return;}
+    document.getElementById('writeEfName').textContent=selectedPath;
+    document.getElementById('writeEfType').textContent='('+SMAP[st]+')';
+    document.getElementById('writeAdmInput').value='';
+    document.getElementById('writeAdmStatus').textContent='';
+    document.getElementById('writeStatus').textContent='';
+    document.getElementById('writeSubmitBtn').disabled=true;
+    writeAdmOk=false;
+    var isTlv=st==='ber_tlv';
+    var isLf=st==='linear_fixed'||st==='cyclic';
+    document.getElementById('writeTlvNotice').style.display=isTlv?'block':'none';
+    document.getElementById('writeHexRow').style.display=isTlv?'none':'block';
+    document.getElementById('writeRecordRow').style.display=isLf?'block':'none';
+    if(isLf&&selectedFd.bytes&&Array.isArray(selectedFd.bytes)){
+        var sel=document.getElementById('writeRecordSelect');sel.innerHTML='';
+        for(var i=0;i<selectedFd.bytes.length;i++){var o=document.createElement('option');o.value=i;o.textContent='Record '+(i+1);sel.appendChild(o);}
+        writeOrigHex=String(selectedFd.bytes[0]||'').toUpperCase().replace(/\s/g,'');
+        document.getElementById('writeHexInput').value=writeOrigHex;
+    }else if(!isTlv){
+        var raw='';
+        if(selectedFd.bytes){raw=typeof selectedFd.bytes==='string'?selectedFd.bytes:JSON.stringify(selectedFd.bytes);}
+        writeOrigHex=raw.toUpperCase().replace(/\s/g,'');
+        document.getElementById('writeHexInput').value=writeOrigHex;
+    }
+    document.getElementById('writeOverlay').classList.add('show');
+}
+function closeWritePopup(){document.getElementById('writeOverlay').classList.remove('show');}
+
+function onWriteRecordChange(){
+    var idx=parseInt(document.getElementById('writeRecordSelect').value);
+    if(selectedFd&&selectedFd.bytes&&Array.isArray(selectedFd.bytes)){
+        writeOrigHex=String(selectedFd.bytes[idx]||'').toUpperCase().replace(/\s/g,'');
+        document.getElementById('writeHexInput').value=writeOrigHex;
+        document.getElementById('writeSubmitBtn').disabled=true;
+    }
+}
+
+function checkWriteChanged(){
+    var cur=document.getElementById('writeHexInput').value.toUpperCase().replace(/\s/g,'');
+    document.getElementById('writeSubmitBtn').disabled=(cur===writeOrigHex)||!writeAdmOk;
+}
+
+async function writeVerifyAdm(){
+    var a=document.getElementById('writeAdmInput').value.trim();
+    if(!a){document.getElementById('writeAdmStatus').textContent='Enter ADM1';return;}
+    document.getElementById('writeAdmStatus').textContent='⏳...';
+    var r=await api('/sim/verify_adm',{adm:a});
+    if(r.success){document.getElementById('writeAdmStatus').innerHTML='<span class="status status-ok">✅ Verified</span>';writeAdmOk=true;checkWriteChanged();}
+    else{document.getElementById('writeAdmStatus').innerHTML='<span class="status status-err">❌ Failed</span>';writeAdmOk=false;}
+}
+
+async function submitWrite(){
+    var hex=document.getElementById('writeHexInput').value.replace(/\s/g,'');
+    var adm=document.getElementById('writeAdmInput').value.trim();
+    var st=getStruct(selectedFd);
+    var isLf=st==='linear_fixed'||st==='cyclic';
+    var recNr=isLf?parseInt(document.getElementById('writeRecordSelect').value)+1:0;
+    document.getElementById('writeStatus').textContent='⏳ Writing...';
+    document.getElementById('writeSubmitBtn').disabled=true;
+    var r=await api('/sim/write_ef',{path:selectedPath,hex:hex,adm:adm,record_nr:recNr,structure:st});
+    if(r.success){
+        document.getElementById('writeStatus').innerHTML='<span class="status status-ok">✅ Written</span>';
+        writeOrigHex=hex.toUpperCase();
+        // Update local data
+        if(isLf&&selectedFd.bytes&&Array.isArray(selectedFd.bytes)){
+            selectedFd.bytes[recNr-1]=hex;
+        }else{
+            selectedFd.bytes=hex;
+        }
+        showDetail(selectedPath,selectedFd);
+    }else{
+        document.getElementById('writeStatus').innerHTML='<span class="status status-err">❌ '+r.error+'</span>';
+        document.getElementById('writeSubmitBtn').disabled=false;
+    }
+}
+
+/* === Panel Resizer === */
+(function(){
+    var resizer=document.getElementById('resizer');
+    var left=document.getElementById('leftPanel');
+    var right=document.getElementById('rightPanel');
+    var container=document.getElementById('panelContainer');
+    var dragging=false;
+    resizer.addEventListener('mousedown',function(e){
+        dragging=true;e.preventDefault();
+        document.body.style.cursor='col-resize';
+        document.body.style.userSelect='none';
+    });
+    document.addEventListener('mousemove',function(e){
+        if(!dragging)return;
+        var rect=container.getBoundingClientRect();
+        var offset=e.clientX-rect.left;
+        var total=rect.width;
+        var pct=Math.max(15,Math.min(85,(offset/total)*100));
+        left.style.flex='none';left.style.width=pct+'%';
+        right.style.flex='none';right.style.width=(100-pct)+'%';
+    });
+    document.addEventListener('mouseup',function(){
+        if(dragging){dragging=false;document.body.style.cursor='';document.body.style.userSelect='';}
+    });
+})();
+
+/* === Column Resizer removed === */
+
+/* === Keyboard Navigation === */
+document.getElementById('fileListScroll').addEventListener('keydown',function(e){
+    if(e.key!=='ArrowDown'&&e.key!=='ArrowUp')return;
+    e.preventDefault();
+    var tbody=document.getElementById('fileListBody');
+    var rows=tbody.querySelectorAll('tr');
+    if(!rows.length)return;
+    var cur=-1;
+    rows.forEach(function(r,i){if(r.classList.contains('selected'))cur=i;});
+    var next=cur;
+    if(e.key==='ArrowDown')next=Math.min(cur+1,rows.length-1);
+    else next=Math.max(cur-1,0);
+    if(next!==cur&&next>=0){rows[next].click();rows[next].scrollIntoView({block:'nearest'});}
+});
+
+async function exportData(){
+    if(!dumpData)return;
+    setStatus('readStatus','⏳ Exporting...','warn');
+    try{
+        var res=await fetch('/sim/export',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:dumpData})});
+        if(res.ok){
+            var blob=await res.blob();
+            var iccid=dumpData.iccid||'unknown';
+            var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=iccid+'.zip';a.click();URL.revokeObjectURL(a.href);
+            setStatus('readStatus','✅ Exported','ok');
+        }else{
+            var err=await res.json();
+            setStatus('readStatus','❌ '+(err.error||'Export failed'),'err');
+        }
+    }catch(e){setStatus('readStatus','❌ '+e.message,'err');}
+}
+</script>
+</body>
+</html>

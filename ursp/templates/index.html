@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URSP Rule Analyzer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <h1>📡 URSP Rule Analyzer</h1>
+                    <div class="header-buttons">
+                        <button class="header-btn info-header-btn" data-tab="info">📖 Spec</button>
+                        <button class="header-btn github-btn" onclick="window.open('https://github.com/joostone-ahn/ursp-rule-analyzer', '_blank')">🔗 GitHub</button>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="copyright">Copyright © 2026 JUSEOK AHN &lt;ajs3013@lguplus.co.kr&gt; All rights reserved.</div>
+                </div>
+            </div>
+        </header>
+        
+        <div class="tabs-with-actions">
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="encoder">Encoder</button>
+                <button class="tab-btn" data-tab="decoder">Decoder</button>
+                <button class="tab-btn" data-tab="result">Result</button>
+            </div>
+            <div class="tab-actions">
+                <!-- Encoding button - shown only on Encoder tab -->
+                <div id="encoding-action" class="tab-action-item active">
+                    <span id="encode-status" class="status-message"></span>
+                    <button id="encode-btn" class="btn-primary">🚀 Encoding</button>
+                </div>
+                <!-- Decoding button - shown only on Decoder tab -->
+                <div id="decoding-action" class="tab-action-item">
+                    <span id="decode-status" class="status-message"></span>
+                    <button id="decode-btn" class="btn-primary">🔍 Decoding</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Tab -->
+        <div id="info-tab" class="tab-content">
+            <div class="info-card">
+                <div class="info-sections info-four-columns">
+                    <div class="info-section">
+                        <div class="section-card">
+                            <h3>🔤 Abbreviations</h3>
+                            <div class="structure-info">
+                                <div class="structure-item abbr-style">
+                                    <strong>URSP:</strong> UE Route Selection Policy
+                                </div>
+                                <div class="structure-item abbr-style">
+                                    <strong>TD:</strong> Traffic Descriptor
+                                </div>
+                                <div class="structure-item abbr-style">
+                                    <strong>RSD:</strong> Route Selection Descriptor
+                                </div>
+                                <div class="structure-item abbr-style">
+                                    <strong>PTI:</strong> Procedure Transaction Identity
+                                </div>
+                                <div class="structure-item abbr-style">
+                                    <strong>PLMN:</strong> Public Land Mobile Network
+                                </div>
+                                <div class="structure-item abbr-style">
+                                    <strong>UPSC:</strong> UE Policy Section Contents
+                                </div>
+                                <div class="structure-item abbr-style">
+                                    <strong>PV:</strong> Precedence Value (Lower = Higher Priority)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="info-section">
+                        <div class="section-card">
+                            <h3>🏗️ URSP Rule Structure</h3>
+                            <div class="structure-info">
+                                <div class="structure-item ursp-style">
+                                    <h4>URSP Rule Components</h4>
+                                    <ul>
+                                        <li><strong>Basic Info:</strong> Precedence Value (Priority)</li>
+                                        <li><strong>Traffic Descriptor:</strong> Traffic identification components</li>
+                                        <li><strong>Route Selection Descriptor:</strong> Network routing components</li>
+                                    </ul>
+                                </div>
+                                <div class="structure-item ursp-style">
+                                    <h4>Match-all Rule</h4>
+                                    <ul>
+                                        <li>Automatically added with highest PV (lowest priority)</li>
+                                        <li>Catches all traffic not matched by other rules</li>
+                                        <li>Essential for complete policy coverage</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="info-section">
+                        <div class="section-card">
+                            <h3>🎯 TD Validation Rules</h3>
+                            <div class="structure-info">
+                                <div class="structure-item td-style">
+                                    <h4>Same Type Components</h4>
+                                    <ul>
+                                        <li><strong>Logic:</strong> <span class="highlight-or">OR</span> (At least one must match)</li>
+                                        <li><strong>Example 1:</strong> DNN="internet" OR DNN="ims"</li>
+                                        <li><strong>Example 2:</strong> Connection Capabilities (IMS OR MMS OR SUPL)</li>
+                                    </ul>
+                                </div>
+                                <div class="structure-item td-style">
+                                    <h4>Different Type Components</h4>
+                                    <ul>
+                                        <li><strong>Logic:</strong> <span class="highlight-and">AND</span> (All must match)</li>
+                                        <li><strong>Example:</strong> DNN="internet" AND App="com.example"</li>
+                                    </ul>
+                                </div>
+                                <div class="structure-item td-style">
+                                    <h4>Mutually Exclusive Types</h4>
+                                    <ul>
+                                        <li><strong>Logic:</strong> <span class="highlight-critical">NOT Allowed</span> (Standard restriction)</li>
+                                        <li><strong>Reason:</strong> 3GPP TS 24.526 Table 5.2.1 NOTE 6: the receiving entity shall ignore the URSP rule</li>
+                                        <li><strong>Example:</strong> Single remote port + Remote port range</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="info-section">
+                        <div class="section-card">
+                            <h3>🛣️ RSD Validation Rules</h3>
+                            <div class="structure-info">
+                                <div class="structure-item rsd-style">
+                                    <h4>Same Type Components</h4>
+                                    <ul>
+                                        <li><strong>Logic:</strong> <span class="highlight-critical">NOT Allowed</span> (Tool recommendation)</li>
+                                        <li><strong>Reason:</strong> Causes UE implementation-dependent routing selection. Single value recommended for predictable routing.</li>
+                                        <li><strong>Example:</strong> Cannot have multiple DNN values in one RSD</li>
+                                    </ul>
+                                </div>
+                                <div class="structure-item rsd-style">
+                                    <h4>Different Type Components</h4>
+                                    <ul>
+                                        <li><strong>Logic:</strong> <span class="highlight-and">AND</span> (All must match)</li>
+                                        <li><strong>Example:</strong> S-NSSAI + DNN + SSC Mode</li>
+                                    </ul>
+                                </div>
+                                <div class="structure-item rsd-style">
+                                    <h4>Routing Fallback Options</h4>
+                                    <ul>
+                                        <li><strong>Method:</strong> Multiple RSDs with different precedence values</li>
+                                        <li><strong>Priority:</strong> Lower precedence value = Higher priority</li>
+                                        <li><strong>Example:</strong> RSD(PV=1) tried first, RSD(PV=2) as fallback</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Encoder Tab -->
+        <div id="encoder-tab" class="tab-content active">
+            <!-- UE Policy Container Section -->
+            <div class="policy-container-section">
+                <div class="policy-container-title">
+                    <h3>📦 UE Policy Container</h3>
+                </div>
+                <div class="policy-container-content">
+                    <div class="basic-info-inline">
+                        <div class="inline-field compact">
+                            <span class="field-label">PTI&nbsp;&nbsp;:</span>
+                            <input type="text" id="pti" value="151">
+                        </div>
+                        <div class="inline-field compact">
+                            <span class="field-label">PLMN&nbsp;&nbsp;:</span>
+                            <input type="text" id="plmn" value="45006F">
+                        </div>
+                        <div class="inline-field compact">
+                            <span class="field-label">UPSC&nbsp;&nbsp;:</span>
+                            <input type="text" id="upsc" value="2">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- URSP Rules -->
+            <div class="ursp-section">
+                <div class="ursp-section-header">
+                    <h3>📋 URSP Rules</h3>
+                    <button type="button" class="add-ursp-btn" onclick="addURSPRule()">
+                        + Add URSP Rule
+                    </button>
+                </div>
+                <div id="ursp-container" class="ursp-container">
+                    <!-- URSP cards will be dynamically generated -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Decoder Tab -->
+        <div id="decoder-tab" class="tab-content">
+            <div class="decoder-card">
+                <div class="decoder-card-header">
+                    <h3>📥 Paste hex dump containing NAS message with UE Policy Container</h3>
+                </div>
+                <div class="decoder-input-section">
+                    <textarea id="log-text" class="log-textarea" placeholder="Supported formats:
+
+Wireshark hex dump
+0000   68 05 00 1F 97 01 00 1B 00 19 54 F0 60 00 14 00
+0010   02 00 10 01 00 0D FF 00 01 01 00 07 00 05 01 00
+0020   02 01 01
+
+Plain hex string
+6805001F9701001B001954F06000140002001001000DFF000101000700050100020101"></textarea>
+                    <div class="decoder-action-buttons">
+                        <button class="clear-log-btn" onclick="clearLogText()">
+                            <span class="icon-trash">🗑</span> Clear
+                        </button>
+                        <button class="sample-log-btn" onclick="loadSampleLog()">📋 Load Sample Log</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Tab -->
+        <div id="result-tab" class="tab-content">
+            <div class="result-container">
+                <div id="result-sections">
+                    <!-- Results will be dynamically inserted here -->
+                    <div class="result-placeholder">
+                        <div class="placeholder-icon">📊</div>
+                        <h3>No Results Yet</h3>
+                        <p>Run Encoding or Decoding to see results here</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
