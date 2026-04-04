@@ -24,6 +24,7 @@ source "$VENV/bin/activate"
 if [ ! -f "$VENV/.deps_installed" ] || [ "$DIR/requirements.txt" -nt "$VENV/.deps_installed" ]; then
     echo "📦 Installing dependencies..."
     pip install -q -r "$DIR/requirements.txt"
+    pip install -q -e "$DIR/pysim"
     touch "$VENV/.deps_installed"
 fi
 

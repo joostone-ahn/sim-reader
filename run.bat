@@ -28,6 +28,7 @@ REM Install dependencies if needed
 if not exist "%VENV%\.deps_installed" (
     echo 📦 Installing dependencies...
     pip install -q -r "%DIR%requirements.txt"
+    pip install -q -e "%DIR%pysim"
     echo. > "%VENV%\.deps_installed"
 )
 
