@@ -203,7 +203,16 @@ async function connectReader(){
         document.getElementById('infoHplmn').textContent=r.info.hplmn||'-';
         // Reset verify state and enable Read All Files
         writeVerified=false;verifiedAdm='';verifiedAdmType='';
+        dumpData=null;selectedPath=null;selectedFd=null;sortedEntries=[];
+        document.getElementById('fileListBody').innerHTML='';
+        document.getElementById('rawDataBox').innerHTML='<span style="color:#999">(no data)</span>';
+        document.getElementById('rawDataBox').style.padding='8px';
+        document.getElementById('btnRead').style.display='none';
+        document.getElementById('btnDecode').disabled=true;
+        document.getElementById('btnWrite').disabled=true;
+        document.getElementById('btnExport').disabled=true;
         document.getElementById('btnReadAll').disabled=false;
+        setStatus('readStatus','','');
     }else{setStatus('connectStatus','❌ '+r.error,'err');}
 }
 
