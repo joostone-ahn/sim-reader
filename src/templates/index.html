@@ -398,7 +398,7 @@ async function doReadEf(admHex, admType){
     var structure=st||'transparent';
     var structures={};
     structures[selectedPath]=structure;
-    var r=await api('/sim/read_failed',{adm:admHex,adm_type:admType,paths:[selectedPath],structures:structures});
+    var r=await api('/sim/re_read',{adm:admHex,adm_type:admType,paths:[selectedPath],structures:structures});
     if(r.success&&r.results&&r.results[selectedPath]){
         var rd=r.results[selectedPath];
         if(rd.bytes){

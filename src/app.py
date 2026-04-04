@@ -404,8 +404,8 @@ def read_ef():
         return jsonify({'success': False, 'error': str(e)})
 
 
-@app.route('/sim/read_failed', methods=['POST'])
-def read_failed():
+@app.route('/sim/re_read', methods=['POST'])
+def re_read():
     """Re-read files that failed with 6982 after ADM verification."""
     try:
         reader = session.get('reader', 0)
