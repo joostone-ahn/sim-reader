@@ -2,6 +2,7 @@
 """SIM Card Reader Web Application."""
 
 import json
+import re
 import sys
 import os
 import subprocess
@@ -21,11 +22,56 @@ PYSIM_SHELL = Path(__file__).parent.parent / "pysim" / "pySim-shell.py"
 DATA_DIR = Path(__file__).parent.parent / "data"
 
 
-def _run_pysim(reader_num: int, exec_cmds: list[str], timeout: int = 60) -> subprocess.CompletedProcess:
+def _run_pysim(reader_num: int, exec_cmds: list[str], timeout: int = 60, apdu_trace: bool = False) -> subprocess.CompletedProcess:
     cmd = [sys.executable, str(PYSIM_SHELL), "-p", str(reader_num), "--noprompt"]
+    if apdu_trace:
+        cmd.append("--apdu-trace")
     for ec in exec_cmds:
         cmd.extend(["-e", ec])
-    return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    if apdu_trace:
+        if result.stderr:
+            print(f"[APDU-ERR]\n{result.stderr}")
+        # Print APDU trace lines from stdout
+        for line in result.stdout.split('\n'):
+            if line.startswith('INFO: ->') or line.startswith('INFO: <-'):
+                print(f"[APDU] {line}")
+    return result
+
+
+def _run_pysim_raw(reader_num: int, apdu_cmds: list[str], timeout: int = 60) -> subprocess.CompletedProcess:
+    """Run pySim with --skip-card-init and raw APDU commands."""
+    cmd = [sys.executable, str(PYSIM_SHELL), "-p", str(reader_num), "--noprompt", "--skip-card-init", "--apdu-trace"]
+    for apdu in apdu_cmds:
+        cmd.extend(["-e", f"apdu {apdu}"])
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    if result.stderr:
+        print(f"[APDU-ERR]\n{result.stderr}")
+    for line in result.stdout.split('\n'):
+        if line.startswith('INFO: ->') or line.startswith('INFO: <-'):
+            print(f"[APDU] {line}")
+    return result
+
+
+def _parse_sw(result: subprocess.CompletedProcess) -> str:
+    """Extract last SW from pySim raw APDU output."""
+    for line in reversed(result.stdout.split('\n')):
+        line = line.strip()
+        if line.startswith('SW:'):
+            return line.split(':')[1].strip()
+    return ''
+
+
+# Key reference mapping for ADM types
+_ADM_KEY_REF = {
+    'ADM1': '0a', 'ADM2': '0b', 'ADM3': '0c', 'ADM4': '0d', 'ADM5': '0e',
+}
+
+
+def _get_usim_aid(reader_num: int) -> str:
+    """Get USIM AID from EF.DIR. Returns hex AID string."""
+    # Default USIM AID
+    return session.get('usim_aid', 'a0000000871002ffffffff8903000000')
 
 
 def _extract_json(stdout: str) -> dict | None:
@@ -54,6 +100,8 @@ def sim_connect():
             "select ADF.USIM",
             "select EF.IMSI", "read_binary_decoded",
             "select EF.MSISDN", "read_records_decoded",
+            "select ADF.USIM",
+            "select EF.HPLMNwAcT", "read_binary",
         ], timeout=30)
 
         if "ReaderError" in result.stderr or "No reader found" in result.stdout:
@@ -61,45 +109,84 @@ def sim_connect():
         if "NoCardException" in result.stderr or "Card initialization" in result.stdout:
             return jsonify({'success': False, 'error': 'No card in reader'})
 
-        # Parse output for key values
+        # Parse all JSON objects from stdout
         stdout = result.stdout
-        info = {'iccid': '', 'imsi': '', 'msisdn': ''}
+        json_objects = []
+        i = 0
+        while i < len(stdout):
+            if stdout[i] in ('{', '['):
+                bracket = stdout[i]
+                close = '}' if bracket == '{' else ']'
+                depth = 0
+                start = i
+                while i < len(stdout):
+                    if stdout[i] == bracket:
+                        depth += 1
+                    elif stdout[i] == close:
+                        depth -= 1
+                        if depth == 0:
+                            try:
+                                obj = json.loads(stdout[start:i+1])
+                                json_objects.append(obj)
+                            except json.JSONDecodeError:
+                                pass
+                            break
+                    i += 1
+            i += 1
 
-        # Extract ICCID
-        if '"iccid"' in stdout.lower():
-            for line in stdout.split('\n'):
-                if '"iccid"' in line.lower():
-                    val = line.split(':', 1)[-1].strip().strip('",')
-                    if val and val != 'null':
-                        info['iccid'] = val
+        info = {'iccid': '', 'imsi': '', 'msisdn': '', 'hplmn': ''}
 
-        # Extract IMSI
-        if '"imsi"' in stdout.lower():
-            for line in stdout.split('\n'):
-                if '"imsi"' in line.lower():
-                    val = line.split(':', 1)[-1].strip().strip('",')
-                    if val and val != 'null':
-                        info['imsi'] = val
+        for obj in json_objects:
+            if isinstance(obj, dict):
+                if 'iccid' in obj:
+                    info['iccid'] = obj['iccid']
+                elif 'imsi' in obj:
+                    info['imsi'] = obj['imsi']
+            elif isinstance(obj, list):
+                # MSISDN records
+                for rec in obj:
+                    if not isinstance(rec, dict):
+                        continue
+                    if 'dialing_nr' in rec and rec['dialing_nr'] and not info['msisdn']:
+                        nr = rec['dialing_nr']
+                        alpha = rec.get('alpha_id', '')
+                        if alpha:
+                            info['msisdn'] = f"{nr}({alpha})"
+                        else:
+                            info['msisdn'] = nr
 
-        # Extract MSISDN - check for dialing_nr field in records
-        if '"dialing_nr"' in stdout.lower():
-            for line in stdout.split('\n'):
-                if '"dialing_nr"' in line.lower():
-                    val = line.split(':', 1)[-1].strip().strip('",')
-                    if val and val != 'null' and len(val) > 3:
-                        info['msisdn'] = val
-                        break
-        # Fallback: check for "number" field
-        elif '"number"' in stdout.lower():
-            for line in stdout.split('\n'):
-                if '"number"' in line.lower():
-                    val = line.split(':', 1)[-1].strip().strip('",')
-                    if val and val != 'null' and len(val) > 3:
-                        info['msisdn'] = val
-                        break
+        # Parse HPLMNwAcT from raw hex line (read_binary output)
+        for line in stdout.split('\n'):
+            line = line.strip()
+            if len(line) >= 10 and all(c in '0123456789abcdefABCDEF' for c in line):
+                raw = line.upper()
+                if raw[:6] != 'FFFFFF':
+                    plmn_hex = raw[:6]
+                    act_hex = raw[6:10]
+                    # Decode PLMN: nibble-swapped BCD
+                    mcc = plmn_hex[1] + plmn_hex[0] + plmn_hex[3]
+                    mnc_d3 = plmn_hex[2]
+                    mnc = plmn_hex[5] + plmn_hex[4]
+                    if mnc_d3 != 'F':
+                        mnc += mnc_d3
+                    info['hplmn'] = f"{mcc}/{mnc}({act_hex})"
+                break
 
         session['reader'] = reader
         session['connected'] = True
+        # Store USIM AID from EF.DIR for raw APDU usage
+        for obj in json_objects:
+            if isinstance(obj, list):
+                for rec in obj:
+                    if isinstance(rec, dict) and 'dialing_nr' not in rec:
+                        continue
+        # Extract AID from stdout
+        for line in stdout.split('\n'):
+            if 'USIM:' in line and '(EF.DIR)' in line:
+                aid = line.split('USIM:')[1].split('(')[0].strip()
+                if aid:
+                    session['usim_aid'] = aid
+                break
         return jsonify({'success': True, 'info': info})
 
     except subprocess.TimeoutExpired:
@@ -108,36 +195,51 @@ def sim_connect():
         return jsonify({'success': False, 'error': str(e)})
 
 
+def _prepare_adm(adm_input: str) -> str:
+    """Return ADM hex value for --pin-is-hex usage. Always 16 hex chars."""
+    adm = adm_input.strip().replace(' ', '')
+    if len(adm) != 16 or not all(c in '0123456789abcdefABCDEF' for c in adm):
+        return ''
+    return adm
+
+
 @app.route('/sim/verify_adm', methods=['POST'])
 def verify_adm():
     try:
         reader = session.get('reader', 0)
-        adm_input = request.json.get('adm', '').strip()
+        adm_hex = _prepare_adm(request.json.get('adm', ''))
+        adm_type = request.json.get('adm_type', 'ADM1')
 
-        # Determine candidates to try
-        candidates = []
-        if len(adm_input) == 16 and all(c in '0123456789abcdefABCDEF' for c in adm_input):
-            # 16-char hex string: try ASCII conversion first, then raw hex
-            try:
-                adm_ascii = bytes.fromhex(adm_input).decode('ascii')
-                candidates.append(adm_ascii)
-            except (ValueError, UnicodeDecodeError):
-                pass
-            candidates.append(adm_input)
-        else:
-            candidates.append(adm_input)
+        if not adm_hex:
+            return jsonify({'success': False, 'error': '⚠️ Invalid ADM value'})
 
-        for adm in candidates:
-            if len(adm) > 16:
-                continue
-            result = _run_pysim(reader, [f"verify_adm {adm}"], timeout=15)
-            if result.returncode == 0 and "EXCEPTION" not in result.stdout:
-                session['adm_verified'] = True
-                return jsonify({'success': True})
+        key_ref = _ADM_KEY_REF.get(adm_type, '0a')
+        usim_aid = _get_usim_aid(reader)
 
-        # All candidates failed
-        err = result.stdout if "EXCEPTION" in result.stdout else result.stderr
-        return jsonify({'success': False, 'error': f'ADM verification failed: {err[:200]}'})
+        # SELECT ADF.USIM + VERIFY ADM via raw APDU
+        select_apdu = f"00a4040410{usim_aid}"
+        verify_apdu = f"002000{key_ref}08{adm_hex}"
+
+        result = _run_pysim_raw(reader, [select_apdu, verify_apdu], timeout=15)
+        sw = _parse_sw(result)
+
+        if sw == '9000':
+            session['adm_verified'] = True
+            return jsonify({'success': True})
+
+        # Map SW to error message
+        sw_messages = {
+            '6983': 'Authentication/PIN method blocked',
+            '6982': 'Security status not satisfied',
+            '6a88': 'Referenced data not found',
+            '6b00': 'Wrong parameters P1-P2',
+        }
+        sw_desc = sw_messages.get(sw, '')
+        if sw.startswith('63c'):
+            tries = int(sw[3], 16)
+            sw_desc = f'{tries} tries remaining'
+        err = f"⚠️ {sw}: {sw_desc}" if sw_desc else f"⚠️ SW: {sw}"
+        return jsonify({'success': False, 'error': err})
 
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
@@ -225,6 +327,68 @@ def _path_to_select_cmds(file_path: str) -> list[str]:
     return cmds
 
 
+@app.route('/sim/read_ef', methods=['POST'])
+def read_ef():
+    """Read a single EF after authentication."""
+    try:
+        reader = session.get('reader', 0)
+        file_path = request.json.get('path', '')
+        structure = request.json.get('structure', 'transparent')
+
+        if not file_path:
+            return jsonify({'success': False, 'error': 'Missing path'})
+
+        cmds = _path_to_select_cmds(file_path)
+
+        if structure in ('linear_fixed', 'cyclic'):
+            cmds.append("read_records_decoded")
+        else:
+            cmds.append("read_binary_decoded")
+
+        result = _run_pysim(reader, cmds, timeout=30)
+        stdout = result.stdout
+
+        # Try to extract JSON
+        json_data = _extract_json(stdout)
+
+        # Also get raw hex: re-read without decode
+        cmds2 = _path_to_select_cmds(file_path)
+        if structure in ('linear_fixed', 'cyclic'):
+            cmds2.append("read_records")
+        else:
+            cmds2.append("read_binary")
+
+        result2 = _run_pysim(reader, cmds2, timeout=30)
+        stdout2 = result2.stdout
+
+        # Parse raw hex from output
+        raw_bytes = None
+        if structure in ('linear_fixed', 'cyclic'):
+            # Records: each line after select has hex data
+            records = []
+            for line in stdout2.split('\n'):
+                line = line.strip()
+                if line and all(c in '0123456789abcdefABCDEF' for c in line):
+                    records.append(line)
+            if records:
+                raw_bytes = records
+        else:
+            for line in stdout2.split('\n'):
+                line = line.strip()
+                if line and all(c in '0123456789abcdefABCDEF' for c in line) and len(line) >= 2:
+                    raw_bytes = line
+                    break
+
+        return jsonify({
+            'success': True,
+            'bytes': raw_bytes,
+            'body': json_data,
+        })
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
 @app.route('/sim/write_ef', methods=['POST'])
 def write_ef():
     try:
@@ -232,37 +396,72 @@ def write_ef():
         file_path = request.json.get('path', '')
         hex_data = request.json.get('hex', '').strip().replace(' ', '')
         adm = request.json.get('adm', '')
+        adm_type = request.json.get('adm_type', 'ADM1')
         record_nr = request.json.get('record_nr', 0)
         structure = request.json.get('structure', 'transparent')
 
         if not file_path or not hex_data:
-            return jsonify({'success': False, 'error': 'Missing path or hex data'})
+            return jsonify({'success': False, 'error': '⚠️ Missing path or hex data'})
 
-        # Prepare ADM
-        if adm and len(adm) == 16 and all(c in '0123456789abcdefABCDEF' for c in adm):
-            try:
-                adm = bytes.fromhex(adm).decode('ascii')
-            except (ValueError, UnicodeDecodeError):
-                pass
+        # If ADM provided, verify via raw APDU first (card retains auth state)
+        adm_hex = _prepare_adm(adm) if adm else ''
+        if adm_hex:
+            key_ref = _ADM_KEY_REF.get(adm_type, '0a')
+            usim_aid = _get_usim_aid(reader)
+            select_apdu = f"00a4040410{usim_aid}"
+            verify_apdu = f"002000{key_ref}08{adm_hex}"
+            vresult = _run_pysim_raw(reader, [select_apdu, verify_apdu], timeout=15)
+            vsw = _parse_sw(vresult)
+            if vsw != '9000':
+                sw_messages = {
+                    '6983': 'Authentication/PIN method blocked',
+                    '6982': 'Security status not satisfied',
+                    '6a88': 'Referenced data not found',
+                    '6b00': 'Wrong parameters P1-P2',
+                }
+                sw_desc = sw_messages.get(vsw, '')
+                if vsw.startswith('63c'):
+                    tries = int(vsw[3], 16)
+                    sw_desc = f'{tries} tries remaining'
+                err = f"⚠️ {vsw}: {sw_desc}" if sw_desc else f"⚠️ SW: {vsw}"
+                return jsonify({'success': False, 'error': err})
 
-        cmds = []
-        if adm:
-            cmds.append(f"verify_adm {adm}")
-
-        # Navigate to the file
-        cmds.extend(_path_to_select_cmds(file_path))
-
-        # Write command depends on structure
+        # Now write via normal pySim (card auth state persists on same reader)
+        cmds = _path_to_select_cmds(file_path)
         if structure in ('linear_fixed', 'cyclic') and record_nr > 0:
             cmds.append(f"update_record {record_nr} {hex_data}")
         else:
             cmds.append(f"update_binary {hex_data}")
 
-        result = _run_pysim(reader, cmds, timeout=30)
+        result = _run_pysim(reader, cmds, timeout=30, apdu_trace=True)
 
-        if "EXCEPTION" in result.stdout or "Error" in result.stdout:
-            err_msg = result.stdout[:300]
-            return jsonify({'success': False, 'error': err_msg})
+        stdout = result.stdout
+        stderr = result.stderr
+
+        has_error = False
+        err_msg = ''
+
+        if "EXCEPTION" in stdout or "EXCEPTION" in stderr:
+            has_error = True
+            err_msg = stdout if "EXCEPTION" in stdout else stderr
+        elif "SW match failed" in stdout or "SW match failed" in stderr:
+            has_error = True
+            err_msg = stdout if "SW match failed" in stdout else stderr
+        elif "Error" in stdout:
+            has_error = True
+            err_msg = stdout
+
+        if has_error:
+            error_line = err_msg
+            for line in err_msg.split('\n'):
+                line = line.strip()
+                if 'SW match failed' in line or 'EXCEPTION' in line:
+                    error_line = line
+                    break
+            sw_m = re.search(r'got (\w{4}):\s*(.+)', error_line)
+            if sw_m:
+                error_line = f"⚠️ {sw_m.group(1)}: {sw_m.group(2).strip()}"
+            return jsonify({'success': False, 'error': error_line[:300]})
 
         return jsonify({'success': True})
 
