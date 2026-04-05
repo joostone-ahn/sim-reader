@@ -574,6 +574,7 @@ def ber_tlv():
         adm_type = request.json.get('adm_type', 'ADM1')
         tag = request.json.get('tag', '')
         data = request.json.get('data', '')
+        show_log = request.json.get('log', True)
 
         if not file_path or not action:
             return jsonify({'success': False, 'error': 'Missing path or action'})
@@ -597,30 +598,33 @@ def ber_tlv():
         else:
             return jsonify({'success': False, 'error': f'Unknown action: {action}'})
 
+        show_log = request.json.get('log', True)
         log_prefix = {'retrieve_tags': '[BER-TLV]', 'retrieve_data': '[BER-TLV]',
                       'set_data': '[set_btn]', 'delete_data': '[delete_btn]'}.get(action, '[BER-TLV]')
 
-        print(f"{log_prefix} CMDS: {cmds}")
+        if show_log:
+            print(f"{log_prefix} CMDS: {cmds}")
         result = _run_pysim(reader, cmds, timeout=30)
 
         # Print APDU trace — after init
-        all_lines = result.stdout.split('\n')
-        init_end = -1
-        for i in range(len(all_lines)):
-            if all_lines[i].startswith('INFO: ->') and '00b000000a' in all_lines[i].lower():
-                for j in range(i + 1, len(all_lines)):
-                    if all_lines[j].startswith('INFO: ->') and '00a4000402 3f00' in all_lines[j].lower():
-                        init_end = j + 2
-                        break
-        if init_end >= 0:
-            show_next = False
-            for line in all_lines[init_end:]:
-                if line.startswith('INFO: ->'):
-                    print(f"{log_prefix} {line}")
-                    show_next = True
-                elif line.startswith('INFO: <-') and show_next:
-                    print(f"{log_prefix} {line}")
-                    show_next = False
+        if show_log:
+            all_lines = result.stdout.split('\n')
+            init_end = -1
+            for i in range(len(all_lines)):
+                if all_lines[i].startswith('INFO: ->') and '00b000000a' in all_lines[i].lower():
+                    for j in range(i + 1, len(all_lines)):
+                        if all_lines[j].startswith('INFO: ->') and '00a4000402 3f00' in all_lines[j].lower():
+                            init_end = j + 2
+                            break
+            if init_end >= 0:
+                show_next = False
+                for line in all_lines[init_end:]:
+                    if line.startswith('INFO: ->'):
+                        print(f"{log_prefix} {line}")
+                        show_next = True
+                    elif line.startswith('INFO: <-') and show_next:
+                        print(f"{log_prefix} {line}")
+                        show_next = False
 
         stdout = result.stdout
         stderr = result.stderr
@@ -641,12 +645,12 @@ def ber_tlv():
         # Parse output based on action
         if action == 'retrieve_tags':
             json_data = _extract_json(stdout)
-            print(f"{log_prefix} SUCCESS")
+            if show_log: print(f"{log_prefix} SUCCESS")
             return jsonify({'success': True, 'tags': json_data})
         elif action == 'retrieve_data':
             # Check for 6a88 (referenced data not found)
             if '6a88' in stdout.lower():
-                print(f"{log_prefix} SUCCESS (6a88: referenced data not found)")
+                if show_log: print(f"{log_prefix} SUCCESS (6a88: referenced data not found)")
                 return jsonify({'success': True, 'data': '', 'empty': True})
             # Extract hex data - last long hex line
             hex_data = ''
@@ -672,10 +676,10 @@ def ber_tlv():
                     hex_data = hex_data[pos:]
                 except (ValueError, IndexError):
                     pass
-            print(f"{log_prefix} SUCCESS")
+            if show_log: print(f"{log_prefix} SUCCESS")
             return jsonify({'success': True, 'data': hex_data})
         else:
-            print(f"{log_prefix} SUCCESS")
+            if show_log: print(f"{log_prefix} SUCCESS")
             return jsonify({'success': True})
 
     except Exception as e:

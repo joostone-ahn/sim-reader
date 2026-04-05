@@ -435,9 +435,14 @@ async function doReadEf(admHex,admType){
 function onReadClick(){
     if(!selectedFd)return;
     requireVerify(function(){
-        document.body.style.cursor='wait';
+        // Show reading status in raw data panel
+        var rawBox=document.getElementById('rawDataBox');
+        rawBox.style.padding='8px';
+        rawBox.innerHTML='<span style="color:#888">⏳ Verifying and reading...</span>';
         doReadEf(verifiedAdm,verifiedAdmType).then(function(ok){
-            document.body.style.cursor='';
+            if(!ok){
+                rawBox.innerHTML='<span style="color:#c0392b">⚠️ Read failed</span>';
+            }
         });
     });
 }
@@ -527,13 +532,23 @@ async function tlvWrite(){
     document.getElementById('writeTlvWriteBtn').disabled=true;
     var r=await api('/sim/ber_tlv',{action:'set_data',path:selectedPath,tag:tag,data:data,adm:verifiedAdm,adm_type:verifiedAdmType});
     if(r.success){document.getElementById('writeTlvStatus').innerHTML='<span class="status status-ok">✅ Done</span>';tlvTagData[tag]=data;tlvOrigHex=data.toUpperCase();updateTlvButtons(true);
-        // Update raw data and re-read decoded
-        if(selectedFd){selectedFd.bytes=tag.replace('0x','').replace('0X','')+('0'+(data.length/2).toString(16)).slice(-2)+data;showDetail(selectedPath,selectedFd);}
-        if(verifiedAdm){
-            var st=getStruct(selectedFd);var rb={adm:verifiedAdm,adm_type:verifiedAdmType,paths:[selectedPath],structures:{},log:false,decoded_only:true};
-            rb.structures[selectedPath]=st;
-            var rr=await api('/sim/verify_and_read',rb);
-            if(rr.success&&rr.results&&rr.results[selectedPath]&&rr.results[selectedPath].body)selectedFd.body=rr.results[selectedPath].body;
+        // Re-retrieve to update raw data and decoding
+        var rr=await api('/sim/ber_tlv',{action:'retrieve_data',path:selectedPath,tag:tag,log:false});
+        if(rr.success&&rr.data){
+            // Update raw bytes with full TLV from retrieve
+            var tagHex=tag.replace('0x','').replace('0X','');
+            var dataLen=rr.data.length/2;
+            var lenHex;
+            if(dataLen<=0x7f){lenHex=('0'+dataLen.toString(16)).slice(-2);}
+            else if(dataLen<=0xff){lenHex='81'+('0'+dataLen.toString(16)).slice(-2);}
+            else{lenHex='82'+('000'+dataLen.toString(16)).slice(-4);}
+            if(selectedFd){
+                selectedFd.bytes=tagHex+lenHex+rr.data;
+                var tagNum=parseInt(tagHex,16);
+                if(!selectedFd.body||typeof selectedFd.body!=='object')selectedFd.body={};
+                selectedFd.body[String(tagNum)]=rr.data;
+                showDetail(selectedPath,selectedFd);
+            }
         }
     }
     else{document.getElementById('writeTlvStatus').innerHTML='<span style="color:#c0392b">'+(r.error||'Write failed')+'</span>';document.getElementById('writeTlvWriteBtn').disabled=false;}
