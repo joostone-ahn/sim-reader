@@ -176,10 +176,13 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
                 <span id="writeTlvRetrieveStatus" style="font-size:0.72rem"></span>
             </div>
             <div style="font-size:0.76rem;font-weight:600;color:#555;margin-bottom:4px">Hex Data</div>
-            <textarea id="writeTlvHexInput" rows="8" placeholder="Press Retrieve to load current tag data" style="width:100%;font-family:Consolas,monospace;font-size:0.82rem;padding:8px;border:1px solid #ddd;border-radius:6px;resize:vertical"></textarea>
+            <textarea id="writeTlvHexInput" rows="8" oninput="checkTlvChanged()" style="width:100%;font-family:Consolas,monospace;font-size:0.82rem;padding:8px;border:1px solid #ddd;border-radius:6px;resize:vertical"></textarea>
             <div style="display:flex;align-items:center;gap:6px;margin-top:8px">
                 <button class="btn btn-primary" id="writeTlvWriteBtn" onclick="tlvWrite()" disabled style="padding:4px 10px;font-size:0.72rem;font-weight:600;min-width:80px">✏️ Write</button>
                 <span id="writeTlvStatus" style="font-size:0.72rem"></span>
+                <span style="margin-left:auto">
+                    <button class="btn" id="writeTlvRestoreBtn" onclick="tlvRestore()" disabled style="padding:4px 10px;font-size:0.72rem;border:1px solid #ccc;border-radius:4px;background:white;color:#555">↩ Restore</button>
+                </span>
             </div>
             <div style="margin-top:12px;padding:8px 10px;background:#f8f9fa;border-radius:6px;font-size:0.70rem;color:#666">
                 <span style="font-weight:600">Note:</span> Use URSP Rule Analyzer to encode/decode URSP rule hex values.<br>
@@ -433,10 +436,8 @@ function onReadClick(){
     if(!selectedFd)return;
     requireVerify(function(){
         document.body.style.cursor='wait';
-        document.getElementById('btnRead').style.opacity='0.5';
         doReadEf(verifiedAdm,verifiedAdmType).then(function(ok){
             document.body.style.cursor='';
-            if(!ok)document.getElementById('btnRead').style.opacity='1';
         });
     });
 }
@@ -474,6 +475,7 @@ function onServiceChange(){
 
 /* === BER-TLV === */
 var tlvTagData={};
+var tlvOrigHex='';
 async function loadTlvTags(){
     var sel=document.getElementById('writeTlvTagSelect');
     sel.innerHTML='<option value="">Loading...</option>';
@@ -489,9 +491,24 @@ async function loadTlvTags(){
         var o=document.createElement('option');o.value=hexTag;o.textContent=hexTag;sel.appendChild(o);}
 }
 function updateTlvButtons(hasData){
-    document.getElementById('writeTlvWriteBtn').disabled=false;
     document.getElementById('writeTlvHexInput').readOnly=false;
     document.getElementById('writeTlvHexInput').style.opacity='1';
+    tlvOrigHex=document.getElementById('writeTlvHexInput').value.trim().replace(/\s/g,'').toUpperCase();
+    document.getElementById('writeTlvWriteBtn').disabled=true;
+    document.getElementById('writeTlvRestoreBtn').disabled=true;
+}
+function checkTlvChanged(){
+    var cur=document.getElementById('writeTlvHexInput').value.trim().replace(/\s/g,'').toUpperCase();
+    var changed=cur!==tlvOrigHex;
+    document.getElementById('writeTlvWriteBtn').disabled=!changed||cur.length===0;
+    document.getElementById('writeTlvRestoreBtn').disabled=!changed;
+    document.getElementById('writeTlvStatus').innerHTML='';
+}
+function tlvRestore(){
+    document.getElementById('writeTlvHexInput').value=tlvOrigHex;
+    document.getElementById('writeTlvWriteBtn').disabled=true;
+    document.getElementById('writeTlvRestoreBtn').disabled=true;
+    document.getElementById('writeTlvStatus').innerHTML='';
 }
 async function tlvRetrieve(){
     var tag=document.getElementById('writeTlvTagSelect').value;if(!tag)return;
@@ -509,7 +526,16 @@ async function tlvWrite(){
     document.getElementById('writeTlvStatus').innerHTML='<span style="color:#888">⏳ Writing...</span>';
     document.getElementById('writeTlvWriteBtn').disabled=true;
     var r=await api('/sim/ber_tlv',{action:'set_data',path:selectedPath,tag:tag,data:data,adm:verifiedAdm,adm_type:verifiedAdmType});
-    if(r.success){document.getElementById('writeTlvStatus').innerHTML='<span class="status status-ok">✅ Done</span>';tlvTagData[tag]=data;updateTlvButtons(true);}
+    if(r.success){document.getElementById('writeTlvStatus').innerHTML='<span class="status status-ok">✅ Done</span>';tlvTagData[tag]=data;tlvOrigHex=data.toUpperCase();updateTlvButtons(true);
+        // Update raw data and re-read decoded
+        if(selectedFd){selectedFd.bytes=tag.replace('0x','').replace('0X','')+('0'+(data.length/2).toString(16)).slice(-2)+data;showDetail(selectedPath,selectedFd);}
+        if(verifiedAdm){
+            var st=getStruct(selectedFd);var rb={adm:verifiedAdm,adm_type:verifiedAdmType,paths:[selectedPath],structures:{},log:false,decoded_only:true};
+            rb.structures[selectedPath]=st;
+            var rr=await api('/sim/verify_and_read',rb);
+            if(rr.success&&rr.results&&rr.results[selectedPath]&&rr.results[selectedPath].body)selectedFd.body=rr.results[selectedPath].body;
+        }
+    }
     else{document.getElementById('writeTlvStatus').innerHTML='<span style="color:#c0392b">'+(r.error||'Write failed')+'</span>';document.getElementById('writeTlvWriteBtn').disabled=false;}
 }
 
