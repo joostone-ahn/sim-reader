@@ -599,7 +599,7 @@ def ber_tlv():
             return jsonify({'success': False, 'error': f'Unknown action: {action}'})
 
         show_log = request.json.get('log', True)
-        log_prefix = {'retrieve_tags': '[BER-TLV]', 'retrieve_data': '[BER-TLV]',
+        log_prefix = {'retrieve_tags': '[retrieve_btn]', 'retrieve_data': '[retrieve_btn]',
                       'set_data': '[set_btn]', 'delete_data': '[delete_btn]'}.get(action, '[BER-TLV]')
 
         if show_log:
