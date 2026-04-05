@@ -599,8 +599,12 @@ def ber_tlv():
             return jsonify({'success': False, 'error': f'Unknown action: {action}'})
 
         show_log = request.json.get('log', True)
-        log_prefix = {'retrieve_tags': '[retrieve_btn]', 'retrieve_data': '[retrieve_btn]',
+        log_prefix = {'retrieve_tags': '[retrieve_tags_auto]', 'retrieve_data': '[retrieve_tags_auto]',
                       'set_data': '[set_btn]', 'delete_data': '[delete_btn]'}.get(action, '[BER-TLV]')
+        # Override with custom log label if provided
+        custom_log = request.json.get('log_label', '')
+        if custom_log:
+            log_prefix = custom_log
 
         if show_log:
             print(f"{log_prefix} CMDS: {cmds}")

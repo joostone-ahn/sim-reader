@@ -519,7 +519,7 @@ async function tlvRetrieve(){
     var tag=document.getElementById('writeTlvTagSelect').value;if(!tag)return;
     document.getElementById('writeTlvRetrieveStatus').innerHTML='<span style="color:#888">⏳</span>';
     document.getElementById('writeTlvStatus').innerHTML='';
-    var r=await api('/sim/ber_tlv',{action:'retrieve_data',path:selectedPath,tag:tag});
+    var r=await api('/sim/ber_tlv',{action:'retrieve_data',path:selectedPath,tag:tag,log_label:'[retrieve_btn]'});
     document.getElementById('writeTlvRetrieveStatus').innerHTML='';
     if(r.success&&r.data){document.getElementById('writeTlvHexInput').value=r.data;tlvTagData[tag]=r.data;updateTlvButtons(true);}
     else{document.getElementById('writeTlvHexInput').value='';tlvTagData[tag]='';updateTlvButtons(false);}
