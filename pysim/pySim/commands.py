@@ -277,8 +277,13 @@ class SimCardCommands:
         Args:
                 fid : file identifier as hex string
         """
-
-        return self.send_apdu_checksw(self.cla_byte + "a4" + self.sel_ctrl + "02" + fid + "00")
+        pdu = self.cla_byte + "a4" + self.sel_ctrl + "02" + fid + "00"
+        print("INFO: -> %s %s" % (pdu[:10], pdu[10:]))
+        data, sw = self.send_apdu(pdu)
+        print("INFO: <- %s: %s" % (sw, data[:40] if data else ''))
+        if not sw_match(sw, "9000"):
+            raise SwMatchError(sw, "9000", self._tp.sw_interpreter)
+        return (data, sw)
 
     def select_parent_df(self) -> ResTuple:
         """Execute SELECT to switch to the parent DF """
@@ -290,9 +295,14 @@ class SimCardCommands:
         Args:
                 aid : application identifier as hex string
         """
-
         aidlen = ("0" + format(len(aid) // 2, 'x'))[-2:]
-        return self.send_apdu_checksw(self.cla_byte + "a4" + "0404" + aidlen + aid + "00")
+        pdu = self.cla_byte + "a4" + "0404" + aidlen + aid + "00"
+        print("INFO: -> %s %s" % (pdu[:10], pdu[10:]))
+        data, sw = self.send_apdu(pdu)
+        print("INFO: <- %s: %s" % (sw, data[:40] if data else ''))
+        if not sw_match(sw, "9000"):
+            raise SwMatchError(sw, "9000", self._tp.sw_interpreter)
+        return (data, sw)
 
     def read_binary(self, ef: Path, length: int = None, offset: int = 0) -> ResTuple:
         """Execute READD BINARY.
@@ -317,7 +327,11 @@ class SimCardCommands:
             pdu = self.cla_byte + \
                 'b0%04x%02x' % (offset + chunk_offset, chunk_len)
             try:
-                data, sw = self.send_apdu_checksw(pdu)
+                print("INFO: -> %s %s" % (pdu[:10], pdu[10:]))
+                data, sw = self.send_apdu(pdu)
+                print("INFO: <- %s: %s" % (sw, data[:40] if data else ''))
+                if not sw_match(sw, "9000"):
+                    raise SwMatchError(sw, "9000", self._tp.sw_interpreter)
             except Exception as e:
                 e.add_note('failed to read (offset %d)' % offset)
                 raise e
@@ -378,8 +392,10 @@ class SimCardCommands:
                 data[chunk_offset*2: (chunk_offset+chunk_len)*2]
             try:
                 print("INFO: -> %s %s" % (pdu[:10], pdu[10:]))
-                chunk_data, chunk_sw = self.send_apdu_checksw(pdu)
+                chunk_data, chunk_sw = self.send_apdu(pdu)
                 print("INFO: <- %s: %s" % (chunk_sw, chunk_data))
+                if not sw_match(chunk_sw, "9000"):
+                    raise SwMatchError(chunk_sw, "9000", self._tp.sw_interpreter)
             except Exception as e:
                 e.add_note('failed to write chunk (chunk_offset %d, chunk_len %d)' % (chunk_offset, chunk_len))
                 raise e
@@ -399,7 +415,12 @@ class SimCardCommands:
         r = self.select_path(ef)
         rec_length = self.__record_len(r)
         pdu = self.cla_byte + 'b2%02x04%02x' % (rec_no, rec_length)
-        return self.send_apdu_checksw(pdu)
+        print("INFO: -> %s %s" % (pdu[:10], pdu[10:]))
+        data, sw = self.send_apdu(pdu)
+        print("INFO: <- %s: %s" % (sw, data[:40] if data else ''))
+        if not sw_match(sw, "9000"):
+            raise SwMatchError(sw, "9000", self._tp.sw_interpreter)
+        return (data, sw)
 
     def __verify_record(self, ef: Path, rec_no: int, data: str):
         """Verify record against given data
@@ -463,8 +484,10 @@ class SimCardCommands:
 
         pdu = (self.cla_byte + 'dc%02x04%02x' % (rec_no, rec_length)) + data
         print("INFO: -> %s %s" % (pdu[:10], pdu[10:]))
-        res = self.send_apdu_checksw(pdu)
+        res = self.send_apdu(pdu)
         print("INFO: <- %s: %s" % (res[1], res[0]))
+        if not sw_match(res[1], "9000"):
+            raise SwMatchError(res[1], "9000", self._tp.sw_interpreter)
         if verify:
             self.__verify_record(ef, rec_no, data)
         return res
@@ -502,7 +525,12 @@ class SimCardCommands:
             pdu = '80cb008001%02x00' % (tag)
         else:
             pdu = '80cb0000'
-        return self.send_apdu_checksw(pdu)
+        print("INFO: -> %s %s" % (pdu[:10], pdu[10:]))
+        data, sw = self.send_apdu(pdu)
+        print("INFO: <- %s: %s" % (sw, data[:40] if data else ''))
+        if not sw_match(sw, "9000") and not sw_match(sw, "62??"):
+            raise SwMatchError(sw, "9000", self._tp.sw_interpreter)
+        return (data, sw)
 
     def retrieve_data(self, ef: Path, tag: int) -> ResTuple:
         """Execute RETRIEVE DATA, see also TS 102 221 Section 11.3.1.
@@ -532,7 +560,12 @@ class SimCardCommands:
         if isinstance(data, (bytes, bytearray)):
             data = b2h(data)
         pdu = '80db00%02x%02x%s' % (p1, len(data)//2, data)
-        return self.send_apdu_checksw(pdu)
+        print("INFO: -> %s %s" % (pdu[:10], pdu[10:]))
+        rdata, sw = self.send_apdu(pdu)
+        print("INFO: <- %s: %s" % (sw, rdata[:40] if rdata else ''))
+        if not sw_match(sw, "9000"):
+            raise SwMatchError(sw, "9000", self._tp.sw_interpreter)
+        return (rdata, sw)
 
     def set_data(self, ef, tag: int, value: str, verify: bool = False, conserve: bool = False) -> ResTuple:
         """Execute SET DATA.

@@ -230,16 +230,30 @@ def verify_adm():
             return jsonify({'success': False, 'error': '⚠️ Invalid ADM value'})
 
         cmd = f"verify_adm --pin-is-hex --adm-type {adm_type} {adm_hex}"
-        print(f"[verify_adm] cmd: {cmd}")
+        print(f"[verify_btn] cmd: {cmd}")
         result = _run_pysim(reader, [cmd], timeout=15)
-        # Print APDU trace lines
-        for line in result.stdout.split('\n'):
-            if line.startswith('INFO: ->') or line.startswith('INFO: <-'):
-                print(f"[verify_adm] {line}")
+        # Print APDU trace lines — after init (ICCID read + select MF)
+        all_lines = result.stdout.split('\n')
+        init_end = -1
+        for i in range(len(all_lines)):
+            if all_lines[i].startswith('INFO: ->') and '00b000000a' in all_lines[i].lower():
+                for j in range(i + 1, len(all_lines)):
+                    if all_lines[j].startswith('INFO: ->') and '00a4000402 3f00' in all_lines[j].lower():
+                        init_end = j + 2
+                        break
+        if init_end >= 0:
+            show_next = False
+            for line in all_lines[init_end:]:
+                if line.startswith('INFO: ->'):
+                    print(f"[verify_btn] {line}")
+                    show_next = True
+                elif line.startswith('INFO: <-') and show_next:
+                    print(f"[verify_btn] {line}")
+                    show_next = False
 
         if "EXCEPTION" not in result.stdout and "EXCEPTION" not in result.stderr:
             session['adm_verified'] = True
-            print(f"[verify_adm] SUCCESS")
+            print(f"[verify_btn] SUCCESS")
             return jsonify({'success': True})
 
         err = result.stderr if "EXCEPTION" in result.stderr else result.stdout
@@ -252,11 +266,11 @@ def verify_adm():
         sw_m = re.search(r'got (\w{4}):\s*(.+)', error_line)
         if sw_m:
             error_line = f"⚠️ {sw_m.group(1)}: {sw_m.group(2).strip()}"
-        print(f"[verify_adm] FAILED: {error_line[:200]}")
+        print(f"[verify_btn] FAILED: {error_line[:200]}")
         return jsonify({'success': False, 'error': error_line[:300]})
 
     except Exception as e:
-        print(f"[verify_adm] EXCEPTION: {e}")
+        print(f"[verify_btn] EXCEPTION: {e}")
         return jsonify({'success': False, 'error': str(e)})
 
 
@@ -276,20 +290,33 @@ def read_all():
             cmds.append(f"verify_adm {adm}")
 
         cmds.append("fsdump --json")
-        print(f"[read_all] Starting fsdump, reader={reader}")
-        result = _run_pysim(reader, cmds, timeout=600)
-        print(f"[read_all] fsdump done, rc={result.returncode}, stdout={len(result.stdout)}B, stderr={len(result.stderr)}B")
+        print(f"[read_all_files_btn] Starting fsdump, reader={reader}")
+        # Use Popen for real-time SELECT APDU logging
+        cmd = [sys.executable, str(PYSIM_SHELL), "-p", str(reader), "--noprompt"]
+        for ec in cmds:
+            cmd.extend(["-e", ec])
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        stdout_lines = []
+        for line in proc.stdout:
+            stdout_lines.append(line)
+            if line.startswith('INFO: ->') or line.startswith('INFO: <-'):
+                pass  # print(f"[read_all_files_btn] {line.rstrip()}")
+        proc.wait()
+        stderr = proc.stderr.read()
+        stdout = ''.join(stdout_lines)
+        if proc.returncode is None:
+            proc.kill()
+        print(f"[read_all_files_btn] fsdump done, rc={proc.returncode}, stdout={len(stdout)}B, stderr={len(stderr)}B")
 
-        stdout = result.stdout
         json_start = stdout.find('{')
         if json_start < 0:
-            print(f"[read_all] ERROR: No JSON. stdout[:300]={stdout[:300]}")
-            print(f"[read_all] stderr[:300]={result.stderr[:300]}")
+            print(f"[read_all_files_btn] ERROR: No JSON. stdout[:300]={stdout[:300]}")
+            print(f"[read_all_files_btn] stderr[:300]={stderr[:300]}")
             return jsonify({'success': False, 'error': 'No JSON output from fsdump',
-                            'stderr': result.stderr[:500]})
+                            'stderr': stderr[:500]})
 
         data = json.loads(stdout[json_start:])
-        print(f"[read_all] JSON parsed, {len(data.get('files', {}))} files")
+        print(f"[read_all_files_btn] JSON parsed, {len(data.get('files', {}))} files")
 
         # Process files: separate raw/body/bytes
         files = {}
@@ -321,15 +348,15 @@ def read_all():
             files[path] = fd
 
         data["files"] = files
-        print(f"[read_all] Processed {len(files)} files, sending response")
+        print(f"[read_all_files_btn] Processed {len(files)} files, sending response")
 
         return jsonify({'success': True, 'data': data})
 
     except subprocess.TimeoutExpired:
-        print("[read_all] TIMEOUT")
+        print("[read_all_files_btn] TIMEOUT")
         return jsonify({'success': False, 'error': 'Read timeout (10 min)'})
     except Exception as e:
-        print(f"[read_all] EXCEPTION: {e}")
+        print(f"[read_all_files_btn] EXCEPTION: {e}")
         return jsonify({'success': False, 'error': str(e)})
 
 
@@ -404,6 +431,23 @@ def read_ef():
         return jsonify({'success': False, 'error': str(e)})
 
 
+@app.route('/sim/service_map', methods=['POST'])
+def service_map():
+    """Return service table map for EF.UST or EF.IST."""
+    try:
+        ef_name = request.json.get('ef', '')
+        if 'UST' in ef_name:
+            from pySim.ts_31_102 import EF_UST_map
+            return jsonify({'success': True, 'map': {str(k): v for k, v in EF_UST_map.items()}})
+        elif 'IST' in ef_name:
+            from pySim.ts_31_103 import EF_IST_map
+            return jsonify({'success': True, 'map': {str(k): v for k, v in EF_IST_map.items()}})
+        else:
+            return jsonify({'success': False, 'error': 'Unknown service table'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
 @app.route('/sim/re_read', methods=['POST'])
 def re_read():
     """Re-read files that failed with 6982 after ADM verification."""
@@ -449,7 +493,7 @@ def re_read():
                             break
 
                 if not raw_bytes:
-                    print(f"[re-read] {file_path}: no data")
+                    print(f"[read_btn] {file_path}: no data")
                     continue
 
                 # Read decoded
@@ -462,21 +506,21 @@ def re_read():
 
                 result2 = _run_pysim(reader, cmds2, timeout=30)
                 body = _extract_json(result2.stdout)
-                print(f"[re-read] {file_path}: decoded body={'found' if body else 'None'}, stdout2_len={len(result2.stdout)}")
+                print(f"[read_btn] {file_path}: decoded body={'found' if body else 'None'}, stdout2_len={len(result2.stdout)}")
                 if body is None and result2.stdout:
                     # Log more to debug
-                    print(f"[re-read] {file_path}: stdout2[:500]={result2.stdout[:500]}")
-                    print(f"[re-read] {file_path}: stdout2[-300:]={result2.stdout[-300:]}")
+                    print(f"[read_btn] {file_path}: stdout2[:500]={result2.stdout[:500]}")
+                    print(f"[read_btn] {file_path}: stdout2[-300:]={result2.stdout[-300:]}")
                 if result2.stderr:
-                    print(f"[re-read] {file_path}: stderr2={result2.stderr[:200]}")
+                    print(f"[read_btn] {file_path}: stderr2={result2.stderr[:200]}")
 
                 entry = {'bytes': raw_bytes}
                 if body is not None:
                     entry['body'] = body
                 results[file_path] = entry
-                print(f"[re-read] {file_path}: OK")
+                print(f"[read_btn] {file_path}: OK")
             except Exception as e:
-                print(f"[re-read] {file_path}: {e}")
+                print(f"[read_btn] {file_path}: {e}")
 
         return jsonify({'success': True, 'results': results})
 
@@ -501,7 +545,7 @@ def write_ef():
         # If ADM provided, include verify in the command chain
         adm_hex = _prepare_adm(adm) if adm else ''
 
-        cmds = []
+        cmds = ['set conserve_write false']
         if adm_hex:
             cmds.append(f"verify_adm --pin-is-hex --adm-type {adm_type} {adm_hex}")
 
@@ -513,12 +557,28 @@ def write_ef():
             cmds.append(f"update_binary {hex_data}")
 
         write_cmd = 'update_record' if (structure in ('linear_fixed', 'cyclic') and record_nr > 0) else 'update_binary'
-        print(f"[{write_cmd}] cmds: {cmds}")
+        print(f"[write_btn] cmds: {cmds}")
         result = _run_pysim(reader, cmds, timeout=30)
-        # Print APDU trace lines
-        for line in result.stdout.split('\n'):
-            if line.startswith('INFO: ->') or line.startswith('INFO: <-'):
-                print(f"[{write_cmd}] {line}")
+        # Print APDU trace lines — after init (ICCID read + select MF)
+        all_lines = result.stdout.split('\n')
+        init_end = -1
+        for i in range(len(all_lines)):
+            if all_lines[i].startswith('INFO: ->') and '00b000000a' in all_lines[i].lower():
+                # Next select MF after ICCID read marks end of init
+                for j in range(i + 1, len(all_lines)):
+                    if all_lines[j].startswith('INFO: ->') and '00a4000402 3f00' in all_lines[j].lower():
+                        # Skip this select MF and its response
+                        init_end = j + 2
+                        break
+        if init_end >= 0:
+            show_next = False
+            for line in all_lines[init_end:]:
+                if line.startswith('INFO: ->'):
+                    print(f"[write_btn] {line}")
+                    show_next = True
+                elif line.startswith('INFO: <-') and show_next:
+                    print(f"[write_btn] {line}")
+                    show_next = False
 
         stdout = result.stdout
         stderr = result.stderr
@@ -548,6 +608,7 @@ def write_ef():
                 error_line = f"⚠️ {sw_m.group(1)}: {sw_m.group(2).strip()}"
             return jsonify({'success': False, 'error': error_line[:300]})
 
+        print(f"[write_btn] SUCCESS")
         return jsonify({'success': True})
 
     except Exception as e:

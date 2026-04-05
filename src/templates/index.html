@@ -102,9 +102,9 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
                     <div class="panel-title">
                         <span>📄 Raw Data</span>
                         <div style="margin-left:auto;display:flex;gap:6px">
-                            <button id="btnRead" onclick="openReadPopup()" style="display:none;padding:4px 14px;font-size:0.76rem;font-weight:600;border:none;border-radius:5px;cursor:pointer;background:rgba(255,255,255,0.2);color:rgba(255,255,255,0.9);width:100px;height:30px;transition:all 0.2s;align-items:center;justify-content:center">📖 Read</button>
-                            <button id="btnDecode" onclick="openDecodePopup()" disabled style="padding:4px 14px;font-size:0.76rem;font-weight:600;border:none;border-radius:5px;cursor:pointer;background:rgba(255,255,255,0.2);color:rgba(255,255,255,0.9);width:100px;height:30px;transition:all 0.2s">🔍 Decoding</button>
-                            <button id="btnWrite" onclick="openWritePopup()" disabled style="padding:4px 14px;font-size:0.76rem;font-weight:600;border:none;border-radius:5px;cursor:pointer;background:rgba(255,255,255,0.2);color:rgba(255,255,255,0.9);width:100px;height:30px;transition:all 0.2s">✏️ Write</button>
+                            <button id="btnRead" onclick="openReadPopup()" style="display:none;padding:4px 14px;font-size:0.76rem;font-weight:600;border:none;border-radius:5px;cursor:pointer;background:rgba(255,255,255,0.2);color:rgba(255,255,255,0.9);width:110px;height:30px;transition:all 0.2s;align-items:center;justify-content:center;white-space:nowrap">📖 Read</button>
+                            <button id="btnDecode" onclick="openDecodePopup()" disabled style="padding:4px 14px;font-size:0.76rem;font-weight:600;border:none;border-radius:5px;cursor:pointer;background:rgba(255,255,255,0.2);color:rgba(255,255,255,0.9);width:110px;height:30px;transition:all 0.2s;white-space:nowrap">🔍 Decoding</button>
+                            <button id="btnWrite" onclick="openWritePopup()" disabled style="padding:4px 14px;font-size:0.76rem;font-weight:600;border:none;border-radius:5px;cursor:pointer;background:rgba(255,255,255,0.2);color:rgba(255,255,255,0.9);width:110px;height:30px;transition:all 0.2s;white-space:nowrap">✏️ Write</button>
                         </div>
                     </div>
                     <div id="rawDataBox" class="data-pre" style="flex:1;overflow:auto"></div>
@@ -165,24 +165,28 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
             <div style="font-size:0.76rem;font-weight:600;color:#555;margin-bottom:4px">Record Number</div>
             <select id="writeRecordSelect" onchange="onWriteRecordChange()" style="padding:4px 8px;border:1px solid #ddd;border-radius:6px;font-size:0.78rem;font-family:Consolas,monospace"></select>
         </div>
+        <div id="writeServiceTable" style="display:none">
+            <div style="font-size:0.76rem;font-weight:600;color:#555;margin-bottom:4px">Service Table</div>
+            <div id="writeServiceList" style="max-height:400px;overflow-y:auto;border:1px solid #ddd;border-radius:6px;font-size:0.72rem"></div>
+        </div>
         <div id="writeHexRow">
             <div style="font-size:0.76rem;font-weight:600;color:#555;margin-bottom:4px">Hex Data <span id="writeEfSize" style="font-weight:400;color:#888"></span></div>
             <div style="position:relative">
                 <textarea id="writeHexInput" rows="12" style="width:100%;font-family:Consolas,monospace;font-size:0.82rem;padding:8px 8px 20px 8px;border:1px solid #ddd;border-radius:6px;resize:vertical" oninput="checkWriteChanged()"></textarea>
                 <span id="writeHexCount" style="position:absolute;right:10px;bottom:8px;font-size:0.66rem;color:#bbb"></span>
             </div>
-            <div style="display:flex;align-items:center;margin-top:4px">
-                <span style="display:flex;align-items:center;gap:6px">
-                    <button class="btn btn-primary" id="writeSubmitBtn" onclick="submitWrite()" disabled style="padding:4px 10px;font-size:0.72rem;font-weight:600;min-width:80px">✏️ Write</button>
-                    <span id="writeStatus" style="font-size:0.72rem"></span>
-                </span>
-                <span style="margin-left:auto">
-                    <button class="btn" id="writeRestoreBtn" onclick="restoreOrigHex()" disabled style="padding:4px 10px;font-size:0.72rem;border:1px solid #ccc;border-radius:4px;background:white;color:#555">↩ Restore</button>
-                </span>
-            </div>
         </div>
         <div id="writeTlvNotice" style="display:none;background:#fff3cd;padding:8px 12px;border-radius:6px;font-size:0.76rem;color:#856404">
             ⚠️ BER-TLV type EF — Write not yet supported (TBD)
+        </div>
+        <div id="writeButtonRow" style="display:flex;align-items:center;margin-top:4px">
+            <span style="display:flex;align-items:center;gap:6px">
+                <button class="btn btn-primary" id="writeSubmitBtn" onclick="submitWrite()" disabled style="padding:4px 10px;font-size:0.72rem;font-weight:600;min-width:80px">✏️ Write</button>
+                <span id="writeStatus" style="font-size:0.72rem"></span>
+            </span>
+            <span style="margin-left:auto">
+                <button class="btn" id="writeRestoreBtn" onclick="restoreOrigHex()" disabled style="padding:4px 10px;font-size:0.72rem;border:1px solid #ccc;border-radius:4px;background:white;color:#555">↩ Restore</button>
+            </span>
         </div>
     </div>
 </div>
@@ -512,6 +516,90 @@ async function readVerifyAuth(btn){
     }
 }
 
+/* === Service Table (UST/IST) === */
+var writeServiceMap=null;
+var writeServiceOrig={};
+
+function isServiceTableFile(path){
+    return path&&(path.endsWith('/EF.UST')||path.endsWith('/EF.IST'));
+}
+
+function hexToBits(hex){
+    var bits={};
+    for(var i=0;i<hex.length;i+=2){
+        var byte=parseInt(hex.substr(i,2),16);
+        for(var b=0;b<8;b++){
+            var svcNum=(i/2)*8+b+1;
+            bits[svcNum]=!!(byte&(1<<b));
+        }
+    }
+    return bits;
+}
+
+function bitsToHex(bits,byteLen){
+    var hex='';
+    for(var i=0;i<byteLen;i++){
+        var byte=0;
+        for(var b=0;b<8;b++){
+            var svcNum=i*8+b+1;
+            if(bits[svcNum])byte|=(1<<b);
+        }
+        hex+=('0'+byte.toString(16)).slice(-2);
+    }
+    return hex.toUpperCase();
+}
+
+async function renderServiceTable(){
+    var efName=selectedPath.endsWith('/EF.UST')?'UST':'IST';
+    var r=await api('/sim/service_map',{ef:efName});
+    if(!r.success||!r.map)return false;
+    writeServiceMap=r.map;
+    var rawHex=(typeof selectedFd.bytes==='string')?selectedFd.bytes.toUpperCase().replace(/\s/g,''):'';
+    var bits=hexToBits(rawHex);
+    writeServiceOrig=JSON.parse(JSON.stringify(bits));
+    var html='<table style="width:100%;border-collapse:collapse">';
+    html+='<thead><tr><th style="width:40px;padding:3px 6px;text-align:center;background:#f0f2f5;font-size:0.70rem">#</th><th style="padding:3px 8px;text-align:left;background:#f0f2f5;font-size:0.70rem">Service</th><th style="width:80px;padding:3px 10px 3px 6px;text-align:center;background:#f0f2f5;font-size:0.70rem">Status</th></tr></thead><tbody>';
+    var keys=Object.keys(writeServiceMap).sort(function(a,b){return parseInt(a)-parseInt(b);});
+    for(var ki=0;ki<keys.length;ki++){
+        var num=keys[ki];
+        var label=writeServiceMap[num];
+        var enabled=!!bits[parseInt(num)];
+        html+='<tr style="border-bottom:1px solid #eee"><td style="padding:3px 6px;text-align:center;color:#888;font-family:Consolas,monospace">'+num+'</td><td style="padding:3px 8px;font-size:0.72rem">'+label+'</td><td style="padding:3px 10px 3px 6px;text-align:center"><select data-svc="'+num+'" onchange="onServiceChange()" style="font-size:0.70rem;padding:1px 4px;border:1px solid #ddd;border-radius:3px"><option value="true"'+(enabled?' selected':'')+'>True</option><option value="false"'+(!enabled?' selected':'')+'>False</option></select></td></tr>';
+    }
+    html+='</tbody></table>';
+    document.getElementById('writeServiceList').innerHTML=html;
+    return true;
+}
+
+function onServiceChange(){
+    // Rebuild bits from dropdowns
+    var selects=document.querySelectorAll('#writeServiceList select');
+    var bits={};
+    for(var i=0;i<selects.length;i++){
+        bits[parseInt(selects[i].getAttribute('data-svc'))]=(selects[i].value==='true');
+    }
+    // Compare with original
+    var changed=false;
+    for(var k in writeServiceOrig){
+        if(!!bits[k]!==!!writeServiceOrig[k]){changed=true;break;}
+    }
+    // Generate hex
+    var byteLen=Math.ceil(writeExpectedSize/2);
+    var newHex=bitsToHex(bits,byteLen);
+    document.getElementById('writeHexInput').value=newHex;
+    // Update digit count
+    document.getElementById('writeHexCount').textContent='('+newHex.length+'/'+writeExpectedSize+')';
+    // Update write button
+    var needsAuth=document.getElementById('writeAuthRow').style.display!=='none';
+    var authOk=!needsAuth||writeVerified;
+    document.getElementById('writeSubmitBtn').disabled=!changed||!authOk;
+    // Update restore
+    var restoreBtn=document.getElementById('writeRestoreBtn');
+    restoreBtn.disabled=!changed;
+    // Update writeStatus
+    document.getElementById('writeStatus').innerHTML='';
+}
+
 /* === Write Popup === */
 function openWritePopup(){
     if(!selectedFd){alert('Select a file first');return;}
@@ -538,7 +626,7 @@ function openWritePopup(){
                 '<input type="text" class="input-sm write-auth-input" data-key="'+k+'" placeholder="16-digit hex" oninput="updateAuthDigitCount(this)" style="border:none;background:transparent;flex:1">'+
                 '<span class="write-auth-count" style="font-size:0.66rem;color:#bbb;white-space:nowrap">(0/16)</span>'+
                 '</div>'+
-                '<div style="display:flex;align-items:center;gap:6px;margin-top:4px">'+
+                '<div style="display:flex;align-items:center;gap:6px;margin-top:12px">'+
                 '<button class="btn btn-dark write-auth-btn" onclick="writeVerifyAuth(this)" disabled style="padding:4px 10px;font-size:0.72rem;min-width:80px">🔐 Verify</button>'+
                 '<span class="write-auth-status" style="font-size:0.72rem"></span>'+
                 '</div>';
@@ -568,8 +656,10 @@ function openWritePopup(){
     }
     var isTlv=st==='ber_tlv';
     var isLf=st==='linear_fixed'||st==='cyclic';
+    var isSvcTable=isServiceTableFile(selectedPath);
     document.getElementById('writeTlvNotice').style.display=isTlv?'block':'none';
-    document.getElementById('writeHexRow').style.display=isTlv?'none':'block';
+    document.getElementById('writeHexRow').style.display=(isTlv||isSvcTable)?'none':'block';
+    document.getElementById('writeServiceTable').style.display='none';
     document.getElementById('writeRecordRow').style.display=isLf?'block':'none';
     if(isLf&&selectedFd.bytes&&Array.isArray(selectedFd.bytes)){
         var sel=document.getElementById('writeRecordSelect');sel.innerHTML='';
@@ -587,11 +677,20 @@ function openWritePopup(){
     }
     var expBytes=Math.ceil(writeExpectedSize/2);
     document.getElementById('writeEfSize').textContent='('+expBytes+' Bytes)';
-    // Lock hex input if ADM verification is needed
+    // Lock hex input and service table if ADM verification is needed
     var needsAuth=document.getElementById('writeAuthRow').style.display!=='none';
-    document.getElementById('writeHexInput').readOnly=needsAuth&&!writeVerified;
+    var locked=needsAuth&&!writeVerified;
+    document.getElementById('writeHexInput').readOnly=locked;
+    document.getElementById('writeHexInput').style.opacity=locked?'0.5':'1';
+    document.getElementById('writeServiceList').style.opacity=locked?'0.5':'1';
+    document.getElementById('writeServiceList').style.pointerEvents=locked?'none':'auto';
     checkWriteChanged();
     document.getElementById('writeOverlay').classList.add('show');
+    // Load service table if applicable
+    if(isSvcTable){
+        document.getElementById('writeServiceTable').style.display='block';
+        renderServiceTable();
+    }
 }
 function closeWritePopup(){document.getElementById('writeOverlay').classList.remove('show');}
 
@@ -627,6 +726,14 @@ function checkWriteChanged(){
 function restoreOrigHex(){
     document.getElementById('writeHexInput').value=writeOrigHex;
     document.getElementById('writeStatus').innerHTML='';
+    // Restore service table dropdowns if applicable
+    if(isServiceTableFile(selectedPath)&&writeServiceOrig){
+        var selects=document.querySelectorAll('#writeServiceList select');
+        for(var i=0;i<selects.length;i++){
+            var svc=parseInt(selects[i].getAttribute('data-svc'));
+            selects[i].value=writeServiceOrig[svc]?'true':'false';
+        }
+    }
     checkWriteChanged();
 }
 
@@ -661,6 +768,9 @@ async function writeVerifyAuth(btn){
         input.readOnly=true;
         btn.disabled=true;
         document.getElementById('writeHexInput').readOnly=false;
+        document.getElementById('writeHexInput').style.opacity='1';
+        document.getElementById('writeServiceList').style.opacity='1';
+        document.getElementById('writeServiceList').style.pointerEvents='auto';
         checkWriteChanged();
     }else{
         status.innerHTML='';
@@ -696,6 +806,14 @@ async function submitWrite(){
     var r=await api('/sim/write_ef',{path:selectedPath,hex:hex,adm:adm,adm_type:admType,record_nr:recNr,structure:st});
     if(r.success){
         writeOrigHex=hex.toUpperCase();
+        // Update service table original state if applicable
+        if(isServiceTableFile(selectedPath)){
+            var selects=document.querySelectorAll('#writeServiceList select');
+            writeServiceOrig={};
+            for(var si=0;si<selects.length;si++){
+                writeServiceOrig[parseInt(selects[si].getAttribute('data-svc'))]=(selects[si].value==='true');
+            }
+        }
         checkWriteChanged();
         document.getElementById('writeStatus').innerHTML='<span class="status status-ok">✅ Done</span>';
         if(isLf&&selectedFd.bytes&&Array.isArray(selectedFd.bytes)){
