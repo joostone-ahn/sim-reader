@@ -600,7 +600,7 @@ def ber_tlv():
 
         show_log = request.json.get('log', True)
         log_prefix = {'retrieve_tags': '[retrieve_tags_auto]', 'retrieve_data': '[retrieve_tags_auto]',
-                      'set_data': '[set_btn]', 'delete_data': '[delete_btn]'}.get(action, '[BER-TLV]')
+                      'set_data': '[write_btn]', 'delete_data': '[delete_btn]'}.get(action, '[BER-TLV]')
         # Override with custom log label if provided
         custom_log = request.json.get('log_label', '')
         if custom_log:
