@@ -521,7 +521,7 @@ var writeServiceMap=null;
 var writeServiceOrig={};
 
 function isServiceTableFile(path){
-    return path&&(path.endsWith('/EF.UST')||path.endsWith('/EF.IST'));
+    return path&&(path.endsWith('/EF.UST')||path.endsWith('/EF.IST')||path.endsWith('/EF.EST'));
 }
 
 function hexToBits(hex){
@@ -550,7 +550,7 @@ function bitsToHex(bits,byteLen){
 }
 
 async function renderServiceTable(){
-    var efName=selectedPath.endsWith('/EF.UST')?'UST':'IST';
+    var efName=selectedPath.endsWith('/EF.UST')?'UST':selectedPath.endsWith('/EF.IST')?'IST':'EST';
     var r=await api('/sim/service_map',{ef:efName});
     if(!r.success||!r.map)return false;
     writeServiceMap=r.map;

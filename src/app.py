@@ -442,6 +442,9 @@ def service_map():
         elif 'IST' in ef_name:
             from pySim.ts_31_103 import EF_IST_map
             return jsonify({'success': True, 'map': {str(k): v for k, v in EF_IST_map.items()}})
+        elif 'EST' in ef_name:
+            from pySim.ts_31_102 import EF_EST_map
+            return jsonify({'success': True, 'map': {str(k): v for k, v in EF_EST_map.items()}})
         else:
             return jsonify({'success': False, 'error': 'Unknown service table'})
     except Exception as e:
