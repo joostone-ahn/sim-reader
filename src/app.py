@@ -14,6 +14,7 @@ from flask import Flask, render_template, request, jsonify, session, send_file
 # Add parent directory for imports
 sys.path.insert(0, str(Path(__file__).parent))
 from export_to_excel import convert_to_excel
+from ursp_codec import decode_ursp_hex, encode_ursp_hex
 
 app = Flask(__name__)
 app.secret_key = 'sim_reader_secret_key_2024'
@@ -773,6 +774,33 @@ def write_ef():
         print(f"[write_btn] SUCCESS")
         return jsonify({'success': True})
 
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/sim/ursp_decode', methods=['POST'])
+def ursp_decode():
+    """Decode URSP hex value into structured JSON."""
+    try:
+        hex_data = request.json.get('hex_data', '')
+        if not hex_data:
+            return jsonify({'success': False, 'error': 'No hex data'})
+        result = decode_ursp_hex(hex_data)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/sim/ursp_encode', methods=['POST'])
+def ursp_encode():
+    """Encode URSP JSON back to hex."""
+    try:
+        plmn = request.json.get('plmn', '')
+        ursp_rules = request.json.get('ursp_rules', [])
+        if not plmn or not ursp_rules:
+            return jsonify({'success': False, 'error': 'Missing plmn or ursp_rules'})
+        result = encode_ursp_hex(plmn, ursp_rules)
+        return jsonify(result)
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 

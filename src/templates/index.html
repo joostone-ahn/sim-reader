@@ -327,10 +327,36 @@ function syntaxHL(obj){
 }
 
 /* === Decode Popup === */
-function openDecodePopup(){
+function isUrspFile(path){return path&&path.indexOf('EF.URSP')>=0;}
+function formatUrspJson(decoded){
+    if(!decoded||!decoded.success||!decoded.ursp_rules)return null;
+    var out={plmn:decoded.plmn,ursp_rules:decoded.ursp_rules.map(function(r,ri){
+        var rule={rule_index:ri,precedence:r.precedence_value,traffic_descriptor:r.td_components.map(function(td){
+            var o={type:td.type};if(td.value!==''&&td.value!==undefined)o.value=td.value;return o;
+        }),route_selection_descriptors:r.rsd_list.map(function(rsd,si){
+            return{rsd_index:si,precedence:rsd.precedence_value,components:rsd.rsd_components.map(function(c){
+                var o={type:c.type};if(c.value!==''&&c.value!==undefined)o.value=c.value;return o;
+            })};
+        })};return rule;
+    })};return out;
+}
+async function openDecodePopup(){
     if(!selectedFd)return;
     document.getElementById('decodeEfName').textContent=selectedPath;
     var box=document.getElementById('decodeJsonBox');
+    // URSP: decode via API
+    if(isUrspFile(selectedPath)&&selectedFd.body&&typeof selectedFd.body==='object'){
+        var tagKeys=Object.keys(selectedFd.body);
+        var hexVal=tagKeys.length>0?selectedFd.body[tagKeys[0]]:'';
+        if(hexVal&&hexVal!=='ff'&&!/^f+$/i.test(hexVal)){
+            box.innerHTML='<span style="color:#888">⏳ Decoding URSP rules...</span>';
+            document.getElementById('decodeOverlay').classList.add('show');
+            var dr=await api('/sim/ursp_decode',{hex_data:hexVal});
+            if(dr.success){var pretty=formatUrspJson(dr);box.innerHTML=syntaxHL(pretty);}
+            else{box.innerHTML='<span style="color:#e67e22">URSP decode error: '+(dr.error||'')+'</span>';}
+            return;
+        }
+    }
     if(selectedFd.body!==undefined&&selectedFd.body!==null){box.innerHTML=syntaxHL(selectedFd.body);}
     else if(selectedFd.error&&selectedFd.bytes){box.innerHTML='<span style="color:#e67e22">Decoding error: '+(selectedFd.error.message||'')+'</span>';}
     else{box.innerHTML='<span style="color:#999">'+(selectedFd.error?'':'(no decoded data)')+'</span>';}
@@ -547,6 +573,11 @@ async function tlvWrite(){
                 var tagNum=parseInt(tagHex,16);
                 if(!selectedFd.body||typeof selectedFd.body!=='object')selectedFd.body={};
                 selectedFd.body[String(tagNum)]=rr.data;
+                // URSP: also decode for display
+                if(isUrspFile(selectedPath)){
+                    var dr=await api('/sim/ursp_decode',{hex_data:rr.data});
+                    if(dr.success){selectedFd._ursp_decoded=dr;}
+                }
                 showDetail(selectedPath,selectedFd);
             }
         }
