@@ -230,7 +230,7 @@ def verify_adm():
             return jsonify({'success': False, 'error': '⚠️ Invalid ADM value'})
 
         cmd = f"verify_adm --pin-is-hex --adm-type {adm_type} {adm_hex}"
-        print(f"[verify_btn] cmd: {cmd}")
+        print(f"[verify_btn] CMDS: {[cmd]}")
         result = _run_pysim(reader, [cmd], timeout=15)
         # Print APDU trace lines — after init (ICCID read + select MF)
         all_lines = result.stdout.split('\n')
@@ -451,14 +451,16 @@ def service_map():
         return jsonify({'success': False, 'error': str(e)})
 
 
-@app.route('/sim/re_read', methods=['POST'])
-def re_read():
-    """Re-read files that failed with 6982 after ADM verification."""
+@app.route('/sim/verify_and_read', methods=['POST'])
+def verify_and_read():
+    """Re-read files after ADM verification."""
     try:
         reader = session.get('reader', 0)
         adm_hex = request.json.get('adm', '')
         adm_type = request.json.get('adm_type', 'ADM1')
         paths = request.json.get('paths', [])
+        show_log = request.json.get('log', False)
+        decoded_only = request.json.get('decoded_only', False)
 
         if not adm_hex or not paths:
             return jsonify({'success': False, 'error': 'Missing ADM or paths'})
@@ -468,36 +470,42 @@ def re_read():
             try:
                 structure = request.json.get('structures', {}).get(file_path, 'transparent')
 
-                # Read raw
-                cmds = [f"verify_adm --pin-is-hex --adm-type {adm_type} {adm_hex}"]
-                cmds.extend(_path_to_select_cmds(file_path))
-                if structure in ('linear_fixed', 'cyclic'):
-                    cmds.append("read_records")
-                else:
-                    cmds.append("read_binary")
-
-                result = _run_pysim(reader, cmds, timeout=30)
-                stdout = result.stdout
-
                 raw_bytes = None
-                if structure in ('linear_fixed', 'cyclic'):
-                    records = []
-                    for line in stdout.split('\n'):
-                        line = line.strip()
-                        if line and all(c in '0123456789abcdefABCDEF' for c in line):
-                            records.append(line)
-                    if records:
-                        raw_bytes = records
-                else:
-                    for line in stdout.split('\n'):
-                        line = line.strip()
-                        if line and all(c in '0123456789abcdefABCDEF' for c in line) and len(line) >= 2:
-                            raw_bytes = line
-                            break
+                result = None
 
-                if not raw_bytes:
-                    print(f"[read_btn] {file_path}: no data")
-                    continue
+                # Read raw (skip if decoded_only)
+                if not decoded_only:
+                    cmds = [f"verify_adm --pin-is-hex --adm-type {adm_type} {adm_hex}"]
+                    cmds.extend(_path_to_select_cmds(file_path))
+                    if structure in ('linear_fixed', 'cyclic'):
+                        cmds.append("read_records")
+                    else:
+                        cmds.append("read_binary")
+
+                    if show_log:
+                        print(f"[read_btn] CMDS: {cmds}")
+                    result = _run_pysim(reader, cmds, timeout=30)
+                    stdout = result.stdout
+
+                    if structure in ('linear_fixed', 'cyclic'):
+                        records = []
+                        for line in stdout.split('\n'):
+                            line = line.strip()
+                            if line and all(c in '0123456789abcdefABCDEF' for c in line):
+                                records.append(line)
+                        if records:
+                            raw_bytes = records
+                    else:
+                        for line in stdout.split('\n'):
+                            line = line.strip()
+                            if line and all(c in '0123456789abcdefABCDEF' for c in line) and len(line) >= 2:
+                                raw_bytes = line
+                                break
+
+                    if not raw_bytes:
+                        if show_log:
+                            print(f"[read_btn] FAILED: no data for {file_path}")
+                        continue
 
                 # Read decoded
                 cmds2 = [f"verify_adm --pin-is-hex --adm-type {adm_type} {adm_hex}"]
@@ -507,23 +515,47 @@ def re_read():
                 else:
                     cmds2.append("read_binary_decoded")
 
+                if show_log:
+                    print(f"[read_btn] CMDS: {cmds2}")
                 result2 = _run_pysim(reader, cmds2, timeout=30)
                 body = _extract_json(result2.stdout)
-                print(f"[read_btn] {file_path}: decoded body={'found' if body else 'None'}, stdout2_len={len(result2.stdout)}")
-                if body is None and result2.stdout:
-                    # Log more to debug
-                    print(f"[read_btn] {file_path}: stdout2[:500]={result2.stdout[:500]}")
-                    print(f"[read_btn] {file_path}: stdout2[-300:]={result2.stdout[-300:]}")
-                if result2.stderr:
-                    print(f"[read_btn] {file_path}: stderr2={result2.stderr[:200]}")
 
-                entry = {'bytes': raw_bytes}
+                # Print APDU trace — after init
+                def _print_after_init(stdout_text, prefix):
+                    all_lines = stdout_text.split('\n')
+                    init_end = -1
+                    for i in range(len(all_lines)):
+                        if all_lines[i].startswith('INFO: ->') and '00b000000a' in all_lines[i].lower():
+                            for j in range(i + 1, len(all_lines)):
+                                if all_lines[j].startswith('INFO: ->') and '00a4000402 3f00' in all_lines[j].lower():
+                                    init_end = j + 2
+                                    break
+                    if init_end >= 0:
+                        show_next = False
+                        for line in all_lines[init_end:]:
+                            if line.startswith('INFO: ->'):
+                                print(f"{prefix} {line}")
+                                show_next = True
+                            elif line.startswith('INFO: <-') and show_next:
+                                print(f"{prefix} {line}")
+                                show_next = False
+
+                if show_log:
+                    if result:
+                        _print_after_init(result.stdout, '[read_btn]')
+                    _print_after_init(result2.stdout, '[read_btn]')
+
+                entry = {}
+                if raw_bytes:
+                    entry['bytes'] = raw_bytes
                 if body is not None:
                     entry['body'] = body
                 results[file_path] = entry
-                print(f"[read_btn] {file_path}: OK")
+                if show_log:
+                    print(f"[read_btn] SUCCESS")
             except Exception as e:
-                print(f"[read_btn] {file_path}: {e}")
+                if show_log:
+                    print(f"[read_btn] FAILED: {e}")
 
         return jsonify({'success': True, 'results': results})
 
@@ -560,7 +592,7 @@ def write_ef():
             cmds.append(f"update_binary {hex_data}")
 
         write_cmd = 'update_record' if (structure in ('linear_fixed', 'cyclic') and record_nr > 0) else 'update_binary'
-        print(f"[write_btn] cmds: {cmds}")
+        print(f"[write_btn] CMDS: {cmds}")
         result = _run_pysim(reader, cmds, timeout=30)
         # Print APDU trace lines — after init (ICCID read + select MF)
         all_lines = result.stdout.split('\n')

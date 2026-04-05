@@ -280,7 +280,7 @@ class SimCardCommands:
         pdu = self.cla_byte + "a4" + self.sel_ctrl + "02" + fid + "00"
         print("INFO: -> %s %s" % (pdu[:10], pdu[10:]))
         data, sw = self.send_apdu(pdu)
-        print("INFO: <- %s: %s" % (sw, data[:40] if data else ''))
+        print("INFO: <- %s: %s" % (sw, data if data else ''))
         if not sw_match(sw, "9000"):
             raise SwMatchError(sw, "9000", self._tp.sw_interpreter)
         return (data, sw)
@@ -299,7 +299,7 @@ class SimCardCommands:
         pdu = self.cla_byte + "a4" + "0404" + aidlen + aid + "00"
         print("INFO: -> %s %s" % (pdu[:10], pdu[10:]))
         data, sw = self.send_apdu(pdu)
-        print("INFO: <- %s: %s" % (sw, data[:40] if data else ''))
+        print("INFO: <- %s: %s" % (sw, data if data else ''))
         if not sw_match(sw, "9000"):
             raise SwMatchError(sw, "9000", self._tp.sw_interpreter)
         return (data, sw)
@@ -329,7 +329,7 @@ class SimCardCommands:
             try:
                 print("INFO: -> %s %s" % (pdu[:10], pdu[10:]))
                 data, sw = self.send_apdu(pdu)
-                print("INFO: <- %s: %s" % (sw, data[:40] if data else ''))
+                print("INFO: <- %s: %s" % (sw, data if data else ''))
                 if not sw_match(sw, "9000"):
                     raise SwMatchError(sw, "9000", self._tp.sw_interpreter)
             except Exception as e:
@@ -417,7 +417,7 @@ class SimCardCommands:
         pdu = self.cla_byte + 'b2%02x04%02x' % (rec_no, rec_length)
         print("INFO: -> %s %s" % (pdu[:10], pdu[10:]))
         data, sw = self.send_apdu(pdu)
-        print("INFO: <- %s: %s" % (sw, data[:40] if data else ''))
+        print("INFO: <- %s: %s" % (sw, data if data else ''))
         if not sw_match(sw, "9000"):
             raise SwMatchError(sw, "9000", self._tp.sw_interpreter)
         return (data, sw)
@@ -527,7 +527,7 @@ class SimCardCommands:
             pdu = '80cb0000'
         print("INFO: -> %s %s" % (pdu[:10], pdu[10:]))
         data, sw = self.send_apdu(pdu)
-        print("INFO: <- %s: %s" % (sw, data[:40] if data else ''))
+        print("INFO: <- %s: %s" % (sw, data if data else ''))
         if not sw_match(sw, "9000") and not sw_match(sw, "62??"):
             raise SwMatchError(sw, "9000", self._tp.sw_interpreter)
         return (data, sw)
@@ -562,7 +562,7 @@ class SimCardCommands:
         pdu = '80db00%02x%02x%s' % (p1, len(data)//2, data)
         print("INFO: -> %s %s" % (pdu[:10], pdu[10:]))
         rdata, sw = self.send_apdu(pdu)
-        print("INFO: <- %s: %s" % (sw, rdata[:40] if rdata else ''))
+        print("INFO: <- %s: %s" % (sw, rdata if rdata else ''))
         if not sw_match(sw, "9000"):
             raise SwMatchError(sw, "9000", self._tp.sw_interpreter)
         return (rdata, sw)

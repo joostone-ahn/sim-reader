@@ -411,7 +411,7 @@ async function doReadEf(admHex, admType){
     var structure=st||'transparent';
     var structures={};
     structures[selectedPath]=structure;
-    var r=await api('/sim/re_read',{adm:admHex,adm_type:admType,paths:[selectedPath],structures:structures});
+    var r=await api('/sim/verify_and_read',{adm:admHex,adm_type:admType,paths:[selectedPath],structures:structures,log:true});
     if(r.success&&r.results&&r.results[selectedPath]){
         var rd=r.results[selectedPath];
         if(rd.bytes){
@@ -822,6 +822,21 @@ async function submitWrite(){
             selectedFd.bytes=hex;
         }
         showDetail(selectedPath,selectedFd);
+        // Re-read decoded data after write
+        if(adm){
+            var rereadBody={adm:adm,adm_type:admType,paths:[selectedPath],structures:{},log:false,decoded_only:true};
+            rereadBody.structures[selectedPath]=st;
+            var readR=await api('/sim/verify_and_read',rereadBody);
+            if(readR.success&&readR.results&&readR.results[selectedPath]){
+                var rd=readR.results[selectedPath];
+                if(rd.body)selectedFd.body=rd.body;
+            }
+        }else{
+            var readR=await api('/sim/read_ef',{path:selectedPath,structure:st});
+            if(readR.success&&readR.body){
+                selectedFd.body=readR.body;
+            }
+        }
     }else{
         document.getElementById('writeStatus').innerHTML='<span style="color:#c0392b">'+((r.error||'Write failed'))+'</span>';
         document.getElementById('writeSubmitBtn').disabled=false;
