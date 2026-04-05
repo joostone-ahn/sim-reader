@@ -762,7 +762,7 @@ def write_ef():
                 error_line = f"⚠️ {sw_m.group(1)}: {sw_m.group(2).strip()}"
             return jsonify({'success': False, 'error': error_line[:300]})
 
-        print(f"{log_prefix} SUCCESS")
+        print(f"[write_btn] SUCCESS")
         return jsonify({'success': True})
 
     except Exception as e:
