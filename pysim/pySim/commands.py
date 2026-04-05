@@ -528,7 +528,7 @@ class SimCardCommands:
         print("INFO: -> %s %s" % (pdu[:10], pdu[10:]))
         data, sw = self.send_apdu(pdu)
         print("INFO: <- %s: %s" % (sw, data if data else ''))
-        if not sw_match(sw, "9000") and not sw_match(sw, "62??"):
+        if not sw_match(sw, "9000") and not sw_match(sw, "62??") and not sw_match(sw, "6a88"):
             raise SwMatchError(sw, "9000", self._tp.sw_interpreter)
         return (data, sw)
 
