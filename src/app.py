@@ -14,10 +14,10 @@ from flask import Flask, render_template, request, jsonify, session, send_file
 # Add parent directory for imports
 sys.path.insert(0, str(Path(__file__).parent))
 from export_to_excel import convert_to_excel
-from ursp_codec import decode_ursp_hex
 
 app = Flask(__name__)
 app.secret_key = 'sim_reader_secret_key_2024'
+app.json.sort_keys = False
 
 PYSIM_SHELL = Path(__file__).parent.parent / "pysim" / "pySim-shell.py"
 DATA_DIR = Path(__file__).parent.parent / "data"
@@ -99,6 +99,23 @@ def _extract_json(stdout: str) -> dict | None:
                 i += 1
         i += 1
     return last_json
+
+
+def _parse_raw_and_decoded(stdout: str, structure: str):
+    """Parse output from read_binary_raw_dec / read_records_raw_dec commands.
+    Returns (raw_bytes, json_data)."""
+    raw_bytes = None
+    for line in stdout.split('\n'):
+        line = line.strip()
+        if line.startswith('RAW:'):
+            raw_val = line[4:]
+            if structure in ('linear_fixed', 'cyclic'):
+                raw_bytes = [r for r in raw_val.split(',') if r]
+            else:
+                raw_bytes = raw_val if raw_val else None
+            break
+    json_data = _extract_json(stdout)
+    return raw_bytes, json_data
 
 
 @app.route('/')
@@ -290,7 +307,7 @@ def read_all():
                     pass
             cmds.append(f"verify_adm {adm}")
 
-        cmds.append("fsdump --json")
+        cmds.append("fsdump_custom --json")
         print(f"[read_all_files_btn] Starting fsdump, reader={reader}")
         # Use Popen for real-time SELECT APDU logging
         cmd = [sys.executable, str(PYSIM_SHELL), "-p", str(reader), "--noprompt"]
@@ -384,43 +401,14 @@ def read_ef():
         cmds = _path_to_select_cmds(file_path)
 
         if structure in ('linear_fixed', 'cyclic'):
-            cmds.append("read_records_decoded")
+            cmds.append("read_records_raw_dec")
         else:
-            cmds.append("read_binary_decoded")
+            cmds.append("read_binary_raw_dec")
 
         result = _run_pysim(reader, cmds, timeout=30)
         stdout = result.stdout
 
-        # Try to extract JSON
-        json_data = _extract_json(stdout)
-
-        # Also get raw hex: re-read without decode
-        cmds2 = _path_to_select_cmds(file_path)
-        if structure in ('linear_fixed', 'cyclic'):
-            cmds2.append("read_records")
-        else:
-            cmds2.append("read_binary")
-
-        result2 = _run_pysim(reader, cmds2, timeout=30)
-        stdout2 = result2.stdout
-
-        # Parse raw hex from output
-        raw_bytes = None
-        if structure in ('linear_fixed', 'cyclic'):
-            # Records: each line after select has hex data
-            records = []
-            for line in stdout2.split('\n'):
-                line = line.strip()
-                if line and all(c in '0123456789abcdefABCDEF' for c in line):
-                    records.append(line)
-            if records:
-                raw_bytes = records
-        else:
-            for line in stdout2.split('\n'):
-                line = line.strip()
-                if line and all(c in '0123456789abcdefABCDEF' for c in line) and len(line) >= 2:
-                    raw_bytes = line
-                    break
+        raw_bytes, json_data = _parse_raw_and_decoded(stdout, structure)
 
         return jsonify({
             'success': True,
@@ -452,8 +440,8 @@ def service_map():
         return jsonify({'success': False, 'error': str(e)})
 
 
-@app.route('/sim/verify_and_read', methods=['POST'])
-def verify_and_read():
+@app.route('/sim/adm_read_ef', methods=['POST'])
+def adm_read_ef():
     """Re-read files after ADM verification."""
     try:
         reader = session.get('reader', 0)
@@ -461,7 +449,6 @@ def verify_and_read():
         adm_type = request.json.get('adm_type', 'ADM1')
         paths = request.json.get('paths', [])
         show_log = request.json.get('log', False)
-        decoded_only = request.json.get('decoded_only', False)
 
         if not adm_hex or not paths:
             return jsonify({'success': False, 'error': 'Missing ADM or paths'})
@@ -471,59 +458,22 @@ def verify_and_read():
             try:
                 structure = request.json.get('structures', {}).get(file_path, 'transparent')
 
-                raw_bytes = None
-                result = None
+                cmds = [f"verify_adm --pin-is-hex --adm-type {adm_type} {adm_hex}"]
+                cmds.extend(_path_to_select_cmds(file_path))
 
-                # Read raw (skip if decoded_only)
-                if not decoded_only:
-                    cmds = [f"verify_adm --pin-is-hex --adm-type {adm_type} {adm_hex}"]
-                    cmds.extend(_path_to_select_cmds(file_path))
-                    if structure in ('linear_fixed', 'cyclic'):
-                        cmds.append("read_records")
-                    else:
-                        cmds.append("read_binary")
-
-                    if show_log:
-                        print(f"[read_btn] CMDS: {cmds}")
-                    result = _run_pysim(reader, cmds, timeout=30)
-                    stdout = result.stdout
-
-                    if structure in ('linear_fixed', 'cyclic'):
-                        records = []
-                        for line in stdout.split('\n'):
-                            line = line.strip()
-                            if line and all(c in '0123456789abcdefABCDEF' for c in line):
-                                records.append(line)
-                        if records:
-                            raw_bytes = records
-                    else:
-                        for line in stdout.split('\n'):
-                            line = line.strip()
-                            if line and all(c in '0123456789abcdefABCDEF' for c in line) and len(line) >= 2:
-                                raw_bytes = line
-                                break
-
-                    if not raw_bytes:
-                        if show_log:
-                            print(f"[read_btn] FAILED: no data for {file_path}")
-                        continue
-
-                # Read decoded
-                cmds2 = [f"verify_adm --pin-is-hex --adm-type {adm_type} {adm_hex}"]
-                cmds2.extend(_path_to_select_cmds(file_path))
                 if structure in ('linear_fixed', 'cyclic'):
-                    cmds2.append("read_records_decoded")
+                    cmds.append("read_records_raw_dec")
                 else:
-                    cmds2.append("read_binary_decoded")
+                    cmds.append("read_binary_raw_dec")
 
                 if show_log:
-                    print(f"[read_btn] CMDS: {cmds2}")
-                result2 = _run_pysim(reader, cmds2, timeout=30)
-                body = _extract_json(result2.stdout)
+                    print(f"[read_btn] CMDS: {cmds}")
+                result = _run_pysim(reader, cmds, timeout=30)
+                stdout = result.stdout
 
                 # Print APDU trace — after init
-                def _print_after_init(stdout_text, prefix):
-                    all_lines = stdout_text.split('\n')
+                if show_log:
+                    all_lines = stdout.split('\n')
                     init_end = -1
                     for i in range(len(all_lines)):
                         if all_lines[i].startswith('INFO: ->') and '00b000000a' in all_lines[i].lower():
@@ -535,23 +485,24 @@ def verify_and_read():
                         show_next = False
                         for line in all_lines[init_end:]:
                             if line.startswith('INFO: ->'):
-                                print(f"{prefix} {line}")
+                                print(f"[read_btn] {line}")
                                 show_next = True
                             elif line.startswith('INFO: <-') and show_next:
-                                print(f"{prefix} {line}")
+                                print(f"[read_btn] {line}")
                                 show_next = False
 
-                if show_log:
-                    if result:
-                        _print_after_init(result.stdout, '[read_btn]')
-                    _print_after_init(result2.stdout, '[read_btn]')
-
+                raw_bytes, body = _parse_raw_and_decoded(stdout, structure)
+                if not raw_bytes:
+                    if show_log:
+                        print(f"[read_btn] FAILED: no data for {file_path}")
+                    continue
                 entry = {}
                 if raw_bytes:
                     entry['bytes'] = raw_bytes
                 if body is not None:
                     entry['body'] = body
                 results[file_path] = entry
+
                 if show_log:
                     print(f"[read_btn] SUCCESS")
             except Exception as e:
@@ -590,7 +541,7 @@ def ber_tlv():
         if action == 'retrieve_tags':
             cmds.append("retrieve_tags")
         elif action == 'retrieve_data':
-            cmds.append(f"retrieve_data {tag}")
+            cmds.append(f"retrieve_data_raw_dec {tag}")
         elif action == 'set_data':
             cmds.append(f"delete_data {tag}")
             cmds.append(f"set_data {tag} {data}")
@@ -657,32 +608,33 @@ def ber_tlv():
             if '6a88' in stdout.lower():
                 if show_log: print(f"{log_prefix} SUCCESS (6a88: referenced data not found)")
                 return jsonify({'success': True, 'data': '', 'empty': True})
-            # Extract hex data - last long hex line
-            hex_data = ''
-            for line in reversed(stdout.split('\n')):
+            # Parse RAW: line for full TLV hex
+            raw_tlv = ''
+            value_hex = ''
+            for line in stdout.split('\n'):
                 line = line.strip()
-                if line and len(line) >= 4 and all(c in '0123456789abcdefABCDEF' for c in line):
-                    hex_data = line.upper()
+                if line.startswith('RAW:'):
+                    raw_tlv = line[4:].upper()
                     break
-            # Strip tag + length from TLV response to get value only
-            if hex_data:
+            # Strip tag + length from TLV to get value only
+            if raw_tlv:
                 try:
                     tag_byte = int(tag.replace('0x', '').replace('0X', ''), 16)
-                    # Skip tag (1 or 2 bytes)
                     pos = 2 if tag_byte <= 0xFF else 4
-                    # Parse BER length
-                    length_byte = int(hex_data[pos:pos+2], 16)
+                    length_byte = int(raw_tlv[pos:pos+2], 16)
                     if length_byte <= 0x7F:
                         pos += 2
                     elif length_byte == 0x81:
                         pos += 4
                     elif length_byte == 0x82:
                         pos += 6
-                    hex_data = hex_data[pos:]
+                    value_hex = raw_tlv[pos:]
                 except (ValueError, IndexError):
-                    pass
+                    value_hex = raw_tlv
+            # Parse decoded JSON
+            decoded = _extract_json(stdout)
             if show_log: print(f"{log_prefix} SUCCESS")
-            return jsonify({'success': True, 'data': hex_data})
+            return jsonify({'success': True, 'data': value_hex, 'decoded': decoded})
         else:
             if show_log: print(f"{log_prefix} SUCCESS")
             return jsonify({'success': True})
@@ -774,19 +726,6 @@ def write_ef():
         print(f"[write_btn] SUCCESS")
         return jsonify({'success': True})
 
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-
-@app.route('/sim/ursp_decode', methods=['POST'])
-def ursp_decode():
-    """Decode URSP hex value into structured JSON."""
-    try:
-        hex_data = request.json.get('hex_data', '')
-        if not hex_data:
-            return jsonify({'success': False, 'error': 'No hex data'})
-        result = decode_ursp_hex(hex_data)
-        return jsonify(result)
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 

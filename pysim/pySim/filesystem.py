@@ -624,6 +624,12 @@ class TransparentEF(CardEF):
             (data, _sw) = self._cmd.lchan.read_binary_dec()
             self._cmd.poutput_json(data, opts.oneline)
 
+        def do_read_binary_raw_dec(self, _opts):
+            """Read binary data and decode in one shot. Output: RAW_HEX line then JSON."""
+            raw, dec = read_binary_raw_dec(self._cmd.lchan)
+            self._cmd.poutput("RAW:" + raw)
+            self._cmd.poutput_json(dec)
+
         upd_bin_parser = argparse.ArgumentParser()
         upd_bin_parser.add_argument(
             '--offset', type=auto_uint16, default=0, help='Byte offset for start of read')
@@ -917,6 +923,12 @@ class LinFixedEF(CardEF):
                 (data, _sw) = self._cmd.lchan.read_record_dec(recnr)
                 data_list.append(data)
             self._cmd.poutput_json(data_list, opts.oneline)
+
+        def do_read_records_raw_dec(self, _opts):
+            """Read all records with raw hex and decode in one shot."""
+            raw_list, dec_list = read_records_raw_dec(self._cmd.lchan)
+            self._cmd.poutput("RAW:" + ",".join(raw_list))
+            self._cmd.poutput_json(dec_list)
 
         upd_rec_parser = argparse.ArgumentParser()
         upd_rec_parser.add_argument(
@@ -1382,6 +1394,17 @@ class BerTlvEF(CardEF):
             (data, _sw) = self._cmd.lchan.retrieve_data(opts.TAG)
             self._cmd.poutput(data)
 
+        retrieve_data_raw_dec_parser = argparse.ArgumentParser()
+        retrieve_data_raw_dec_parser.add_argument(
+            'TAG', type=auto_int, help='BER-TLV Tag of value to retrieve')
+
+        @cmd2.with_argparser(retrieve_data_raw_dec_parser)
+        def do_retrieve_data_raw_dec(self, opts):
+            """Retrieve data from a BER-TLV EF with raw hex and decoded JSON."""
+            raw_tlv, value_hex, dec = retrieve_data_raw_dec(self._cmd.lchan, opts.TAG)
+            self._cmd.poutput("RAW:" + raw_tlv)
+            self._cmd.poutput_json(dec)
+
         def do_retrieve_tags(self, _opts):
             """List tags available in a given BER-TLV EF"""
             tags = self._cmd.lchan.retrieve_tags()
@@ -1458,6 +1481,70 @@ class BerTlvEF(CardEF):
                 (tag, l, val, remainder) = bertlv_parse_one(h2b(result[0]))
                 export_str += ("set_data 0x%02x %s\n" % (t, b2h(val)))
         return export_str.strip()
+
+
+# NOTE: Custom helper functions for sim-reader tool
+# Common read logic used by both shell commands (_all) and fsdump_custom
+
+def read_binary_raw_dec(lchan):
+    """Read transparent EF: returns (raw_hex, decoded_dict)."""
+    (raw, _sw) = lchan.read_binary()
+    try:
+        dec = lchan.selected_file.decode_hex(raw)
+    except Exception as e:
+        dec = {"_decode_error": str(e)}
+    return str(raw), dec
+
+
+def read_records_raw_dec(lchan):
+    """Read all records from record-oriented EF: returns (raw_list, decoded_list)."""
+    num_of_rec = lchan.selected_file_num_of_rec()
+    raw_list = []
+    dec_list = []
+    if num_of_rec:
+        for recnr in range(1, 1 + num_of_rec):
+            (data, _sw) = lchan.read_record(recnr)
+            raw_list.append(str(data))
+            try:
+                dec = lchan.selected_file.decode_record_hex(data, recnr)
+            except Exception as e:
+                dec = {"_decode_error": str(e)}
+            dec_list.append(dec)
+    else:
+        r = 1
+        while True:
+            try:
+                (data, _sw) = lchan.read_record(r)
+                raw_list.append(str(data))
+                try:
+                    dec = lchan.selected_file.decode_record_hex(data, r)
+                except Exception as e:
+                    dec = {"_decode_error": str(e)}
+                dec_list.append(dec)
+            except SwMatchError as e:
+                if e.sw_actual == "9402":
+                    break
+                raise e
+            r = r + 1
+    return raw_list, dec_list
+
+
+def retrieve_data_raw_dec(lchan, tag_int):
+    """Retrieve BER-TLV tag: returns (raw_tlv_hex, value_hex, decoded_dict)."""
+    (data, _sw) = lchan.retrieve_data(tag_int)
+    raw_tlv = str(data)
+    try:
+        (tag, l, val, remainder) = bertlv_parse_one(h2b(data))
+        value_hex = b2h(val)
+    except Exception:
+        value_hex = data
+    selected = lchan.selected_file
+    decode_method = getattr(selected, 'decode_tag_data', None)
+    if callable(decode_method):
+        dec = decode_method('%02x' % tag_int, value_hex)
+    else:
+        dec = {'raw': value_hex}
+    return raw_tlv, value_hex, dec
 
 
 def interpret_sw(sw_data: dict, sw: str):

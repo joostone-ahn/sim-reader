@@ -64,6 +64,7 @@ from pySim.utils import sanitize_pin_adm, tabulate_str_list, boxed_heading_str, 
 from pySim.card_handler import CardHandler, CardHandlerAuto
 
 from pySim.filesystem import CardMF, CardEF, CardDF, CardADF, LinFixedEF, TransparentEF, BerTlvEF
+from pySim.filesystem import read_binary_raw_dec, read_records_raw_dec, retrieve_data_raw_dec
 from pySim.ts_102_221 import pin_names
 from pySim.ts_102_222 import Ts102222Commands
 from pySim.gsm_r import DF_EIRENE
@@ -737,25 +738,24 @@ class PySimCommands(CommandSet):
             if isinstance(self._cmd.lchan.selected_file, CardEF):
                 structure = self._cmd.lchan.selected_file_structure()
                 if structure == 'transparent':
-                    (raw_data, sw) = self._cmd.lchan.read_binary()
                     if as_json:
-                        res['raw'] = str(raw_data)
-                        body = self._cmd.lchan.selected_file.decode_hex(raw_data)
+                        result = self._cmd.lchan.read_binary_dec()
+                        body = result[0]
                     else:
-                        body = str(raw_data)
+                        result = self._cmd.lchan.read_binary()
+                        body = str(result[0])
                 elif structure == 'cyclic' or structure == 'linear_fixed':
                     body = []
-                    raw_body = []
                     # Use number of records specified in select response
                     num_of_rec = self._cmd.lchan.selected_file_num_of_rec()
                     if num_of_rec:
                         for r in range(1, num_of_rec + 1):
-                            (raw_data, sw) = self._cmd.lchan.read_record(r)
-                            raw_body.append(str(raw_data))
                             if as_json:
-                                body.append(self._cmd.lchan.selected_file.decode_record_hex(raw_data, r))
+                                result = self._cmd.lchan.read_record_dec(r)
+                                body.append(result[0])
                             else:
-                                body.append(str(raw_data))
+                                result = self._cmd.lchan.read_record(r)
+                                body.append(str(result[0]))
 
                     # When the select response does not return the number of records, read until we hit the
                     # first record that cannot be read.
@@ -763,12 +763,12 @@ class PySimCommands(CommandSet):
                         r = 1
                         while True:
                             try:
-                                (raw_data, sw) = self._cmd.lchan.read_record(r)
-                                raw_body.append(str(raw_data))
                                 if as_json:
-                                    body.append(self._cmd.lchan.selected_file.decode_record_hex(raw_data, r))
+                                    result = self._cmd.lchan.read_record_dec(r)
+                                    body.append(result[0])
                                 else:
-                                    body.append(str(raw_data))
+                                    result = self._cmd.lchan.read_record(r)
+                                    body.append(str(result[0]))
                             except SwMatchError as e:
                                 # We are past the last valid record - stop
                                 if e.sw_actual == "9402":
@@ -776,8 +776,6 @@ class PySimCommands(CommandSet):
                                 # Some other problem occurred
                                 raise e
                             r = r + 1
-                    if as_json:
-                        res['raw'] = raw_body
                 elif structure == 'ber_tlv':
                     tags = self._cmd.lchan.retrieve_tags()
                     body = {}
@@ -796,11 +794,73 @@ class PySimCommands(CommandSet):
                 'message': e.description,
             }
         except Exception as e:
-            # 디코딩 에러 시에도 이미 읽은 raw 데이터 보존
+            raise(e)
+            res['error'] = {
+                'message': str(e)
+            }
+
+        context['result']['files'][file.fully_qualified_path_str(True)] = res
+
+    # NOTE: Custom implementation for sim-reader tool
+    # Reads raw hex + decoded JSON in single pass, with EF-specific decoding (e.g. EF.URSP)
+    def __dump_file_custom(self, filename, context, as_json):
+        """ Select and dump a single file with raw + decoded data in one pass """
+        file = self._cmd.lchan.get_file_by_name(filename)
+        if file:
+            res = {
+                'path': file.fully_qualified_path(True)
+            }
+        else:
+            raise RuntimeError("cannot dump, file %s does not exist in the file system tree" % filename)
+
+        try:
+            fcp_dec = self._cmd.lchan.select(filename, self._cmd)
+
+            if not self._cmd.lchan.selected_file_fcp_hex:
+                return
+
+            res['fcp_raw'] = str(self._cmd.lchan.selected_file_fcp_hex)
+            res['fcp'] = fcp_dec
+
+            if isinstance(self._cmd.lchan.selected_file, CardEF):
+                structure = self._cmd.lchan.selected_file_structure()
+                if structure == 'transparent':
+                    raw, body = read_binary_raw_dec(self._cmd.lchan)
+                    if as_json:
+                        res['raw'] = raw
+                    else:
+                        body = raw
+                elif structure == 'cyclic' or structure == 'linear_fixed':
+                    raw_list, dec_list = read_records_raw_dec(self._cmd.lchan)
+                    if as_json:
+                        res['raw'] = raw_list
+                        body = dec_list
+                    else:
+                        body = raw_list
+                elif structure == 'ber_tlv':
+                    tags = self._cmd.lchan.retrieve_tags()
+                    body = {}
+                    for t in tags:
+                        raw_tlv, value_hex, dec = retrieve_data_raw_dec(self._cmd.lchan, t)
+                        body[t] = value_hex
+                        if as_json and dec and dec.get('success'):
+                            res['decoded'] = dec
+                else:
+                    raise RuntimeError('Unsupported structure "%s" of file "%s"' % (structure, filename))
+                res['body'] = body
+
+        except SwMatchError as e:
+            res['error'] = {
+                'sw_actual': e.sw_actual,
+                'sw_expected': e.sw_expected,
+                'message': e.description,
+            }
+        except Exception as e:
+            # Preserve raw data on decode error
             try:
-                if 'raw' not in res and raw_body:
-                    res['raw'] = raw_body
-            except NameError:
+                if 'raw' not in res:
+                    raw_body = res.get('raw')
+            except Exception:
                 pass
             res['error'] = {
                 'message': str(e)
@@ -843,6 +903,41 @@ class PySimCommands(CommandSet):
                 print("#")
                 exception_str_add = ", also had to stop early due to exception:" + str(e)
                 #raise e
+
+        self._cmd.poutput_json(context['result'])
+
+    # NOTE: Custom command for sim-reader tool
+    # Uses __dump_file_custom for raw + decoded data in single pass
+    fsdump_custom_parser = argparse.ArgumentParser()
+    fsdump_custom_parser.add_argument(
+        '--filename', type=str, default=None, help='only export specific (named) file')
+    fsdump_custom_parser.add_argument(
+        '--json', action='store_true', help='export file contents as JSON (less reliable)')
+
+    @cmd2.with_argparser(fsdump_custom_parser)
+    def do_fsdump_custom(self, opts):
+        """Custom fsdump: raw hex + decoded JSON in single pass, with EF-specific decoding."""
+        result = {
+            'name': self._cmd.card.name,
+            'atr': self._cmd.rs.identity['ATR'],
+            'eid': self._cmd.rs.identity.get('EID', None),
+            'iccid': self._cmd.rs.identity.get('ICCID', None),
+            'aids': {x.aid:{} for x in self._cmd.rs.mf.applications.values()},
+            'files': {},
+        }
+        context = {'result': result, 'DF_SKIP': 0, 'DF_SKIP_REASON': []}
+        kwargs_export = {'as_json': opts.json}
+        exception_str_add = ""
+
+        if opts.filename:
+            self.__walk_action(self.__dump_file_custom, opts.filename, context, **kwargs_export)
+        else:
+            try:
+                self.__walk(0, self.__dump_file_custom, self.__dump_file_custom, context, **kwargs_export)
+            except Exception as e:
+                print("# Stopping early here due to exception: " + str(e))
+                print("#")
+                exception_str_add = ", also had to stop early due to exception:" + str(e)
 
         self._cmd.poutput_json(context['result'])
 

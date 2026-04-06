@@ -291,6 +291,7 @@ function renderFileList(){
             this.classList.add('selected');
             var idx=parseInt(this.getAttribute('data-idx'));
             selectedPath=sortedEntries[idx][0];selectedFd=sortedEntries[idx][1];
+            if(selectedFd.decoded)selectedFd._ursp_decoded=selectedFd.decoded;
             showDetail(selectedPath,selectedFd);
             var isEf=getFt(selectedFd)==='EF';
             var is6982=selectedFd.error&&selectedFd.error.sw_actual==='6982';
@@ -329,7 +330,7 @@ function syntaxHL(obj){
 /* === Decode Popup === */
 function isUrspFile(path){return path&&path.indexOf('EF.URSP')>=0;}
 function formatUrspJson(decoded){
-    if(!decoded||!decoded.success||!decoded.ursp_rules)return null;
+    if(!decoded||!decoded.ursp_rules)return null;
     var out={plmn:decoded.plmn,ursp_rules:decoded.ursp_rules.map(function(r,ri){
         var rule={rule_index:ri,precedence:r.precedence_value,traffic_descriptor:r.td_components.map(function(td){
             var o={type:td.type};if(td.value!==''&&td.value!==undefined)o.value=td.value;return o;
@@ -340,22 +341,18 @@ function formatUrspJson(decoded){
         })};return rule;
     })};return out;
 }
-async function openDecodePopup(){
+function openDecodePopup(){
     if(!selectedFd)return;
     document.getElementById('decodeEfName').textContent=selectedPath;
     var box=document.getElementById('decodeJsonBox');
-    // URSP: decode via API
-    if(isUrspFile(selectedPath)&&selectedFd.body&&typeof selectedFd.body==='object'){
-        var tagKeys=Object.keys(selectedFd.body);
-        var hexVal=tagKeys.length>0?selectedFd.body[tagKeys[0]]:'';
-        if(hexVal&&hexVal!=='ff'&&!/^f+$/i.test(hexVal)){
-            box.innerHTML='<span style="color:#888">⏳ Decoding URSP rules...</span>';
-            document.getElementById('decodeOverlay').classList.add('show');
-            var dr=await api('/sim/ursp_decode',{hex_data:hexVal});
-            if(dr.success){var pretty=formatUrspJson(dr);box.innerHTML=syntaxHL(pretty);}
-            else{box.innerHTML='<span style="color:#e67e22">URSP decode error: '+(dr.error||'')+'</span>';}
-            return;
-        }
+    // URSP: use decoded data from retrieve_data_all (stored in selectedFd._ursp_decoded)
+    if(isUrspFile(selectedPath)&&selectedFd._ursp_decoded){
+        var pretty=formatUrspJson(selectedFd._ursp_decoded);
+        if(pretty){box.innerHTML=syntaxHL(pretty);}
+        else if(selectedFd.body){box.innerHTML=syntaxHL(selectedFd.body);}
+        else{box.innerHTML='<span style="color:#999">(no decoded data)</span>';}
+        document.getElementById('decodeOverlay').classList.add('show');
+        return;
     }
     if(selectedFd.body!==undefined&&selectedFd.body!==null){box.innerHTML=syntaxHL(selectedFd.body);}
     else if(selectedFd.error&&selectedFd.bytes){box.innerHTML='<span style="color:#e67e22">Decoding error: '+(selectedFd.error.message||'')+'</span>';}
@@ -446,7 +443,7 @@ async function doVerify(){
 /* === Read (6982 files) === */
 async function doReadEf(admHex,admType){
     var st=getStruct(selectedFd);var structures={};structures[selectedPath]=st;
-    var r=await api('/sim/verify_and_read',{adm:admHex,adm_type:admType,paths:[selectedPath],structures:structures,log:true});
+    var r=await api('/sim/adm_read_ef',{adm:admHex,adm_type:admType,paths:[selectedPath],structures:structures,log:true});
     if(r.success&&r.results&&r.results[selectedPath]){
         var rd=r.results[selectedPath];
         if(rd.bytes){selectedFd.bytes=rd.bytes;if(rd.body)selectedFd.body=rd.body;delete selectedFd.error;
@@ -547,7 +544,8 @@ async function tlvRetrieve(){
     document.getElementById('writeTlvStatus').innerHTML='';
     var r=await api('/sim/ber_tlv',{action:'retrieve_data',path:selectedPath,tag:tag,log_label:'[retrieve_btn]'});
     document.getElementById('writeTlvRetrieveStatus').innerHTML='';
-    if(r.success&&r.data){document.getElementById('writeTlvHexInput').value=r.data;tlvTagData[tag]=r.data;updateTlvButtons(true);}
+    if(r.success&&r.data){document.getElementById('writeTlvHexInput').value=r.data;tlvTagData[tag]=r.data;updateTlvButtons(true);
+        if(r.decoded&&selectedFd)selectedFd._ursp_decoded=r.decoded;}
     else{document.getElementById('writeTlvHexInput').value='';tlvTagData[tag]='';updateTlvButtons(false);}
 }
 async function tlvWrite(){
@@ -573,11 +571,7 @@ async function tlvWrite(){
                 var tagNum=parseInt(tagHex,16);
                 if(!selectedFd.body||typeof selectedFd.body!=='object')selectedFd.body={};
                 selectedFd.body[String(tagNum)]=rr.data;
-                // URSP: also decode for display
-                if(isUrspFile(selectedPath)){
-                    var dr=await api('/sim/ursp_decode',{hex_data:rr.data});
-                    if(dr.success){selectedFd._ursp_decoded=dr;}
-                }
+                if(rr.decoded)selectedFd._ursp_decoded=rr.decoded;
                 showDetail(selectedPath,selectedFd);
             }
         }
@@ -673,10 +667,14 @@ async function submitWrite(){
         showDetail(selectedPath,selectedFd);
         // Re-read decoded
         if(verifiedAdm){
-            var rb={adm:verifiedAdm,adm_type:verifiedAdmType,paths:[selectedPath],structures:{},log:false,decoded_only:true};
+            var rb={adm:verifiedAdm,adm_type:verifiedAdmType,paths:[selectedPath],structures:{},log:false};
             rb.structures[selectedPath]=st;
-            var rr=await api('/sim/verify_and_read',rb);
-            if(rr.success&&rr.results&&rr.results[selectedPath]&&rr.results[selectedPath].body)selectedFd.body=rr.results[selectedPath].body;
+            var rr=await api('/sim/adm_read_ef',rb);
+            if(rr.success&&rr.results&&rr.results[selectedPath]){
+                var rd=rr.results[selectedPath];
+                if(rd.body)selectedFd.body=rd.body;
+                if(rd.bytes)selectedFd.bytes=rd.bytes;
+            }
         }else{
             var rr=await api('/sim/read_ef',{path:selectedPath,structure:st});
             if(rr.success&&rr.body)selectedFd.body=rr.body;

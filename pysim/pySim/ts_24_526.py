@@ -5,7 +5,8 @@ Decodes URSP rule hex data stored in BER-TLV tag 0x80.
 SIM card stores: PLMN(3B) + BER-TLV_Length + URSP_Rules (per TS 31.102 Section 4.4.11.12)
 Based on 3GPP TS 24.526 URSP rule encoding.
 
-Reference: ursp/ folder (spec.py, decoder.py, encoder.py)
+NOTE: This module is NOT part of the original pySim project.
+      Custom implementation for sim-reader tool.
 """
 
 import ipaddress
@@ -75,8 +76,6 @@ CONNECTION_CAPABILITY_MAP = {
     0xA7: "Unified communications", 0xA8: "Background",
     0xA9: "Mission critical communications", 0xAA: "Time critical communications",
 }
-
-SST_MAP = {1: "eMBB", 2: "URLLC", 3: "MIoT", 4: "V2X", 5: "HMTC", 6: "HDLLC", 7: "GBRSS"}
 
 SSC_MODE_MAP = {0x01: "SSC mode 1", 0x02: "SSC mode 2", 0x03: "SSC mode 3"}
 
@@ -410,9 +409,9 @@ def _parse_rsd(hb, idx):
             if slen == 4:
                 sd = (int(hb[idx], 16) << 16) | (int(hb[idx + 1], 16) << 8) | int(hb[idx + 2], 16)
                 idx += 3
-                comp['value'] = f"SST {sst} + SD {sd}"
+                comp['value'] = {'sst': sst, 'sd': sd}
             else:
-                comp['value'] = f"SST {sst}"
+                comp['value'] = {'sst': sst}
         elif type_name == "DNN":
             dlen = int(hb[idx], 16); idx += 1
             alen = int(hb[idx], 16); idx += 1

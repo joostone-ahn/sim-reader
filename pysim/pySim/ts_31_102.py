@@ -1122,12 +1122,32 @@ class EF_Routing_Indicator(TransparentEF):
                                  'rfu'/Bytes(2))
 
 # TS 31.102 Section 4.4.11.12 (Rel 16)
+# NOTE: Custom - changed from TransparentEF to BerTlvEF, added decode_tag_data for URSP decoding
 class EF_URSP(BerTlvEF):
     """EF.URSP - UE Route Selection Policies per PLMN.
     BER-TLV EF as defined in 3GPP TS 31.102, data format per TS 24.526."""
     def __init__(self, fid='4f0b', sfid=0x0b, name='EF.URSP',
                  desc='UE Route Selector Policies per PLMN', **kwargs):
         super().__init__(fid, sfid=sfid, name=name, desc=desc, **kwargs)
+
+    @staticmethod
+    def decode_tag_data(tag_hex: str, value_hex: str) -> dict:
+        """Decode a BER-TLV tag value from EF.URSP using ursp_decoder.
+        Args:
+            tag_hex: tag as hex string (e.g. '80')
+            value_hex: value portion (tag+length stripped) as hex string
+        Returns:
+            decoded dict or raw fallback
+        """
+        if int(tag_hex, 16) == 0x80 and value_hex and len(set(value_hex.upper())) > 1:
+            try:
+                from pySim.ts_24_526 import decode_ursp_hex
+                result = decode_ursp_hex(value_hex)
+                if result.get('success'):
+                    return result
+            except Exception:
+                pass
+        return {'raw': value_hex}
 
 # TS 31.102 Section 4.4.11.13 (Rel 16)
 class EF_TN3GPPSNN(TransparentEF):
@@ -1585,7 +1605,7 @@ class DF_USIM_5GS(CardDF):
             EF_OPL5G(service=129),
             EF_SUPI_NAI(service=130),
             EF_Routing_Indicator(service=124),
-            EF_URSP(service=132),
+            EF_URSP(service=132),  # NOTE: Custom - BerTlvEF (originally TransparentEF)
             EF_TN3GPPSNN(service=133),
             # Rel-17 additions below
             EF_CAG(service=137),

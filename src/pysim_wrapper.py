@@ -40,7 +40,7 @@ def _run_pysim(reader_num: int, exec_cmds: list[str]) -> subprocess.CompletedPro
 
 
 def _run_fsdump(reader_num: int, as_json: bool = False) -> tuple[dict, str, str]:
-    cmd_flag = "fsdump --json" if as_json else "fsdump"
+    cmd_flag = "fsdump_custom --json" if as_json else "fsdump_custom"
     result = _run_pysim(reader_num, [cmd_flag])
     stdout = result.stdout
     logger.debug("fsdump stdout (first 500): %s", stdout[:500])
