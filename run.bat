@@ -23,24 +23,14 @@ if not exist "%PYTHON%" (
     python -m venv "%VENV%"
 )
 
-REM Install dependencies if needed
-if not exist "%VENV%\.deps_installed" (
+REM Install dependencies: check by importing cmd2 (pySim core dep)
+"%PYTHON%" -c "import cmd2" >nul 2>&1
+if errorlevel 1 (
     echo [SETUP] Installing dependencies...
     "%PIP%" install -r "%DIR%requirements.txt"
     echo [SETUP] Installing pySim...
     "%PIP%" install -e "%DIR%pysim"
     echo [SETUP] Done.
-    echo. > "%VENV%\.deps_installed"
-)
-
-REM Verify cmd2 is available
-"%PYTHON%" -c "import cmd2" >nul 2>&1
-if errorlevel 1 (
-    echo [ERROR] Required module 'cmd2' not found. Reinstalling...
-    del "%VENV%\.deps_installed" >nul 2>&1
-    "%PIP%" install -r "%DIR%requirements.txt"
-    "%PIP%" install -e "%DIR%pysim"
-    echo. > "%VENV%\.deps_installed"
 )
 
 REM Open browser after delay
