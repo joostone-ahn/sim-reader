@@ -28,6 +28,10 @@ if not exist "%VENV%\.deps_installed" (
     echo [SETUP] Installing dependencies...
     "%PIP%" install -q -r "%DIR%requirements.txt"
     "%PIP%" install -q -e "%DIR%pysim"
+    if errorlevel 1 (
+        echo [WARN] Some pySim dependencies failed to install, retrying without optional deps...
+        "%PIP%" install -q --no-deps -e "%DIR%pysim"
+    )
     echo. > "%VENV%\.deps_installed"
 )
 
