@@ -1,6 +1,6 @@
 """
-URSP Codec for SIM Card (EF.URSP)
-Decodes/encodes URSP rule hex data stored in BER-TLV tag 0x80.
+URSP Decoder for SIM Card (EF.URSP)
+Decodes URSP rule hex data stored in BER-TLV tag 0x80.
 
 SIM card stores: PLMN(3B) + BER-TLV_Length + URSP_Rules (per TS 31.102 Section 4.4.11.12)
 Based on 3GPP TS 24.526 URSP rule encoding.
@@ -11,7 +11,7 @@ Reference: ursp/ folder (spec.py, decoder.py, encoder.py)
 import ipaddress
 
 # ============================================================================
-# Spec constants (from ursp/spec.py - subset needed for SIM decode/encode)
+# Spec constants (from ursp/spec.py - subset needed for SIM decode)
 # ============================================================================
 
 # TD Component Types by ID
@@ -43,8 +43,6 @@ TD_TYPES_BY_ID = {
     0xA3: "Connectivity group ID",
 }
 
-TD_TYPES_BY_NAME = {v: k for k, v in TD_TYPES_BY_ID.items()}
-
 # RSD Component Types by ID
 RSD_TYPES_BY_ID = {
     0x01: "SSC mode",
@@ -62,17 +60,11 @@ RSD_TYPES_BY_ID = {
     0x84: "5G ProSe multi-path preference",
 }
 
-RSD_TYPES_BY_NAME = {v: k for k, v in RSD_TYPES_BY_ID.items()}
-
 # Zero-length RSD types
 RSD_ZERO = {"Multi-access preference", "Non-seamless non-3GPP offload indication",
             "5G ProSe layer-3 UE-to-network relay offload indication", "5G ProSe multi-path preference"}
 
-# One-byte RSD types
-RSD_ONE = {"SSC mode", "PDU session type", "Preferred access type", "PDU session pair ID", "RSN"}
-
 PROTOCOL_MAP = {0x01: "ICMP", 0x06: "TCP", 0x11: "UDP", 0x32: "ESP", 0x3A: "ICMPv6"}
-PROTOCOL_REV = {v: k for k, v in PROTOCOL_MAP.items()}
 
 CONNECTION_CAPABILITY_MAP = {
     0x01: "IMS", 0x02: "MMS", 0x04: "SUPL", 0x08: "Internet",
@@ -83,24 +75,18 @@ CONNECTION_CAPABILITY_MAP = {
     0xA7: "Unified communications", 0xA8: "Background",
     0xA9: "Mission critical communications", 0xAA: "Time critical communications",
 }
-CONNECTION_CAPABILITY_REV = {v: k for k, v in CONNECTION_CAPABILITY_MAP.items()}
 
 SST_MAP = {1: "eMBB", 2: "URLLC", 3: "MIoT", 4: "V2X", 5: "HMTC", 6: "HDLLC", 7: "GBRSS"}
 
 SSC_MODE_MAP = {0x01: "SSC mode 1", 0x02: "SSC mode 2", 0x03: "SSC mode 3"}
-SSC_MODE_REV = {v: k for k, v in SSC_MODE_MAP.items()}
 
 PDU_SESSION_TYPE_MAP = {0x01: "IPv4", 0x02: "IPv6", 0x03: "IPv4v6"}
-PDU_SESSION_TYPE_REV = {v: k for k, v in PDU_SESSION_TYPE_MAP.items()}
 
 PREFERRED_ACCESS_TYPE_MAP = {0x01: "3GPP access", 0x02: "Non-3GPP access"}
-PREFERRED_ACCESS_TYPE_REV = {v: k for k, v in PREFERRED_ACCESS_TYPE_MAP.items()}
 
 PDU_SESSION_PAIR_ID_MAP = {i: f"PDU session pair ID {i}" for i in range(7)}
-PDU_SESSION_PAIR_ID_REV = {v: k for k, v in PDU_SESSION_PAIR_ID_MAP.items()}
 
 RSN_MAP = {0x00: "v1", 0x01: "v2"}
-RSN_REV = {v: k for k, v in RSN_MAP.items()}
 
 ANDROID_OS_ID = "97A498E3FC925C9489860333D06E4E47"
 
@@ -121,16 +107,6 @@ def _parse_ber_length(hb, idx):
     elif first == 0x82:
         return (int(hb[idx + 1], 16) << 8) + int(hb[idx + 2], 16), idx + 3
     return 0, idx + 1
-
-
-def _encode_ber_length(byte_count):
-    """Encode BER-TLV length. Returns list of hex strings."""
-    if byte_count <= 0x7F:
-        return [f"{byte_count:02X}"]
-    elif byte_count <= 0xFF:
-        return ["81", f"{byte_count:02X}"]
-    else:
-        return ["82", f"{byte_count >> 8:02X}", f"{byte_count & 0xFF:02X}"]
 
 
 # ============================================================================
@@ -458,357 +434,3 @@ def _parse_rsd(hb, idx):
         components.append(comp)
 
     return {'precedence_value': pv, 'rsd_components': components}, rsd_end
-
-
-# ============================================================================
-# ENCODER - JSON → hex string
-# ============================================================================
-
-def encode_ursp_hex(plmn, ursp_rules):
-    """
-    Encode URSP rules to hex value for BER-TLV tag 0x80.
-    
-    Input: plmn string (e.g. "45006"), ursp_rules list
-    Output: dict with success, hex_data (value portion, without tag+length)
-    
-    The returned hex_data = PLMN(3B) + BER-TLV_Length + URSP_Rules
-    """
-    if not ursp_rules:
-        return {'success': False, 'error': 'No URSP rules provided'}
-
-    try:
-        # Encode all URSP rules
-        all_rule_bytes = []
-        for rule in ursp_rules:
-            rule_hex = _encode_ursp_rule(rule)
-            all_rule_bytes.extend(rule_hex)
-
-        # PLMN encoding (3 bytes)
-        plmn_padded = plmn if len(plmn) == 6 else plmn + 'F'
-        mcc = plmn_padded[:3]
-        mnc = plmn_padded[3:]
-        plmn_hex = [
-            f"{int(mcc[1], 16):X}{int(mcc[0], 16):X}",
-            f"{int(mnc[2], 16):X}{int(mcc[2], 16):X}",
-            f"{int(mnc[1], 16):X}{int(mnc[0], 16):X}",
-        ]
-
-        # Build: PLMN + BER-TLV length + URSP rules
-        result = []
-        result.extend(plmn_hex)
-        result.extend(_encode_ber_length(len(all_rule_bytes)))
-        result.extend(all_rule_bytes)
-
-        return {'success': True, 'hex_data': ''.join(result).upper()}
-
-    except Exception as e:
-        return {'success': False, 'error': str(e)}
-
-
-def _encode_ursp_rule(rule):
-    """Encode one URSP rule. Returns list of hex strings."""
-    pv = rule.get('precedence_value', 1)
-    td_comps = rule.get('td_components', [])
-    rsd_list = rule.get('rsd_list', [])
-
-    # Encode TD components
-    td_payload = []
-    if not td_comps or (len(td_comps) == 1 and td_comps[0].get('type') == 'Match-all'):
-        td_payload.append('01')
-    else:
-        for tc in td_comps:
-            td_payload.extend(_encode_td_component(tc))
-
-    # TD length (2 bytes)
-    td_len = len(td_payload)
-
-    # Encode RSDs
-    rsd_payload = []
-    for rsd in rsd_list:
-        rsd_payload.extend(_encode_rsd(rsd))
-
-    # RSD list length (2 bytes)
-    rsd_len = len(rsd_payload)
-
-    # Build rule: precedence + TD_len + TD + RSD_len + RSD
-    body = []
-    body.append(f"{pv:02X}")
-    body.append(f"{td_len >> 8:02X}")
-    body.append(f"{td_len & 0xFF:02X}")
-    body.extend(td_payload)
-    body.append(f"{rsd_len >> 8:02X}")
-    body.append(f"{rsd_len & 0xFF:02X}")
-    body.extend(rsd_payload)
-
-    # Rule length (2 bytes)
-    rule_len = len(body)
-    result = [f"{rule_len >> 8:02X}", f"{rule_len & 0xFF:02X}"]
-    result.extend(body)
-    return result
-
-
-def _encode_td_component(tc):
-    """Encode one TD component. Returns list of hex strings."""
-    ctype = tc.get('type', '')
-    cval = tc.get('value', '')
-    out = []
-
-    type_id = TD_TYPES_BY_NAME.get(ctype)
-    if type_id is None:
-        return out
-    out.append(f"{type_id:02X}")
-
-    if ctype == "Match-all":
-        pass
-
-    elif ctype == "OS Id + OS App Id":
-        parts = cval.split(':', 1)
-        if len(parts) < 2:
-            return out
-        if parts[0] == 'Android':
-            for i in range(0, len(ANDROID_OS_ID), 2):
-                out.append(ANDROID_OS_ID[i:i + 2])
-            app_bytes = parts[1].encode('ascii')
-            out.append(f"{len(app_bytes):02X}")
-            for b in app_bytes:
-                out.append(f"{b:02X}")
-        else:
-            uid = parts[0].replace('-', '')
-            for i in range(0, 32, 2):
-                out.append(uid[i:i + 2].upper())
-            app_bytes = parts[1].encode('ascii')
-            out.append(f"{len(app_bytes):02X}")
-            for b in app_bytes:
-                out.append(f"{b:02X}")
-
-    elif ctype == "IPv4 remote address":
-        ps = cval.split('/')
-        if len(ps) == 2:
-            for p in ps[0].split('.'):
-                out.append(f"{int(p):02X}")
-            for p in ps[1].split('.'):
-                out.append(f"{int(p):02X}")
-
-    elif ctype == "IPv6 remote address/prefix length":
-        ps = cval.split('/')
-        if len(ps) == 2:
-            for b in ipaddress.IPv6Address(ps[0]).packed:
-                out.append(f"{b:02X}")
-            out.append(f"{int(ps[1]):02X}")
-
-    elif ctype == "Protocol identifier/next header":
-        pid = PROTOCOL_REV.get(cval, int(cval) if cval.isdigit() else 0)
-        out.append(f"{pid:02X}")
-
-    elif ctype == "Single remote port":
-        port = int(cval)
-        out.append(f"{port >> 8:02X}")
-        out.append(f"{port & 0xFF:02X}")
-
-    elif ctype == "Remote port range":
-        ps = cval.split('-')
-        if len(ps) == 2:
-            lo, hi = int(ps[0].strip()), int(ps[1].strip())
-            out.extend([f"{lo >> 8:02X}", f"{lo & 0xFF:02X}", f"{hi >> 8:02X}", f"{hi & 0xFF:02X}"])
-
-    elif ctype == "IP 3 tuple":
-        if isinstance(cval, dict):
-            bitmap = 0
-            ip_type = cval.get('ipType', '')
-            if ip_type == 'IPv4' and cval.get('address') and cval.get('mask'):
-                bitmap |= 0x01
-            if ip_type == 'IPv6' and cval.get('address') and cval.get('prefix'):
-                bitmap |= 0x02
-            if cval.get('protocol'):
-                bitmap |= 0x04
-            pt = cval.get('portType', '')
-            if pt == 'Single' and cval.get('port'):
-                bitmap |= 0x08
-            if pt == 'Range' and cval.get('portLow') and cval.get('portHigh'):
-                bitmap |= 0x10
-            out.append(f"{bitmap:02X}")
-            if bitmap & 0x01:
-                for p in cval['address'].split('.'):
-                    out.append(f"{int(p):02X}")
-                for p in cval['mask'].split('.'):
-                    out.append(f"{int(p):02X}")
-            if bitmap & 0x02:
-                for b in ipaddress.IPv6Address(cval['address']).packed:
-                    out.append(f"{b:02X}")
-                out.append(f"{int(cval['prefix']):02X}")
-            if bitmap & 0x04:
-                pid = PROTOCOL_REV.get(cval['protocol'], int(cval['protocol']) if cval['protocol'].isdigit() else 0)
-                out.append(f"{pid:02X}")
-            if bitmap & 0x08:
-                port = int(cval['port'])
-                out.extend([f"{port >> 8:02X}", f"{port & 0xFF:02X}"])
-            if bitmap & 0x10:
-                lo, hi = int(cval['portLow']), int(cval['portHigh'])
-                out.extend([f"{lo >> 8:02X}", f"{lo & 0xFF:02X}", f"{hi >> 8:02X}", f"{hi & 0xFF:02X}"])
-
-    elif ctype == "Security parameter index":
-        spi = int(cval, 16) if cval.startswith('0x') else int(cval)
-        out.extend([f"{(spi >> 24) & 0xFF:02X}", f"{(spi >> 16) & 0xFF:02X}", f"{(spi >> 8) & 0xFF:02X}", f"{spi & 0xFF:02X}"])
-
-    elif ctype == "Type of service/traffic class":
-        v = int(cval, 16) if cval.startswith('0x') else int(cval)
-        out.append(f"{v:02X}")
-
-    elif ctype == "Flow label":
-        v = int(cval, 16) if cval.startswith('0x') else int(cval)
-        out.extend([f"{(v >> 16) & 0xFF:02X}", f"{(v >> 8) & 0xFF:02X}", f"{v & 0xFF:02X}"])
-
-    elif ctype == "Destination MAC address":
-        mac = cval.replace(':', '').replace('-', '')
-        for i in range(0, 12, 2):
-            out.append(mac[i:i + 2].upper())
-
-    elif ctype in ("802.1Q C-TAG VID", "802.1Q S-TAG VID"):
-        v = int(cval)
-        out.extend([f"{v >> 8:02X}", f"{v & 0xFF:02X}"])
-
-    elif ctype in ("802.1Q C-TAG PCP/DEI", "802.1Q S-TAG PCP/DEI"):
-        v = int(cval, 16) if cval.startswith('0x') else int(cval)
-        out.append(f"{v:02X}")
-
-    elif ctype == "Ethertype":
-        v = int(cval, 16) if cval.startswith('0x') else int(cval)
-        out.extend([f"{v >> 8:02X}", f"{v & 0xFF:02X}"])
-
-    elif ctype == "DNN":
-        ab = cval.encode('ascii')
-        out.append(f"{len(ab) + 1:02X}")
-        out.append(f"{len(ab):02X}")
-        for b in ab:
-            out.append(f"{b:02X}")
-
-    elif ctype == "Connection capabilities":
-        items = [x.strip() for x in cval.split(',')]
-        valid = [CONNECTION_CAPABILITY_REV[x] for x in items if x in CONNECTION_CAPABILITY_REV]
-        out.append(f"{len(valid):02X}")
-        for cid in valid:
-            out.append(f"{cid:02X}")
-
-    elif ctype == "Destination FQDN":
-        fb = cval.encode('ascii')
-        out.append(f"{len(fb):02X}")
-        for b in fb:
-            out.append(f"{b:02X}")
-
-    elif ctype == "Regular expression":
-        rb = cval.encode('utf-8')
-        out.append(f"{len(rb):02X}")
-        for b in rb:
-            out.append(f"{b:02X}")
-
-    elif ctype == "OS App Id":
-        ab = cval.encode('ascii')
-        out.append(f"{len(ab):02X}")
-        for b in ab:
-            out.append(f"{b:02X}")
-
-    elif ctype == "Destination MAC address range":
-        macs = cval.split('-')
-        if len(macs) == 2:
-            for m in macs:
-                mc = m.strip().replace(':', '').replace('-', '')
-                for i in range(0, 12, 2):
-                    out.append(mc[i:i + 2].upper())
-
-    elif ctype == "PIN ID":
-        pb = cval.encode('ascii')
-        out.append(f"{len(pb):02X}")
-        for b in pb:
-            out.append(f"{b:02X}")
-
-    elif ctype == "Connectivity group ID":
-        gb = cval.encode('ascii')
-        out.append(f"{len(gb):02X}")
-        for b in gb:
-            out.append(f"{b:02X}")
-
-    return out
-
-
-def _encode_rsd(rsd):
-    """Encode one RSD. Returns list of hex strings."""
-    pv = rsd.get('precedence_value', 1)
-    comps = rsd.get('rsd_components', [])
-
-    payload = []
-    for c in comps:
-        payload.extend(_encode_rsd_component(c))
-
-    # Contents length (2 bytes)
-    cont_len = len(payload)
-
-    body = []
-    body.append(f"{pv:02X}")
-    body.append(f"{cont_len >> 8:02X}")
-    body.append(f"{cont_len & 0xFF:02X}")
-    body.extend(payload)
-
-    # RSD length (2 bytes)
-    rsd_len = len(body)
-    result = [f"{rsd_len >> 8:02X}", f"{rsd_len & 0xFF:02X}"]
-    result.extend(body)
-    return result
-
-
-def _encode_rsd_component(comp):
-    """Encode one RSD component. Returns list of hex strings."""
-    ctype = comp.get('type', '')
-    cval = comp.get('value', '')
-    out = []
-
-    type_id = RSD_TYPES_BY_NAME.get(ctype)
-    if type_id is None:
-        return out
-    out.append(f"{type_id:02X}")
-
-    if ctype == "SSC mode":
-        v = SSC_MODE_REV.get(cval, int(cval) if cval.isdigit() else 1)
-        out.append(f"{v:02X}")
-
-    elif ctype == "S-NSSAI":
-        if ' + SD ' in cval:
-            parts = cval.split(' + ')
-            sst = int(parts[0].split(' ')[1])
-            sd = int(parts[1].split(' ')[1])
-            out.append('04')
-            out.append(f"{sst:02X}")
-            sd_hex = f"{sd:06X}"
-            for i in range(0, 6, 2):
-                out.append(sd_hex[i:i + 2])
-        else:
-            sst = int(cval.split(' ')[1])
-            out.append('01')
-            out.append(f"{sst:02X}")
-
-    elif ctype == "DNN":
-        ab = cval.encode('ascii')
-        out.append(f"{len(ab) + 1:02X}")
-        out.append(f"{len(ab):02X}")
-        for b in ab:
-            out.append(f"{b:02X}")
-
-    elif ctype == "PDU session type":
-        v = PDU_SESSION_TYPE_REV.get(cval, int(cval) if cval.isdigit() else 1)
-        out.append(f"{v:02X}")
-
-    elif ctype == "Preferred access type":
-        v = PREFERRED_ACCESS_TYPE_REV.get(cval, int(cval) if cval.isdigit() else 1)
-        out.append(f"{v:02X}")
-
-    elif ctype == "PDU session pair ID":
-        v = PDU_SESSION_PAIR_ID_REV.get(cval, int(cval) if cval.isdigit() else 0)
-        out.append(f"{v:02X}")
-
-    elif ctype == "RSN":
-        v = RSN_REV.get(cval, int(cval) if cval.isdigit() else 0)
-        out.append(f"{v:02X}")
-
-    elif ctype in RSD_ZERO:
-        pass  # no value field
-
-    return out
