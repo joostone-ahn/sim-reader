@@ -21,12 +21,11 @@ if [ ! -f "$PYTHON" ]; then
     python3 -m venv "$VENV"
 fi
 
-# Install dependencies if needed
-if [ ! -f "$VENV/.deps_installed" ] || [ "$DIR/requirements.txt" -nt "$VENV/.deps_installed" ]; then
+# Install dependencies: check by importing pySim
+if ! "$PYTHON" -c "import pySim" &>/dev/null; then
     echo "📦 Installing dependencies..."
     "$PIP" install -q -r "$DIR/requirements.txt"
     "$PIP" install -q -e "$DIR/pysim"
-    touch "$VENV/.deps_installed"
 fi
 
 # Open browser after short delay
