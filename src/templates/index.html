@@ -117,7 +117,7 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
 
 <!-- Decode Popup -->
 <div id="decodeOverlay" class="overlay" onclick="if(event.target===this)closeDecodePopup()">
-<div class="popup" style="width:710px">
+<div class="popup" style="width:780px">
     <div class="panel-title" style="border-radius:10px 10px 0 0">
         <span>🔍 Decoded JSON</span>
         <span id="decodeEfName" style="margin-left:8px;font-weight:400;font-size:0.78rem;opacity:0.9"></span>
@@ -171,9 +171,7 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
         <div id="writeTlvSection" style="display:none">
             <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
                 <span style="font-size:0.76rem;font-weight:600;color:#555">Tag</span>
-                <select id="writeTlvTagSelect" style="padding:4px 8px;border:1px solid #ddd;border-radius:6px;font-size:0.78rem;font-family:Consolas,monospace"></select>
-                <button class="btn btn-dark" id="writeTlvRetrieveBtn" onclick="tlvRetrieve()" style="padding:4px 10px;font-size:0.72rem;min-width:70px">Retrieve</button>
-                <span id="writeTlvRetrieveStatus" style="font-size:0.72rem"></span>
+                <select id="writeTlvTagSelect" onchange="onTlvTagChange()" style="padding:4px 8px;border:1px solid #ddd;border-radius:6px;font-size:0.78rem;font-family:Consolas,monospace"></select>
             </div>
             <div style="font-size:0.76rem;font-weight:600;color:#555;margin-bottom:4px">Hex Data</div>
             <textarea id="writeTlvHexInput" rows="8" oninput="checkTlvChanged()" style="width:100%;font-family:Consolas,monospace;font-size:0.82rem;padding:8px;border:1px solid #ddd;border-radius:6px;resize:vertical"></textarea>
@@ -443,7 +441,7 @@ async function doVerify(){
 /* === Read (6982 files) === */
 async function doReadEf(admHex,admType){
     var st=getStruct(selectedFd);var structures={};structures[selectedPath]=st;
-    var r=await api('/sim/adm_read_ef',{adm:admHex,adm_type:admType,paths:[selectedPath],structures:structures,log:true});
+    var r=await api('/sim/read_ef',{adm:admHex,adm_type:admType,paths:[selectedPath],structures:structures,log:true});
     if(r.success&&r.results&&r.results[selectedPath]){
         var rd=r.results[selectedPath];
         if(rd.bytes){selectedFd.bytes=rd.bytes;if(rd.body)selectedFd.body=rd.body;delete selectedFd.error;
@@ -504,19 +502,44 @@ function onServiceChange(){
 /* === BER-TLV === */
 var tlvTagData={};
 var tlvOrigHex='';
-async function loadTlvTags(){
-    var sel=document.getElementById('writeTlvTagSelect');
-    sel.innerHTML='<option value="">Loading...</option>';
+function parseTlvFromRaw(rawHex){
+    var result=[];if(!rawHex)return result;
+    var hex=rawHex.toUpperCase().replace(/\s/g,'');var i=0;
+    while(i<hex.length-2){
+        var tagByte=parseInt(hex.substr(i,2),16);var tagHex=hex.substr(i,2);i+=2;
+        if((tagByte&0x1F)===0x1F){tagHex+=hex.substr(i,2);i+=2;}
+        var lenByte=parseInt(hex.substr(i,2),16);i+=2;var dataLen=0;
+        if(lenByte<=0x7F){dataLen=lenByte;}
+        else if(lenByte===0x81){dataLen=parseInt(hex.substr(i,2),16);i+=2;}
+        else if(lenByte===0x82){dataLen=parseInt(hex.substr(i,4),16);i+=4;}
+        var value=hex.substr(i,dataLen*2);i+=dataLen*2;
+        result.push({tag:'0x'+tagHex,value:value});
+    }
+    return result;
+}
+function loadTlvFromRaw(){
+    var sel=document.getElementById('writeTlvTagSelect');sel.innerHTML='';
     document.getElementById('writeTlvHexInput').value='';
     document.getElementById('writeTlvWriteBtn').disabled=true;
+    document.getElementById('writeTlvRestoreBtn').disabled=true;
     document.getElementById('writeTlvStatus').innerHTML='';
-    var r=await api('/sim/ber_tlv',{action:'retrieve_tags',path:selectedPath});
-    if(!r.success){sel.innerHTML='<option value="">Error</option>';return;}
-    var tags=r.tags;tlvTagData={};sel.innerHTML='';
-    var tagList=Array.isArray(tags)?tags:(tags?Object.values(tags):[]);
-    if(!tagList.length){sel.innerHTML='<option value="">(no tags)</option>';return;}
-    for(var ti=0;ti<tagList.length;ti++){var t=tagList[ti];var hexTag='0x'+('0'+(typeof t==='number'?t.toString(16):parseInt(t).toString(16))).slice(-2).toUpperCase();
-        var o=document.createElement('option');o.value=hexTag;o.textContent=hexTag;sel.appendChild(o);}
+    tlvTagData={};
+    var rawHex=selectedFd&&selectedFd.bytes?String(selectedFd.bytes):'';
+    var tlvs=parseTlvFromRaw(rawHex);
+    if(!tlvs.length){sel.innerHTML='<option value="">(no tags)</option>';return;}
+    for(var ti=0;ti<tlvs.length;ti++){
+        var o=document.createElement('option');o.value=tlvs[ti].tag;o.textContent=tlvs[ti].tag;sel.appendChild(o);
+        tlvTagData[tlvs[ti].tag]=tlvs[ti].value;
+    }
+    sel.value=tlvs[0].tag;
+    document.getElementById('writeTlvHexInput').value=tlvs[0].value;
+    updateTlvButtons(true);
+}
+function onTlvTagChange(){
+    var tag=document.getElementById('writeTlvTagSelect').value;
+    var val=tlvTagData[tag]||'';
+    document.getElementById('writeTlvHexInput').value=val;
+    updateTlvButtons(!!val);
 }
 function updateTlvButtons(hasData){
     document.getElementById('writeTlvHexInput').readOnly=false;
@@ -538,26 +561,18 @@ function tlvRestore(){
     document.getElementById('writeTlvRestoreBtn').disabled=true;
     document.getElementById('writeTlvStatus').innerHTML='';
 }
-async function tlvRetrieve(){
-    var tag=document.getElementById('writeTlvTagSelect').value;if(!tag)return;
-    document.getElementById('writeTlvRetrieveStatus').innerHTML='<span style="color:#888">⏳</span>';
-    document.getElementById('writeTlvStatus').innerHTML='';
-    var r=await api('/sim/ber_tlv',{action:'retrieve_data',path:selectedPath,tag:tag,log_label:'[retrieve_btn]'});
-    document.getElementById('writeTlvRetrieveStatus').innerHTML='';
-    if(r.success&&r.data){document.getElementById('writeTlvHexInput').value=r.data;tlvTagData[tag]=r.data;updateTlvButtons(true);
-        if(r.decoded&&selectedFd)selectedFd._ursp_decoded=r.decoded;}
-    else{document.getElementById('writeTlvHexInput').value='';tlvTagData[tag]='';updateTlvButtons(false);}
-}
 async function tlvWrite(){
     var tag=document.getElementById('writeTlvTagSelect').value;
     var data=document.getElementById('writeTlvHexInput').value.trim().replace(/\s/g,'');
     if(!tag||!data)return;
     document.getElementById('writeTlvStatus').innerHTML='<span style="color:#888">⏳ Writing...</span>';
     document.getElementById('writeTlvWriteBtn').disabled=true;
-    var r=await api('/sim/ber_tlv',{action:'set_data',path:selectedPath,tag:tag,data:data,adm:verifiedAdm,adm_type:verifiedAdmType});
+    var r=await api('/sim/write_tlv',{path:selectedPath,tag:tag,data:data,adm:verifiedAdm,adm_type:verifiedAdmType});
     if(r.success){document.getElementById('writeTlvStatus').innerHTML='<span class="status status-ok">✅ Done</span>';tlvTagData[tag]=data;tlvOrigHex=data.toUpperCase();updateTlvButtons(true);
         // Re-retrieve to update raw data and decoding
-        var rr=await api('/sim/ber_tlv',{action:'retrieve_data',path:selectedPath,tag:tag,log:false});
+        var rr;
+        if(verifiedAdm){rr=await api('/sim/read_tlv',{path:selectedPath,tag:tag,adm:verifiedAdm,adm_type:verifiedAdmType});}
+        else{rr=await api('/sim/read_tlv',{path:selectedPath,tag:tag});}
         if(rr.success&&rr.data){
             // Update raw bytes with full TLV from retrieve
             var tagHex=tag.replace('0x','').replace('0X','');
@@ -614,7 +629,7 @@ function openWritePopup(){
     checkWriteChanged();
     document.getElementById('writeOverlay').classList.add('show');
     if(isSvcTable){document.getElementById('writeServiceTable').style.display='block';renderServiceTable();}
-    if(isTlv){loadTlvTags();}
+    if(isTlv){loadTlvFromRaw();}
 }
 function closeWritePopup(){document.getElementById('writeOverlay').classList.remove('show');}
 
@@ -669,7 +684,7 @@ async function submitWrite(){
         if(verifiedAdm){
             var rb={adm:verifiedAdm,adm_type:verifiedAdmType,paths:[selectedPath],structures:{},log:false};
             rb.structures[selectedPath]=st;
-            var rr=await api('/sim/adm_read_ef',rb);
+            var rr=await api('/sim/read_ef',rb);
             if(rr.success&&rr.results&&rr.results[selectedPath]){
                 var rd=rr.results[selectedPath];
                 if(rd.body)selectedFd.body=rd.body;

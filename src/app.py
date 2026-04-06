@@ -389,76 +389,33 @@ def _path_to_select_cmds(file_path: str) -> list[str]:
 
 @app.route('/sim/read_ef', methods=['POST'])
 def read_ef():
-    """Read a single EF after authentication."""
+    """Read EF file(s). If adm provided, verify first."""
     try:
         reader = session.get('reader', 0)
-        file_path = request.json.get('path', '')
-        structure = request.json.get('structure', 'transparent')
-
-        if not file_path:
-            return jsonify({'success': False, 'error': 'Missing path'})
-
-        cmds = _path_to_select_cmds(file_path)
-
-        if structure in ('linear_fixed', 'cyclic'):
-            cmds.append("read_records_raw_dec")
-        else:
-            cmds.append("read_binary_raw_dec")
-
-        result = _run_pysim(reader, cmds, timeout=30)
-        stdout = result.stdout
-
-        raw_bytes, json_data = _parse_raw_and_decoded(stdout, structure)
-
-        return jsonify({
-            'success': True,
-            'bytes': raw_bytes,
-            'body': json_data,
-        })
-
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-
-@app.route('/sim/service_map', methods=['POST'])
-def service_map():
-    """Return service table map for EF.UST or EF.IST."""
-    try:
-        ef_name = request.json.get('ef', '')
-        if 'UST' in ef_name:
-            from pySim.ts_31_102 import EF_UST_map
-            return jsonify({'success': True, 'map': {str(k): v for k, v in EF_UST_map.items()}})
-        elif 'IST' in ef_name:
-            from pySim.ts_31_103 import EF_IST_map
-            return jsonify({'success': True, 'map': {str(k): v for k, v in EF_IST_map.items()}})
-        elif 'EST' in ef_name:
-            from pySim.ts_31_102 import EF_EST_map
-            return jsonify({'success': True, 'map': {str(k): v for k, v in EF_EST_map.items()}})
-        else:
-            return jsonify({'success': False, 'error': 'Unknown service table'})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-
-@app.route('/sim/adm_read_ef', methods=['POST'])
-def adm_read_ef():
-    """Re-read files after ADM verification."""
-    try:
-        reader = session.get('reader', 0)
-        adm_hex = request.json.get('adm', '')
+        adm = request.json.get('adm', '')
         adm_type = request.json.get('adm_type', 'ADM1')
         paths = request.json.get('paths', [])
         show_log = request.json.get('log', False)
 
-        if not adm_hex or not paths:
-            return jsonify({'success': False, 'error': 'Missing ADM or paths'})
+        # Support single path for backward compat
+        single_path = request.json.get('path', '')
+        single_structure = request.json.get('structure', 'transparent')
+        if single_path and not paths:
+            paths = [single_path]
+
+        if not paths:
+            return jsonify({'success': False, 'error': 'Missing path'})
+
+        adm_hex = _prepare_adm(adm) if adm else ''
 
         results = {}
         for file_path in paths:
             try:
-                structure = request.json.get('structures', {}).get(file_path, 'transparent')
+                structure = request.json.get('structures', {}).get(file_path, single_structure)
 
-                cmds = [f"verify_adm --pin-is-hex --adm-type {adm_type} {adm_hex}"]
+                cmds = []
+                if adm_hex:
+                    cmds.append(f"verify_adm --pin-is-hex --adm-type {adm_type} {adm_hex}")
                 cmds.extend(_path_to_select_cmds(file_path))
 
                 if structure in ('linear_fixed', 'cyclic'):
@@ -471,7 +428,6 @@ def adm_read_ef():
                 result = _run_pysim(reader, cmds, timeout=30)
                 stdout = result.stdout
 
-                # Print APDU trace — after init
                 if show_log:
                     all_lines = stdout.split('\n')
                     init_end = -1
@@ -515,72 +471,69 @@ def adm_read_ef():
         return jsonify({'success': False, 'error': str(e)})
 
 
-@app.route('/sim/ber_tlv', methods=['POST'])
-def ber_tlv():
-    """BER-TLV operations: retrieve_tags, retrieve_data, set_data, delete_data."""
+@app.route('/sim/service_map', methods=['POST'])
+def service_map():
+    """Return service table map for EF.UST or EF.IST."""
+    try:
+        ef_name = request.json.get('ef', '')
+        if 'UST' in ef_name:
+            from pySim.ts_31_102 import EF_UST_map
+            return jsonify({'success': True, 'map': {str(k): v for k, v in EF_UST_map.items()}})
+        elif 'IST' in ef_name:
+            from pySim.ts_31_103 import EF_IST_map
+            return jsonify({'success': True, 'map': {str(k): v for k, v in EF_IST_map.items()}})
+        elif 'EST' in ef_name:
+            from pySim.ts_31_102 import EF_EST_map
+            return jsonify({'success': True, 'map': {str(k): v for k, v in EF_EST_map.items()}})
+        else:
+            return jsonify({'success': False, 'error': 'Unknown service table'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/sim/write_tlv', methods=['POST'])
+def write_tlv():
+    """BER-TLV write: delete + set data for a tag."""
     try:
         reader = session.get('reader', 0)
-        action = request.json.get('action', '')
         file_path = request.json.get('path', '')
-        adm = request.json.get('adm', '')
-        adm_type = request.json.get('adm_type', 'ADM1')
         tag = request.json.get('tag', '')
         data = request.json.get('data', '')
-        show_log = request.json.get('log', True)
+        adm = request.json.get('adm', '')
+        adm_type = request.json.get('adm_type', 'ADM1')
 
-        if not file_path or not action:
-            return jsonify({'success': False, 'error': 'Missing path or action'})
+        if not file_path or not tag or not data:
+            return jsonify({'success': False, 'error': 'Missing path, tag or data'})
 
         adm_hex = _prepare_adm(adm) if adm else ''
         cmds = []
-        # Only include verify for write operations (set/delete)
-        if adm_hex and action in ('set_data', 'delete_data'):
+        if adm_hex:
             cmds.append(f"verify_adm --pin-is-hex --adm-type {adm_type} {adm_hex}")
         cmds.extend(_path_to_select_cmds(file_path))
+        cmds.append(f"delete_data {tag}")
+        cmds.append(f"set_data {tag} {data}")
 
-        if action == 'retrieve_tags':
-            cmds.append("retrieve_tags")
-        elif action == 'retrieve_data':
-            cmds.append(f"retrieve_data_raw_dec {tag}")
-        elif action == 'set_data':
-            cmds.append(f"delete_data {tag}")
-            cmds.append(f"set_data {tag} {data}")
-        elif action == 'delete_data':
-            cmds.append(f"delete_data {tag}")
-        else:
-            return jsonify({'success': False, 'error': f'Unknown action: {action}'})
-
-        show_log = request.json.get('log', True)
-        log_prefix = {'retrieve_tags': '[retrieve_tags_auto]', 'retrieve_data': '[retrieve_tags_auto]',
-                      'set_data': '[write_btn]', 'delete_data': '[delete_btn]'}.get(action, '[BER-TLV]')
-        # Override with custom log label if provided
-        custom_log = request.json.get('log_label', '')
-        if custom_log:
-            log_prefix = custom_log
-
-        if show_log:
-            print(f"{log_prefix} CMDS: {cmds}")
+        print(f"[write_btn] CMDS: {cmds}")
         result = _run_pysim(reader, cmds, timeout=30)
 
         # Print APDU trace — after init
-        if show_log:
-            all_lines = result.stdout.split('\n')
-            init_end = -1
-            for i in range(len(all_lines)):
-                if all_lines[i].startswith('INFO: ->') and '00b000000a' in all_lines[i].lower():
-                    for j in range(i + 1, len(all_lines)):
-                        if all_lines[j].startswith('INFO: ->') and '00a4000402 3f00' in all_lines[j].lower():
-                            init_end = j + 2
-                            break
-            if init_end >= 0:
-                show_next = False
-                for line in all_lines[init_end:]:
-                    if line.startswith('INFO: ->'):
-                        print(f"{log_prefix} {line}")
-                        show_next = True
-                    elif line.startswith('INFO: <-') and show_next:
-                        print(f"{log_prefix} {line}")
-                        show_next = False
+        all_lines = result.stdout.split('\n')
+        init_end = -1
+        for i in range(len(all_lines)):
+            if all_lines[i].startswith('INFO: ->') and '00b000000a' in all_lines[i].lower():
+                for j in range(i + 1, len(all_lines)):
+                    if all_lines[j].startswith('INFO: ->') and '00a4000402 3f00' in all_lines[j].lower():
+                        init_end = j + 2
+                        break
+        if init_end >= 0:
+            show_next = False
+            for line in all_lines[init_end:]:
+                if line.startswith('INFO: ->'):
+                    print(f"[write_btn] {line}")
+                    show_next = True
+                elif line.startswith('INFO: <-') and show_next:
+                    print(f"[write_btn] {line}")
+                    show_next = False
 
         stdout = result.stdout
         stderr = result.stderr
@@ -598,46 +551,75 @@ def ber_tlv():
                 error_line = f"⚠️ {sw_m.group(1)}: {sw_m.group(2).strip()}"
             return jsonify({'success': False, 'error': error_line[:300]})
 
-        # Parse output based on action
-        if action == 'retrieve_tags':
-            json_data = _extract_json(stdout)
-            if show_log: print(f"{log_prefix} SUCCESS")
-            return jsonify({'success': True, 'tags': json_data})
-        elif action == 'retrieve_data':
-            # Check for 6a88 (referenced data not found)
-            if '6a88' in stdout.lower():
-                if show_log: print(f"{log_prefix} SUCCESS (6a88: referenced data not found)")
-                return jsonify({'success': True, 'data': '', 'empty': True})
-            # Parse RAW: line for full TLV hex
-            raw_tlv = ''
-            value_hex = ''
-            for line in stdout.split('\n'):
+        print(f"[write_btn] SUCCESS")
+        return jsonify({'success': True})
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/sim/read_tlv', methods=['POST'])
+def read_tlv():
+    """BER-TLV read: retrieve data for a tag with raw + decoded. If adm provided, verify first."""
+    try:
+        reader = session.get('reader', 0)
+        file_path = request.json.get('path', '')
+        tag = request.json.get('tag', '')
+        adm = request.json.get('adm', '')
+        adm_type = request.json.get('adm_type', 'ADM1')
+
+        if not file_path or not tag:
+            return jsonify({'success': False, 'error': 'Missing path or tag'})
+
+        adm_hex = _prepare_adm(adm) if adm else ''
+        cmds = []
+        if adm_hex:
+            cmds.append(f"verify_adm --pin-is-hex --adm-type {adm_type} {adm_hex}")
+        cmds.extend(_path_to_select_cmds(file_path))
+        cmds.append(f"retrieve_data_raw_dec {tag}")
+
+        result = _run_pysim(reader, cmds, timeout=30)
+        stdout = result.stdout
+
+        if "EXCEPTION" in stdout or "EXCEPTION" in result.stderr:
+            err = result.stderr if "EXCEPTION" in result.stderr else stdout
+            error_line = err
+            for line in err.split('\n'):
                 line = line.strip()
-                if line.startswith('RAW:'):
-                    raw_tlv = line[4:].upper()
+                if 'SW match failed' in line or 'EXCEPTION' in line:
+                    error_line = line
                     break
-            # Strip tag + length from TLV to get value only
-            if raw_tlv:
-                try:
-                    tag_byte = int(tag.replace('0x', '').replace('0X', ''), 16)
-                    pos = 2 if tag_byte <= 0xFF else 4
-                    length_byte = int(raw_tlv[pos:pos+2], 16)
-                    if length_byte <= 0x7F:
-                        pos += 2
-                    elif length_byte == 0x81:
-                        pos += 4
-                    elif length_byte == 0x82:
-                        pos += 6
-                    value_hex = raw_tlv[pos:]
-                except (ValueError, IndexError):
-                    value_hex = raw_tlv
-            # Parse decoded JSON
-            decoded = _extract_json(stdout)
-            if show_log: print(f"{log_prefix} SUCCESS")
-            return jsonify({'success': True, 'data': value_hex, 'decoded': decoded})
-        else:
-            if show_log: print(f"{log_prefix} SUCCESS")
-            return jsonify({'success': True})
+            sw_m = re.search(r'got (\w{4}):\s*(.+)', error_line)
+            if sw_m:
+                error_line = f"⚠️ {sw_m.group(1)}: {sw_m.group(2).strip()}"
+            return jsonify({'success': False, 'error': error_line[:300]})
+
+        if '6a88' in stdout.lower():
+            return jsonify({'success': True, 'data': '', 'empty': True})
+
+        raw_tlv = ''
+        value_hex = ''
+        for line in stdout.split('\n'):
+            line = line.strip()
+            if line.startswith('RAW:'):
+                raw_tlv = line[4:].upper()
+                break
+        if raw_tlv:
+            try:
+                tag_byte = int(tag.replace('0x', '').replace('0X', ''), 16)
+                pos = 2 if tag_byte <= 0xFF else 4
+                length_byte = int(raw_tlv[pos:pos+2], 16)
+                if length_byte <= 0x7F:
+                    pos += 2
+                elif length_byte == 0x81:
+                    pos += 4
+                elif length_byte == 0x82:
+                    pos += 6
+                value_hex = raw_tlv[pos:]
+            except (ValueError, IndexError):
+                value_hex = raw_tlv
+        decoded = _extract_json(stdout)
+        return jsonify({'success': True, 'data': value_hex, 'decoded': decoded})
 
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
