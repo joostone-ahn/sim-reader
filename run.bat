@@ -24,7 +24,7 @@ if not exist "%PYTHON%" (
 )
 
 REM Install dependencies: check by importing cmd2 (pySim core dep)
-"%PYTHON%" -c "import cmd2" >nul 2>&1
+"%PYTHON%" -c "import pySim" >nul 2>&1
 if errorlevel 1 (
     echo [SETUP] Installing dependencies...
     "%PIP%" install -r "%DIR%requirements.txt"
