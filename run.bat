@@ -26,12 +26,20 @@ if not exist "%PYTHON%" (
 REM Install dependencies if needed
 if not exist "%VENV%\.deps_installed" (
     echo [SETUP] Installing dependencies...
-    "%PIP%" install -q -r "%DIR%requirements.txt"
-    "%PIP%" install -q -e "%DIR%pysim"
-    if errorlevel 1 (
-        echo [WARN] Some pySim dependencies failed to install, retrying without optional deps...
-        "%PIP%" install -q --no-deps -e "%DIR%pysim"
-    )
+    "%PIP%" install -r "%DIR%requirements.txt"
+    echo [SETUP] Installing pySim...
+    "%PIP%" install -e "%DIR%pysim"
+    echo [SETUP] Done.
+    echo. > "%VENV%\.deps_installed"
+)
+
+REM Verify cmd2 is available
+"%PYTHON%" -c "import cmd2" >nul 2>&1
+if errorlevel 1 (
+    echo [ERROR] Required module 'cmd2' not found. Reinstalling...
+    del "%VENV%\.deps_installed" >nul 2>&1
+    "%PIP%" install -r "%DIR%requirements.txt"
+    "%PIP%" install -e "%DIR%pysim"
     echo. > "%VENV%\.deps_installed"
 )
 
