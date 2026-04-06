@@ -141,6 +141,11 @@ def sim_connect():
         print(f"[connect] rc={result.returncode}, stdout={len(result.stdout)}B, stderr={len(result.stderr)}B")
         if result.stderr:
             print(f"[connect] stderr[:500]: {result.stderr[:500]}")
+            # Print last lines of stderr for actual error
+            stderr_lines = result.stderr.strip().split('\n')
+            print(f"[connect] stderr last 5 lines:")
+            for line in stderr_lines[-5:]:
+                print(f"  {line}")
         if not result.stdout or len(result.stdout) < 10:
             print(f"[connect] stdout: {result.stdout}")
 
