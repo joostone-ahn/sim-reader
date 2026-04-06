@@ -31,9 +31,10 @@ setup(
         "colorlog",
         "pycryptodomex",
         "packaging",
-        # NOTE: smpp.pdu and smpp.twisted3 removed - not needed for sim-reader
-        # and smpp.twisted3 causes build errors on Windows (twisted-iocpsupport)
+        "smpp.pdu @ git+https://github.com/hologram-io/smpp.pdu",
         "asn1tools",
+        # NOTE: smpp.twisted3 removed - not needed for sim-reader
+        # and causes twisted-iocpsupport build errors on Windows
     ],
     scripts=[
         'pySim-prog.py',
