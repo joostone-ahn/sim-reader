@@ -138,6 +138,12 @@ def sim_connect():
             "select EF.HPLMNwAcT", "read_binary",
         ], timeout=30)
 
+        print(f"[connect] rc={result.returncode}, stdout={len(result.stdout)}B, stderr={len(result.stderr)}B")
+        if result.stderr:
+            print(f"[connect] stderr[:500]: {result.stderr[:500]}")
+        if not result.stdout or len(result.stdout) < 10:
+            print(f"[connect] stdout: {result.stdout}")
+
         if "ReaderError" in result.stderr or "No reader found" in result.stdout:
             return jsonify({'success': False, 'error': 'Reader not found'})
         if "NoCardException" in result.stderr or "Card initialization" in result.stdout:
@@ -208,6 +214,7 @@ def sim_connect():
 
         session['reader'] = reader
         session['connected'] = True
+        print(f"[connect] info={info}")
         # Store USIM AID from EF.DIR for raw APDU usage
         for obj in json_objects:
             if isinstance(obj, list):
