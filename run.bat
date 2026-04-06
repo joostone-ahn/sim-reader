@@ -6,36 +6,35 @@ set DIR=%~dp0
 set VENV=%DIR%.venv
 set PORT=8082
 set URL=http://127.0.0.1:%PORT%
+set PYTHON=%VENV%\Scripts\python.exe
+set PIP=%VENV%\Scripts\pip.exe
 
 REM Check Python
 where python >nul 2>&1
 if errorlevel 1 (
-    echo ❌ Python not found. Please install Python 3.10+
+    echo [ERROR] Python not found. Please install Python 3.10+
     pause
     exit /b 1
 )
 
 REM Create venv if needed
-if not exist "%VENV%\Scripts\activate.bat" (
-    echo 📦 Creating virtual environment...
+if not exist "%PYTHON%" (
+    echo [SETUP] Creating virtual environment...
     python -m venv "%VENV%"
 )
 
-REM Activate
-call "%VENV%\Scripts\activate.bat"
-
 REM Install dependencies if needed
 if not exist "%VENV%\.deps_installed" (
-    echo 📦 Installing dependencies...
-    pip install -q -r "%DIR%requirements.txt"
-    pip install -q -e "%DIR%pysim"
+    echo [SETUP] Installing dependencies...
+    "%PIP%" install -q -r "%DIR%requirements.txt"
+    "%PIP%" install -q -e "%DIR%pysim"
     echo. > "%VENV%\.deps_installed"
 )
 
 REM Open browser after delay
 start "" "%URL%"
 
-REM Start server
-echo 🚀 Starting SIM Card Reader at %URL%
-python "%DIR%src\app.py"
+REM Start server (use venv python directly)
+echo [START] SIM Card Reader at %URL%
+"%PYTHON%" "%DIR%src\app.py"
 pause
