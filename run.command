@@ -24,8 +24,8 @@ fi
 # Install dependencies: check by importing pySim
 if ! "$PYTHON" -c "import pySim" &>/dev/null; then
     echo "📦 Installing dependencies..."
-    "$PIP" install -q -r "$DIR/requirements.txt"
-    "$PIP" install -q -e "$DIR/pysim"
+    "$PIP" install -q --disable-pip-version-check -r "$DIR/requirements.txt"
+    "$PIP" install -q --disable-pip-version-check -e "$DIR/pysim"
 fi
 
 # Open browser after short delay

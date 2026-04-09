@@ -27,9 +27,9 @@ REM Install dependencies: check by importing cmd2 (pySim core dep)
 "%PYTHON%" -c "import pySim" >nul 2>&1
 if errorlevel 1 (
     echo [SETUP] Installing dependencies...
-    "%PIP%" install -r "%DIR%requirements.txt"
+    "%PIP%" install -q --disable-pip-version-check -r "%DIR%requirements.txt"
     echo [SETUP] Installing pySim...
-    "%PIP%" install -e "%DIR%pysim"
+    "%PIP%" install -q --disable-pip-version-check -e "%DIR%pysim"
     echo [SETUP] Done.
 )
 
