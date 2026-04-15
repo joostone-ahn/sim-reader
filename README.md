@@ -43,13 +43,21 @@ Double-click `run.bat` to launch.
 
 Your browser will automatically open `http://127.0.0.1:8082`.
 
-1. **Connect** — Connect to reader and view card info (ICCID, IMSI, MSISDN)
-2. **Read All Files** — Dump the entire file system
-3. **Search** — Filter by FID or file name
-4. **Decoding** — View decoded JSON for the selected file
-5. **Write** — Write hex data to an EF (ADM verification required)
-6. **Export** — Save dump to `logs/<ICCID>/` (dump.json, dump.xlsx, decoded JSONs)
-7. **Load Dump** — Open a previously exported dump.json file
+#### SIM Card Mode
+
+1. **Connect** — Connect to reader and view card info (ICCID, IMSI, MSISDN, HPLMNwAcT)
+2. **Read All Files** — Read the entire SIM file system
+3. **Export Dump** — Save to `logs/<ICCID>/` (dump.json, dump.xlsx, decoded JSONs)
+
+#### Offline Mode
+
+4. **Load Dump** — Open a previously exported `dump.json` to browse without a SIM card
+
+#### File Operations
+
+5. **Search** — Filter files by FID or name (press Enter to apply)
+6. **Decoding** — View decoded data in Tree or JSON format
+7. **Write** — Write hex data to an EF (ADM verification required)
 
 ---
 
@@ -61,12 +69,12 @@ run.bat              # Windows launcher
 requirements.txt     # Python dependencies
 src/
   app.py             # Flask web server (GUI)
-  dump.py            # CLI entry point
   pysim_wrapper.py   # pySim integration module
   export_to_excel.py # JSON to Excel converter
   templates/
     index.html       # Web GUI frontend
-pysim/               # pySim open source (submodule)
+pysim/               # pySim open source (modified)
+logs/                # Export output directory (auto-created)
 ```
 
 ---

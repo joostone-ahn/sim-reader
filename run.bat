@@ -38,5 +38,6 @@ start "" "%URL%"
 
 REM Start server (use venv python directly)
 echo [START] SIM Card Reader at %URL%
+set PYTHONDONTWRITEBYTECODE=1
 "%PYTHON%" -u "%DIR%src\app.py"
 pause

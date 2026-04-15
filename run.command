@@ -33,4 +33,4 @@ fi
 
 # Start server (use venv python directly)
 echo "🚀 Starting SIM Card Reader at $URL"
-"$PYTHON" "$DIR/src/app.py"
+PYTHONDONTWRITEBYTECODE=1 "$PYTHON" "$DIR/src/app.py"
