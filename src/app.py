@@ -6,10 +6,8 @@ import re
 import sys
 import os
 import subprocess
-import zipfile
-import tempfile
 from pathlib import Path
-from flask import Flask, render_template, request, jsonify, session, send_file
+from flask import Flask, render_template, request, jsonify, session
 
 # Add parent directory for imports
 sys.path.insert(0, str(Path(__file__).parent))
@@ -20,7 +18,7 @@ app.secret_key = 'sim_reader_secret_key_2024'
 app.json.sort_keys = False
 
 PYSIM_SHELL = Path(__file__).parent.parent / "pysim" / "pySim-shell.py"
-DATA_DIR = Path(__file__).parent.parent / "data"
+DATA_DIR = Path(__file__).parent.parent / "logs"
 
 
 def _run_pysim(reader_num: int, exec_cmds: list[str], timeout: int = 60, apdu_trace: bool = False) -> subprocess.CompletedProcess:
@@ -732,32 +730,18 @@ def export_sim():
             return jsonify({'success': False, 'error': 'No data'}), 400
 
         iccid = data.get('iccid', 'unknown')
+        card_dir = DATA_DIR / iccid
+        card_dir.mkdir(parents=True, exist_ok=True)
 
-        # Use temp directory only — don't write to project data/
-        with tempfile.TemporaryDirectory() as tmpdir:
-            card_dir = Path(tmpdir) / iccid
-            card_dir.mkdir()
+        # Save dump.json
+        json_path = card_dir / "dump.json"
+        with open(json_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
 
-            # Save dump.json
-            json_path = card_dir / "dump.json"
-            with open(json_path, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
+        # Convert to Excel (also creates decoded/ directory)
+        convert_to_excel(str(json_path))
 
-            # Convert to Excel (also creates decoded/ directory)
-            xlsx_path = convert_to_excel(str(json_path))
-
-            # Create zip with all generated files
-            zip_path = Path(tmpdir) / f"{iccid}.zip"
-            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
-                for root, dirs, files in os.walk(card_dir):
-                    for fname in files:
-                        fpath = Path(root) / fname
-                        arcname = str(fpath.relative_to(Path(tmpdir)))
-                        zf.write(fpath, arcname)
-
-            return send_file(str(zip_path), as_attachment=True,
-                             download_name=f"{iccid}.zip",
-                             mimetype='application/zip')
+        return jsonify({'success': True, 'path': str(card_dir)})
 
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500

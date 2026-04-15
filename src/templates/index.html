@@ -6,8 +6,8 @@
 <title>SIM Card Reader</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;color:#333}
-.container{max-width:100%;padding:10px 12px}
+body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);height:100vh;color:#333;display:flex;flex-direction:column;overflow:hidden}
+.container{max-width:100%;padding:10px 12px 0 12px;flex:1;overflow:hidden;display:flex;flex-direction:column}
 .header{background:rgba(255,255,255,0.95);border-radius:10px;padding:10px 24px;margin-bottom:8px;box-shadow:0 4px 16px rgba(0,0,0,0.1)}
 .header h1{font-size:1.3rem;color:#2c3e50;font-weight:700}
 .btn{padding:6px 14px;border:none;border-radius:6px;cursor:pointer;font-size:0.78rem;font-weight:600;transition:all 0.2s;display:inline-flex;align-items:center;justify-content:center;gap:4px}
@@ -18,72 +18,82 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
 .btn-dark{background:linear-gradient(45deg,#333,#555);color:white}
 .btn-warning{background:linear-gradient(45deg,#e67e22,#f39c12);color:white}
 .btn:disabled{opacity:0.5;cursor:not-allowed;transform:none}
-.input-sm{padding:5px 10px;border:1px solid #ddd;border-radius:6px;font-size:0.78rem;font-family:Consolas,monospace}
+.input-sm{padding:5px 10px;border:1px solid #ddd;border-radius:6px;font-size:0.78rem;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace}
 .input-sm:focus{outline:none;border-color:#667eea}
 .status{font-size:0.74rem;padding:3px 8px;border-radius:4px}
 .status-ok{background:#d4edda;color:#155724}
 .status-err{background:#f8d7da;color:#721c24}
 .status-warn{background:#fff3cd;color:#856404}
 .sim-info-cards{display:flex;gap:10px}
-.info-card{flex:1;background:linear-gradient(135deg,#f8f9fa,#e9ecef);border-radius:6px;padding:4px 14px;border-left:3px solid #667eea;display:flex;align-items:center;gap:8px}
-.info-label{font-size:0.68rem;color:#888;font-weight:600;text-transform:uppercase;white-space:nowrap}
-.info-value{font-size:0.85rem;font-family:Consolas,monospace;color:#2c3e50;font-weight:700}
+.info-card{background:linear-gradient(135deg,#f0f4ff,#e8ecf5);border-radius:6px;padding:4px 14px;border-left:3px solid #667eea;display:flex;align-items:center;gap:8px}
+.info-label{font-size:0.76rem;color:#888;font-weight:600;text-transform:uppercase;white-space:nowrap;padding-right:4px}
+.info-value{font-size:0.85rem;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;color:#2c3e50;font-weight:700}
 .card{background:rgba(255,255,255,0.95);border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);overflow:hidden}
 .panel-title{background:linear-gradient(45deg,#667eea,#764ba2);color:white;padding:10px 12px;font-size:0.85rem;font-weight:700;display:flex;align-items:center}
 .file-table{width:100%;border-collapse:collapse;font-size:0.76rem}
-.file-table thead th{background:#a8c4e0;color:#1a3a5c;padding:4px 6px;position:sticky;top:0;z-index:2;font-weight:600;font-size:0.72rem;font-family:Consolas,monospace;border-right:1px solid #eee;text-align:center}
+.file-table thead th{background:#a8c4e0;color:#1a3a5c;padding:4px 6px;position:sticky;top:0;z-index:2;font-weight:600;font-size:0.72rem;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;border-right:1px solid #eee;text-align:center}
 .file-table thead th:last-child{border-right:none}
 .file-table tbody tr{border-bottom:1px solid #eee;cursor:pointer}
 .file-table tbody tr:hover{background:#eef2ff}
 .file-table tbody tr.selected{outline:2px solid #667eea}
 .file-table tbody tr.df-row{background:#d4edda}
-.file-table td{padding:3px 8px;font-family:Consolas,monospace;font-size:0.74rem;border-right:1px solid #eee}
+.file-table td{padding:3px 8px;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;font-size:0.74rem;border-right:1px solid #eee}
 .file-table td:last-child{border-right:none}
 #fileListScroll:focus{outline:none}
 .file-table .cc{text-align:center}
 .file-table .cr{text-align:right;padding-right:12px}
-.data-pre{font-family:Consolas,monospace;font-size:0.78rem;white-space:pre-wrap;word-break:break-all;color:#333;background:#f8f9fa;padding:8px;margin:0}
+.data-pre{font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;font-size:0.78rem;white-space:pre-wrap;word-break:break-all;color:#333;background:#f8f9fa;padding:8px;margin:0}
 .rec-table{width:100%;border-collapse:collapse;font-size:0.76rem}
-.rec-table th{background:#a8c4e0;color:#1a3a5c;padding:4px 6px;font-size:0.72rem;font-family:Consolas,monospace;font-weight:600;position:sticky;top:0;white-space:nowrap}
-.rec-table td{padding:3px 8px;font-family:Consolas,monospace;font-size:0.74rem;border-bottom:1px solid #eee}
+.rec-table th{background:#a8c4e0;color:#1a3a5c;padding:4px 6px;font-size:0.72rem;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;font-weight:600;position:sticky;top:0;white-space:nowrap}
+.rec-table td{padding:3px 8px;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;font-size:0.74rem;border-bottom:1px solid #eee}
 .rec-table td:first-child{text-align:center;width:80px;white-space:nowrap;color:#667eea;font-weight:600}
 .overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;justify-content:center;align-items:center}
 .overlay.show{display:flex}
 .popup{background:white;border-radius:10px;width:710px;max-height:80vh;overflow:auto;box-shadow:0 8px 32px rgba(0,0,0,0.3);resize:both;min-width:400px;min-height:200px}
 #btnRead:disabled,#btnDecode:disabled,#btnWrite:disabled{opacity:0.3;cursor:not-allowed}
 .search-ph::placeholder{color:rgba(255,255,255,0.4);font-style:italic}
+.mono{font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;-webkit-text-size-adjust:100%}
+.toggle-switch{display:flex;background:#e9ecef;border-radius:4px;cursor:pointer;overflow:hidden;width:fit-content}
+.toggle-label{padding:4px 8px;font-size:0.68rem;font-weight:600;color:#888;transition:all 0.2s;user-select:none;text-align:center;width:50px}
+.toggle-label.toggle-active{background:#6b7eec;color:white}
+.tree-display{padding:12px;background:#f8f9fa;border-radius:4.8px;overflow:auto;margin:0;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;font-size:0.78rem;white-space:pre;line-height:1.3;color:#333}
+.json-display{padding:12px;background:#f8f9fa;border-radius:4.8px;overflow:auto}
+.json-hl{margin:0;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;font-size:0.78rem;white-space:pre;line-height:1.3}
+.json-key{color:#881391}.json-string{color:#0451a5}.json-number{color:#098658}.json-boolean{color:#0000ff}.json-null{color:#808080}
 </style>
 </head>
 <body>
 <div class="container">
-    <div class="header" style="display:flex;align-items:center;justify-content:space-between"><h1>📖 SIM Card Reader</h1><span style="font-size:0.68rem;color:#888;font-weight:400">© 2026 JUSEOK AHN &lt;ajs3013@lguplus.co.kr&gt; All rights reserved.</span></div>
-    <div class="card" style="margin-bottom:8px">
-        <div style="padding:10px 12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-            <button class="btn btn-primary" onclick="connectReader()" style="width:160px;white-space:nowrap;height:32px">🔌 Connect</button>
-            <span id="connectStatus"></span>
-            <div class="sim-info-cards" id="simInfo" style="display:none;flex:1">
-                <div class="info-card"><div class="info-label">ICCID</div><div class="info-value" id="infoIccid">-</div></div>
-                <div class="info-card"><div class="info-label">IMSI</div><div class="info-value" id="infoImsi">-</div></div>
-                <div class="info-card"><div class="info-label">MSISDN</div><div class="info-value" id="infoMsisdn">-</div></div>
-                <div class="info-card"><div class="info-label" style="text-transform:none">HPLMNwAcT</div><div class="info-value" id="infoHplmn">-</div></div>
-            </div>
-        </div>
+    <div class="header" style="display:flex;align-items:center;justify-content:space-between">
+        <h1>📖 SIM Card Reader</h1>
     </div>
-    <div class="card" style="padding:12px;margin-bottom:8px">
-        <div style="display:flex;gap:12px;align-items:center;margin-bottom:10px">
-            <button class="btn btn-primary" id="btnReadAll" onclick="readAllFiles()" disabled style="width:160px;white-space:nowrap;height:32px">📂 Read All Files</button>
-            <span id="readStatus" class="status"></span>
-            <span id="admBadge" style="display:none;font-size:0.74rem;padding:3px 8px;border-radius:4px;background:#fff3cd;color:#856404">🔐 ADM1 Verified</span>
-            <button class="btn btn-success" id="btnExport" onclick="exportData()" disabled style="margin-left:auto;min-width:130px;white-space:nowrap;height:32px">📥 Export</button>
+    <div class="header" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:8px 12px">
+        <button class="btn btn-primary" onclick="connectReader()" style="width:145px;white-space:nowrap;height:32px;flex-shrink:0">🔌 Connect</button>
+        <button class="btn btn-primary" onclick="document.getElementById('loadDumpInput').click()" style="width:145px;white-space:nowrap;height:32px;flex-shrink:0">🗂️ Load Dump</button>
+        <input type="file" id="loadDumpInput" accept=".json" style="display:none" onchange="loadDumpFile(this)">
+        <button class="btn btn-primary" id="btnReadAll" onclick="readAllFiles()" disabled style="width:145px;white-space:nowrap;height:32px;flex-shrink:0">📂 Read All Files</button>
+        <button class="btn btn-primary" id="btnExport" onclick="exportData()" disabled style="width:145px;white-space:nowrap;height:32px;flex-shrink:0">📥 Export Dump</button>
+        <span id="connectStatus" class="status"></span>
+        <span id="actionStatus" class="status"></span>
+        <span id="admBadge" style="display:none;font-size:0.74rem;padding:3px 8px;border-radius:4px;background:#fff3cd;color:#856404">🔐 ADM1 Verified</span>
+        <span id="exportStatus" class="status"></span>
+    </div>
+    <div class="card" style="padding:12px;margin-bottom:0;flex:1;display:flex;flex-direction:column;min-height:0">
+        <div style="display:flex;gap:10px;margin-bottom:10px">
+            <div class="info-card"><div class="info-label">ICCID</div><div class="info-value" id="infoIccid">-</div></div>
+            <div class="info-card"><div class="info-label">IMSI</div><div class="info-value" id="infoImsi">-</div></div>
+            <div class="info-card"><div class="info-label">MSISDN</div><div class="info-value" id="infoMsisdn">-</div></div>
+            <div class="info-card"><div class="info-label" style="text-transform:none">HPLMNwAcT</div><div class="info-value" id="infoHplmn">-</div></div>
         </div>
-        <div id="panelContainer" style="display:flex;height:calc(100vh - 210px)">
+        <hr style="border:none;border-top:1px solid #e0e0e0;margin:0 0 10px 0">
+        <div id="panelContainer" style="display:flex;flex:1;min-height:0">
             <div id="leftPanel" class="card" style="flex:5;display:flex;flex-direction:column;min-width:200px">
                 <div class="panel-title">
                     <span>🗂️ File List</span>
                     <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
                         <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.2);border-radius:5px;padding:4px 10px;height:30px;width:250px">
                             <span style="font-size:0.76rem;font-weight:600;color:rgba(255,255,255,0.9);white-space:nowrap;min-width:56px">Search</span>
-                            <input type="text" id="fileFilter" oninput="onFilterInput()" onkeydown="if(event.key==='Enter')applyFilter()" placeholder="FID or File Name" style="border:none;background:transparent;color:white;font-size:0.78rem;font-family:Consolas,monospace;flex:1;min-width:0;outline:none" class="search-ph">
+                            <input type="text" id="fileFilter" oninput="onFilterInput()" onkeydown="if(event.key==='Enter')applyFilter()" placeholder="FID or File Name" style="border:none;background:transparent;color:white;font-size:0.78rem;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;flex:1;min-width:0;outline:none" class="search-ph">
                             <span id="filterClear" onclick="clearFilter()" style="display:none;color:white;cursor:pointer;font-size:1rem;line-height:1;font-weight:700;flex-shrink:0">✕</span>
                         </div>
                     </div>
@@ -119,12 +129,22 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
 <div id="decodeOverlay" class="overlay" onclick="if(event.target===this)closeDecodePopup()">
 <div class="popup" style="width:780px">
     <div class="panel-title" style="border-radius:10px 10px 0 0">
-        <span>🔍 Decoded JSON</span>
+        <span>🔍 Decoding</span>
         <span id="decodeEfName" style="margin-left:8px;font-weight:400;font-size:0.78rem;opacity:0.9"></span>
-        <button onclick="closeDecodePopup()" style="margin-left:auto;background:none;border:none;color:white;font-size:1.1rem;cursor:pointer">✕</button>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+            <div class="toggle-switch" id="decodeToggle" onclick="toggleDecodeView()">
+                <span class="toggle-label toggle-active" id="toggle-tree">Tree</span>
+                <span class="toggle-label" id="toggle-json">JSON</span>
+            </div>
+            <button class="btn btn-dark" id="decodeCopyBtn" onclick="copyDecodeContent(this)" style="padding:3px 8px;font-size:0.68rem;min-width:60px">📋 Copy</button>
+            <button onclick="closeDecodePopup()" style="background:none;border:none;color:white;font-size:1.1rem;cursor:pointer">✕</button>
+        </div>
     </div>
     <div style="padding:12px;max-height:calc(80vh - 50px);overflow:auto">
-        <pre id="decodeJsonBox" class="data-pre" style="min-height:100px"></pre>
+        <pre id="decodeTreeView" class="tree-display" style="min-height:100px"></pre>
+        <div id="decodeJsonView" class="json-display" style="display:none;min-height:100px"></div>
+        <textarea id="decodeTreeRaw" style="display:none"></textarea>
+        <textarea id="decodeJsonRaw" style="display:none"></textarea>
     </div>
 </div>
 </div>
@@ -199,25 +219,29 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
     </div>
 </div>
 </div>
+<div style="height:30px;flex-shrink:0;display:flex;align-items:center;justify-content:center"><span style="font-size:0.66rem;color:rgba(255,255,255,0.5)">Copyright © 2026 JUSEOK AHN &lt;ajs3013@lguplus.co.kr&gt; All rights reserved.</span></div>
 
 <script>
 let dumpData=null,selectedPath=null,selectedFd=null,sortedEntries=[],writeOrigHex='',writeExpectedSize=0;
 let writeVerified=false,verifiedAdm='',verifiedAdmType='';
+let isOfflineMode=false;
 let verifyCallback=null;
 async function api(u,b){try{const r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b||{})});return await r.json();}catch(e){console.error('API error:',u,e);return{success:false,error:e.message};}}
-function setStatus(id,t,c){const e=document.getElementById(id);e.className='status status-'+c;e.textContent=t;}
+function setStatus(id,t,c){const e=document.getElementById(id);e.className='status status-'+c;e.textContent=t;e.style.display=t?'':'none';}
 
 async function connectReader(){
     setStatus('connectStatus','Connecting...','warn');
+    setStatus('actionStatus','','');
+    setStatus('exportStatus','','');
     const r=await api('/sim/connect',{reader:0});
-    if(r.success){setStatus('connectStatus','✅ Connected','ok');document.getElementById('simInfo').style.display='flex';
+    if(r.success){setStatus('connectStatus','✅ Connected','ok');
         document.getElementById('infoIccid').textContent=r.info.iccid||'-';
         document.getElementById('infoImsi').textContent=r.info.imsi||'-';
         document.getElementById('infoMsisdn').textContent=r.info.msisdn||'-';
         document.getElementById('infoHplmn').textContent=r.info.hplmn||'-';
         writeVerified=false;verifiedAdm='';verifiedAdmType='';
         document.getElementById('admBadge').style.display='none';
-        dumpData=null;selectedPath=null;selectedFd=null;sortedEntries=[];
+        dumpData=null;selectedPath=null;selectedFd=null;sortedEntries=[];isOfflineMode=false;
         document.getElementById('fileListBody').innerHTML='';
         document.getElementById('rawDataBox').innerHTML='<span style="color:#999">(no data)</span>';
         document.getElementById('rawDataBox').style.padding='8px';
@@ -226,7 +250,6 @@ async function connectReader(){
         document.getElementById('btnWrite').disabled=true;
         document.getElementById('btnExport').disabled=true;
         document.getElementById('btnReadAll').disabled=false;
-        setStatus('readStatus','','');
     }else{setStatus('connectStatus','❌ '+r.error,'err');}
 }
 
@@ -254,16 +277,17 @@ function sortKey(path,fd){
 }
 
 async function readAllFiles(){
-    setStatus('readStatus','⏳ Reading... (may take a few seconds)','warn');
+    setStatus('actionStatus','⏳ Reading... (may take a few seconds)','warn');
     var startTime=Date.now();
     try{
         var r=await api('/sim/read_all',{});
         var elapsed=((Date.now()-startTime)/1000).toFixed(1);
         if(r.success){dumpData=r.data;sortedEntries=Object.entries(r.data.files).sort(function(a,b){return sortKey(a[0],a[1]).localeCompare(sortKey(b[0],b[1]));});
-            renderFileList();setStatus('readStatus','✅ '+sortedEntries.length+' files (elapsed '+elapsed+'s)','ok');
+            renderFileList();setStatus('actionStatus','✅ '+sortedEntries.length+' files (elapsed '+elapsed+'s)','ok');
             document.getElementById('btnExport').disabled=false;
-        }else{setStatus('readStatus','❌ '+(r.error||'Unknown error'),'err');}
-    }catch(ex){setStatus('readStatus','❌ JS Error: '+ex.message,'err');}
+            document.getElementById('btnReadAll').disabled=true;
+        }else{setStatus('actionStatus','❌ '+(r.error||'Unknown error'),'err');}
+    }catch(ex){setStatus('actionStatus','❌ JS Error: '+ex.message,'err');}
 }
 
 function applyFilter(){document.getElementById('filterClear').style.display=document.getElementById('fileFilter').value?'inline':'none';renderFileList();}
@@ -293,9 +317,10 @@ function renderFileList(){
             showDetail(selectedPath,selectedFd);
             var isEf=getFt(selectedFd)==='EF';
             var is6982=selectedFd.error&&selectedFd.error.sw_actual==='6982';
-            document.getElementById('btnRead').style.display=is6982?'inline-flex':'none';
+            document.getElementById('btnRead').style.display=(is6982&&!isOfflineMode)?'inline-flex':'none';
             document.getElementById('btnDecode').disabled=!isEf||is6982;
-            document.getElementById('btnWrite').disabled=!isEf||is6982;
+            document.getElementById('btnWrite').disabled=!isEf||is6982||isOfflineMode;
+            document.getElementById('btnWrite').style.display=isOfflineMode?'none':'';
         };
         tbody.appendChild(tr);
     }
@@ -327,34 +352,235 @@ function syntaxHL(obj){
 
 /* === Decode Popup === */
 function isUrspFile(path){return path&&path.indexOf('EF.URSP')>=0;}
-function formatUrspJson(decoded){
-    if(!decoded||!decoded.ursp_rules)return null;
-    var out={plmn:decoded.plmn,ursp_rules:decoded.ursp_rules.map(function(r,ri){
-        var rule={rule_index:ri,precedence:r.precedence_value,traffic_descriptor:r.td_components.map(function(td){
-            var o={type:td.type};if(td.value!==''&&td.value!==undefined)o.value=td.value;return o;
-        }),route_selection_descriptors:r.rsd_list.map(function(rsd,si){
-            return{rsd_index:si,precedence:rsd.precedence_value,components:rsd.rsd_components.map(function(c){
-                var o={type:c.type};if(c.value!==''&&c.value!==undefined)o.value=c.value;return o;
-            })};
-        })};return rule;
-    })};return out;
+
+/* RSD zero-value types */
+var RSD_ZERO_TYPES={'Multi-access preference':1,'Non-seamless non-3GPP offload indication':1,'5G ProSe layer-3 UE-to-network relay offload indication':1,'5G ProSe multi-path preference':1};
+
+function normalizeTdValue(type,val){
+    if(type==='OS Id + OS App Id'&&typeof val==='string'&&val.indexOf(':')>=0){
+        var p=val.split(':');return{'OS Id':p[0],'OS App Id':p.slice(1).join(':')};}
+    if(type==='IPv4 remote address'&&typeof val==='string'&&val.indexOf('/')>=0){
+        var p=val.split('/');return{'IPv4 address':p[0],'Subnet mask':p[1]};}
+    if(type==='IPv6 remote address/prefix length'&&typeof val==='string'&&val.indexOf('/')>=0){
+        var p=val.split('/');return{'IPv6 address':p[0],'Prefix length':parseInt(p[1])};}
+    if(type==='Remote port range'&&typeof val==='string'&&val.indexOf('-')>=0){
+        var p=val.split('-');return{'Low limit':parseInt(p[0]),'High limit':parseInt(p[1])};}
+    if(type==='Connection capabilities'&&typeof val==='string'){
+        return val.split(',').map(function(s){return s.trim();}).filter(function(s){return s;});}
+    if(type==='Destination MAC address range'&&typeof val==='string'&&val.indexOf('-')>=0){
+        var p=val.split('-');return{'Low limit':p[0].trim(),'High limit':p[1].trim()};}
+    if(type==='IP 3 tuple'&&val&&typeof val==='object'){
+        var r={};
+        if(val.ipType==='IPv4'&&val.address){r['IPv4 address']=val.address;if(val.mask)r['Subnet mask']=val.mask;}
+        else if(val.ipType==='IPv6'&&val.address){r['IPv6 address']=val.address;if(val.prefix)r['Prefix length']=parseInt(val.prefix);}
+        if(val.protocol){
+            if(val.ipType==='IPv4'&&val.address)r['Protocol identifier']=val.protocol;
+            else if(val.ipType==='IPv6'&&val.address)r['Next header']=val.protocol;
+            else r['Protocol identifier/Next header']=val.protocol;}
+        if(val.portType==='Single'&&val.port)r['Port']=parseInt(val.port);
+        else if(val.portType==='Range'){if(val.portLow)r['Port low limit']=parseInt(val.portLow);if(val.portHigh)r['Port high limit']=parseInt(val.portHigh);}
+        return r;}
+    return val;
 }
+function normalizeRsdValue(type,val){
+    if(type==='S-NSSAI'&&typeof val==='string'){
+        var r={};
+        if(val.indexOf(' + SD ')>=0){var p=val.split(' + ');r['SST']=parseInt(p[0].replace('SST ',''));r['SD']=parseInt(p[1].replace('SD ',''));}
+        else{r['SST']=parseInt(val.replace('SST ',''));}
+        return r;}
+    return val;
+}
+function normalizeUrspRules(decoded){
+    if(!decoded||!decoded.ursp_rules)return null;
+    var rules=decoded.ursp_rules.map(function(rule){
+        var tdList=rule.td_components.map(function(td){
+            if(td.type==='Match-all')return{type:'Match-all'};
+            return{type:td.type,value:normalizeTdValue(td.type,td.value)};
+        });
+        var rsdList=rule.rsd_list.map(function(rsd){
+            var conts=rsd.rsd_components.map(function(c){
+                if(RSD_ZERO_TYPES[c.type])return{type:c.type};
+                return{type:c.type,value:normalizeRsdValue(c.type,c.value)};
+            });
+            return{'Precedence value':rsd.precedence_value,'Route selection descriptor contents':conts};
+        });
+        return{'Precedence value':rule.precedence_value,'Traffic descriptor':tdList,'Route selection descriptor list':rsdList};
+    });
+    return{'URSP rules':rules};
+}
+
+function renderValueTree(val,prefix,cont){
+    var lines=[];
+    if(Array.isArray(val)){
+        for(var i=0;i<val.length;i++){var p=i<val.length-1?'├─ ':'└─ ';lines.push(prefix+cont+'   '+p+val[i]);}
+    }else if(val&&typeof val==='object'){
+        var items=Object.keys(val);
+        for(var i=0;i<items.length;i++){var p=i<items.length-1?'├─ ':'└─ ';lines.push(prefix+cont+'   '+p+items[i]+' = '+val[items[i]]);}
+    }
+    return lines;
+}
+
+function formatUrspTree(normalized){
+    if(!normalized||!normalized['URSP rules'])return'';
+    var result=['URSP Rules'];
+    var rules=normalized['URSP rules'];
+    for(var ri=0;ri<rules.length;ri++){
+        var rule=rules[ri],pv=rule['Precedence value'];
+        var rp=ri<rules.length-1?'├─ ':'└─ ',rc=ri<rules.length-1?'│ ':'  ';
+        result.push(rp+'URSP_'+ri);
+        result.push(rc+'├─ Precedence Value = '+pv);
+        var tdList=rule['Traffic descriptor'];
+        var isMatchAll=tdList.length===1&&tdList[0].type==='Match-all';
+        if(!tdList.length||isMatchAll){result.push(rc+'├─ Traffic Descriptor = Match-all');}
+        else{
+            result.push(rc+'├─ Traffic Descriptor');
+            for(var ti=0;ti<tdList.length;ti++){
+                var td=tdList[ti],tp=ti<tdList.length-1?'├─ ':'└─ ',tc=ti<tdList.length-1?'│ ':'  ';
+                var tv=td.value;
+                if(td.type==='Match-all'){result.push(rc+'│ '+tp+td.type);}
+                else if(tv&&typeof tv==='object'){result.push(rc+'│ '+tp+td.type);result=result.concat(renderValueTree(tv,rc+'│ ',tc));}
+                else{result.push(rc+'│ '+tp+td.type+' = '+tv);}
+            }
+        }
+        var rsdList=rule['Route selection descriptor list'];
+        result.push(rc+'└─ Route selection descriptor list');
+        for(var si=0;si<rsdList.length;si++){
+            var rsd=rsdList[si],sp=si<rsdList.length-1?'├─ ':'└─ ',sc=si<rsdList.length-1?'│ ':'  ';
+            var conts=rsd['Route selection descriptor contents'];
+            result.push(rc+'   '+sp+'RSD_'+si);
+            result.push(rc+'   '+sc+'├─ Precedence value = '+rsd['Precedence value']);
+            result.push(rc+'   '+sc+'└─ Route selection descriptor contents');
+            for(var ci=0;ci<conts.length;ci++){
+                var comp=conts[ci],cp=ci<conts.length-1?'├─ ':'└─ ',cc=ci<conts.length-1?'│ ':'  ';
+                var cv=comp.value;
+                if(cv===undefined||cv===null){result.push(rc+'   '+sc+'   '+cp+comp.type);}
+                else if(cv&&typeof cv==='object'){
+                    result.push(rc+'   '+sc+'   '+cp+comp.type);
+                    var items=Object.keys(cv);
+                    for(var vi=0;vi<items.length;vi++){var vp=vi<items.length-1?'├─ ':'└─ ';result.push(rc+'   '+sc+'   '+cc+'  '+vp+items[vi]+' = '+cv[items[vi]]);}
+                }else{result.push(rc+'   '+sc+'   '+cp+comp.type+' = '+cv);}
+            }
+        }
+    }
+    return result.join('\n');
+}
+
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function syntaxHLJson(json){
+    if(!json)return'';
+    return'<pre class="json-hl">'+json.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+        function(m){var c='json-number';if(/^"/.test(m)){c=/:$/.test(m)?'json-key':'json-string';}
+        else if(/true|false/.test(m)){c='json-boolean';}else if(/null/.test(m)){c='json-null';}
+        return'<span class="'+c+'">'+m+'</span>';})+'</pre>';
+}
+
+function jsonToTree(obj,prefix,cont){
+    if(prefix===undefined)prefix='';
+    if(cont===undefined)cont='';
+    var lines=[];
+    if(Array.isArray(obj)){
+        for(var i=0;i<obj.length;i++){
+            var last=i===obj.length-1;
+            var p=prefix+(last?'└─ ':'├─ ');
+            var c=cont+(last?'   ':'│  ');
+            var v=obj[i];
+            if(v&&typeof v==='object'){
+                if(Array.isArray(v)){lines.push(p+'['+i+']');lines=lines.concat(jsonToTree(v,c,c));}
+                else{lines.push(p+'['+i+']');lines=lines.concat(jsonToTree(v,c,c));}
+            }else{lines.push(p+formatVal(v));}
+        }
+    }else if(obj&&typeof obj==='object'){
+        var keys=Object.keys(obj);
+        for(var k=0;k<keys.length;k++){
+            var key=keys[k],val=obj[key];
+            var last=k===keys.length-1;
+            var p=prefix+(last?'└─ ':'├─ ');
+            var c=cont+(last?'   ':'│  ');
+            if(val===null||val===undefined){lines.push(p+key);}
+            else if(Array.isArray(val)){
+                if(val.length===0){lines.push(p+key+' = []');}
+                else{lines.push(p+key);lines=lines.concat(jsonToTree(val,c,c));}
+            }else if(typeof val==='object'){
+                if(Object.keys(val).length===0){lines.push(p+key+' = {}');}
+                else{lines.push(p+key);lines=lines.concat(jsonToTree(val,c,c));}
+            }else{lines.push(p+key+' = '+formatVal(val));}
+        }
+    }
+    return lines;
+}
+function formatVal(v){if(typeof v==='string')return v;if(typeof v==='boolean')return v?'true':'false';if(v===null)return'null';return String(v);}
+
+function buildDecodeViews(jsonObj,efName){
+    var jsonStr=JSON.stringify(jsonObj,null,2);
+    var treeLines=[];
+    if(efName)treeLines.push(efName);
+    treeLines=treeLines.concat(jsonToTree(jsonObj,'',''));
+    var treeStr=treeLines.join('\n');
+    document.getElementById('decodeTreeView').textContent=treeStr;
+    document.getElementById('decodeJsonView').innerHTML=syntaxHLJson(jsonStr);
+    document.getElementById('decodeTreeRaw').value=treeStr;
+    document.getElementById('decodeJsonRaw').value=jsonStr;
+}
+
+function showDecodeEmpty(msg){
+    var m=msg||'(no decoded data)';
+    document.getElementById('decodeTreeView').innerHTML='<span style="color:#999">'+m+'</span>';
+    document.getElementById('decodeJsonView').innerHTML='<span style="color:#999">'+m+'</span>';
+    document.getElementById('decodeTreeRaw').value='';
+    document.getElementById('decodeJsonRaw').value='';
+}
+
+function showDecodeError(msg){
+    document.getElementById('decodeTreeView').innerHTML='<span style="color:#e67e22">'+escHtml(msg)+'</span>';
+    document.getElementById('decodeJsonView').innerHTML='<span style="color:#e67e22">'+escHtml(msg)+'</span>';
+    document.getElementById('decodeTreeRaw').value='';
+    document.getElementById('decodeJsonRaw').value='';
+}
+
+function resetDecodeToggle(){
+    document.getElementById('decodeTreeView').style.display='block';
+    document.getElementById('decodeJsonView').style.display='none';
+    document.getElementById('toggle-tree').classList.add('toggle-active');
+    document.getElementById('toggle-json').classList.remove('toggle-active');
+}
+
+function toggleDecodeView(){
+    var tv=document.getElementById('decodeTreeView'),jv=document.getElementById('decodeJsonView');
+    var tl=document.getElementById('toggle-tree'),jl=document.getElementById('toggle-json');
+    if(jv.style.display==='none'){tv.style.display='none';jv.style.display='block';tl.classList.remove('toggle-active');jl.classList.add('toggle-active');}
+    else{tv.style.display='block';jv.style.display='none';tl.classList.add('toggle-active');jl.classList.remove('toggle-active');}
+}
+
+function copyDecodeContent(btn){
+    var jv=document.getElementById('decodeJsonView');
+    var text=(jv&&jv.style.display!=='none')?document.getElementById('decodeJsonRaw').value:document.getElementById('decodeTreeRaw').value;
+    navigator.clipboard.writeText(text).then(function(){btn.textContent='✓ Copied';setTimeout(function(){btn.textContent='📋 Copy';},1500);});
+}
+
 function openDecodePopup(){
     if(!selectedFd)return;
-    document.getElementById('decodeEfName').textContent=selectedPath;
-    var box=document.getElementById('decodeJsonBox');
-    // URSP: use decoded data from retrieve_data_all (stored in selectedFd._ursp_decoded)
+    document.getElementById('decodeEfName').textContent=selectedPath.replace(/\//g,' / ');
+    resetDecodeToggle();
+    var efName=selectedPath?selectedPath.split('/').pop():'';
     if(isUrspFile(selectedPath)&&selectedFd._ursp_decoded){
-        var pretty=formatUrspJson(selectedFd._ursp_decoded);
-        if(pretty){box.innerHTML=syntaxHL(pretty);}
-        else if(selectedFd.body){box.innerHTML=syntaxHL(selectedFd.body);}
-        else{box.innerHTML='<span style="color:#999">(no decoded data)</span>';}
+        var normalized=normalizeUrspRules(selectedFd._ursp_decoded);
+        if(normalized){
+            var treeStr=formatUrspTree(normalized);
+            var jsonStr=JSON.stringify(normalized,null,2);
+            document.getElementById('decodeTreeView').textContent=treeStr;
+            document.getElementById('decodeJsonView').innerHTML=syntaxHLJson(jsonStr);
+            document.getElementById('decodeTreeRaw').value=treeStr;
+            document.getElementById('decodeJsonRaw').value=jsonStr;
+        }else if(selectedFd.body){buildDecodeViews(selectedFd.body,efName);}
+        else{showDecodeEmpty();}
         document.getElementById('decodeOverlay').classList.add('show');
         return;
     }
-    if(selectedFd.body!==undefined&&selectedFd.body!==null){box.innerHTML=syntaxHL(selectedFd.body);}
-    else if(selectedFd.error&&selectedFd.bytes){box.innerHTML='<span style="color:#e67e22">Decoding error: '+(selectedFd.error.message||'')+'</span>';}
-    else{box.innerHTML='<span style="color:#999">'+(selectedFd.error?'':'(no decoded data)')+'</span>';}
+    if(selectedFd.body!==undefined&&selectedFd.body!==null){buildDecodeViews(selectedFd.body,efName);}
+    else if(selectedFd.error&&selectedFd.bytes){showDecodeError('Decoding error: '+(selectedFd.error.message||''));}
+    else{showDecodeEmpty(selectedFd.error?'':'(no decoded data)');}
     document.getElementById('decodeOverlay').classList.add('show');
 }
 function closeDecodePopup(){document.getElementById('decodeOverlay').classList.remove('show');}
@@ -718,12 +944,62 @@ document.getElementById('fileListScroll').addEventListener('keydown',function(e)
 });
 
 async function exportData(){
-    if(!dumpData)return;setStatus('readStatus','⏳ Exporting...','warn');
+    if(!dumpData)return;setStatus('exportStatus','⏳ Exporting...','warn');
     try{
-        var res=await fetch('/sim/export',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:dumpData})});
-        if(res.ok){var blob=await res.blob();var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=(dumpData.iccid||'unknown')+'.zip';a.click();URL.revokeObjectURL(a.href);setStatus('readStatus','✅ Exported','ok');}
-        else{var err=await res.json();setStatus('readStatus','❌ '+(err.error||'Export failed'),'err');}
-    }catch(e){setStatus('readStatus','❌ '+e.message,'err');}
+        var r=await api('/sim/export',{data:dumpData});
+        if(r.success){setStatus('exportStatus','✅ Saved to '+r.path,'ok');}
+        else{setStatus('exportStatus','❌ '+(r.error||'Export failed'),'err');}
+    }catch(e){setStatus('exportStatus','❌ '+e.message,'err');}
+}
+
+function loadDumpFile(input){
+    if(!input.files||!input.files[0])return;
+    var file=input.files[0];
+    setStatus('actionStatus','⏳ Loading '+file.name+'...','warn');
+    setStatus('connectStatus','','');
+    setStatus('exportStatus','','');
+    var reader=new FileReader();
+    reader.onload=function(e){
+        try{
+            var data=JSON.parse(e.target.result);
+            if(!data.files){setStatus('actionStatus','❌ Invalid dump file','err');return;}
+            dumpData=data;
+            sortedEntries=Object.entries(data.files).sort(function(a,b){return sortKey(a[0],a[1]).localeCompare(sortKey(b[0],b[1]));});
+            document.getElementById('infoIccid').textContent=data.iccid||'-';
+            document.getElementById('infoImsi').textContent='-';
+            document.getElementById('infoMsisdn').textContent='-';
+            document.getElementById('infoHplmn').textContent='-';
+            if(data.files){
+                for(var p in data.files){
+                    var fd=data.files[p];
+                    if(p.endsWith('EF.IMSI')&&fd.body&&fd.body.imsi)document.getElementById('infoImsi').textContent=fd.body.imsi;
+                    if(p.endsWith('EF.MSISDN')&&fd.body&&Array.isArray(fd.body)){
+                        for(var i=0;i<fd.body.length;i++){if(fd.body[i]&&fd.body[i].dialing_nr){document.getElementById('infoMsisdn').textContent=fd.body[i].dialing_nr;break;}}
+                    }
+                    if(p.endsWith('EF.HPLMNwAcT')&&fd.bytes&&typeof fd.bytes==='string'){
+                        var raw=fd.bytes.toUpperCase();
+                        if(raw.length>=10&&raw.substr(0,6)!=='FFFFFF'){
+                            var mcc=raw[1]+raw[0]+raw[3],mnc=raw[5]+raw[4],mnc3=raw[2];
+                            if(mnc3!=='F')mnc+=mnc3;
+                            document.getElementById('infoHplmn').textContent=mcc+'/'+mnc+'('+raw.substr(6,4)+')';
+                        }
+                    }
+                }
+            }
+            renderFileList();
+            setStatus('actionStatus','✅ Loaded ('+sortedEntries.length+' files)','ok');
+            document.getElementById('btnExport').disabled=true;
+            document.getElementById('btnReadAll').disabled=true;
+            document.getElementById('btnWrite').disabled=true;
+            document.getElementById('btnWrite').style.display='none';
+            document.getElementById('btnRead').style.display='none';
+            document.getElementById('admBadge').style.display='none';
+            writeVerified=false;verifiedAdm='';verifiedAdmType='';
+            isOfflineMode=true;
+        }catch(ex){setStatus('actionStatus','❌ Parse error: '+ex.message,'err');}
+    };
+    reader.readAsText(file);
+    input.value='';
 }
 </script>
 </body>

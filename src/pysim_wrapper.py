@@ -9,7 +9,7 @@ import logging
 from pathlib import Path
 
 PYSIM_SHELL = Path(__file__).parent.parent / "pysim" / "pySim-shell.py"
-DATA_DIR = Path(__file__).parent.parent / "data"
+DATA_DIR = Path(__file__).parent.parent / "logs"
 
 logger = logging.getLogger(__name__)
 

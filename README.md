@@ -48,7 +48,8 @@ Your browser will automatically open `http://127.0.0.1:8082`.
 3. **Search** — Filter by FID or file name
 4. **Decoding** — View decoded JSON for the selected file
 5. **Write** — Write hex data to an EF (ADM verification required)
-6. **Export** — Save the entire file system as a zip (dump.json, dump.xlsx, decoded JSONs)
+6. **Export** — Save dump to `logs/<ICCID>/` (dump.json, dump.xlsx, decoded JSONs)
+7. **Load Dump** — Open a previously exported dump.json file
 
 ---
 
