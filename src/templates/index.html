@@ -965,6 +965,10 @@ function loadDumpFile(input){
     setStatus('actionStatus','⏳ Loading '+file.name+'...','warn');
     setStatus('connectStatus','','');
     setStatus('exportStatus','','');
+    document.getElementById('fileListBody').innerHTML='';
+    document.getElementById('rawDataBox').innerHTML='<span style="color:#999">(no data)</span>';
+    document.getElementById('rawDataBox').style.padding='8px';
+    dumpData=null;selectedPath=null;selectedFd=null;sortedEntries=[];
     var reader=new FileReader();
     reader.onload=function(e){
         try{
