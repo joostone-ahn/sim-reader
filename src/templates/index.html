@@ -248,6 +248,7 @@ async function connectReader(){
         writeVerified=false;verifiedAdm='';verifiedAdmType='';
         document.getElementById('admBadge').style.display='none';
         dumpData=null;selectedPath=null;selectedFd=null;sortedEntries=[];isOfflineMode=false;
+        clearFilter();
         document.getElementById('fileListBody').innerHTML='';
         document.getElementById('rawDataBox').innerHTML='<span style="color:#999">(no data)</span>';
         document.getElementById('rawDataBox').style.padding='8px';
@@ -969,6 +970,7 @@ function loadDumpFile(input){
     document.getElementById('rawDataBox').innerHTML='<span style="color:#999">(no data)</span>';
     document.getElementById('rawDataBox').style.padding='8px';
     dumpData=null;selectedPath=null;selectedFd=null;sortedEntries=[];
+    clearFilter();
     var reader=new FileReader();
     reader.onload=function(e){
         try{
