@@ -134,6 +134,10 @@ def sim_connect():
             "select EF.MSISDN", "read_records_decoded",
             "select ADF.USIM",
             "select EF.HPLMNwAcT", "read_binary",
+            "select ADF.ISIM",
+            "select EF.IMPI", "read_binary_decoded",
+            "select ADF.ISIM",
+            "select EF.IMPU", "read_records_decoded",
         ], timeout=30)
 
         print(f"[connect] rc={result.returncode}, stdout={len(result.stdout)}B, stderr={len(result.stderr)}B")
@@ -177,7 +181,7 @@ def sim_connect():
                     i += 1
             i += 1
 
-        info = {'iccid': '', 'imsi': '', 'msisdn': '', 'hplmn': ''}
+        info = {'iccid': '', 'imsi': '', 'msisdn': '', 'hplmn': '', 'impi': '', 'impu': ''}
 
         for obj in json_objects:
             if isinstance(obj, dict):
@@ -185,6 +189,8 @@ def sim_connect():
                     info['iccid'] = obj['iccid']
                 elif 'imsi' in obj:
                     info['imsi'] = obj['imsi']
+                elif 'nai' in obj and not info['impi']:
+                    info['impi'] = obj['nai']
             elif isinstance(obj, list):
                 # MSISDN records
                 for rec in obj:
@@ -197,6 +203,8 @@ def sim_connect():
                             info['msisdn'] = f"{nr}({alpha})"
                         else:
                             info['msisdn'] = nr
+                    if 'impu' in rec and rec['impu'] and not info['impu']:
+                        info['impu'] = rec['impu']
 
         # Parse HPLMNwAcT from raw hex line (read_binary output)
         for line in stdout.split('\n'):
