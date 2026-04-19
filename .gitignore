@@ -7,8 +7,6 @@ __pycache__/
 data/
 logs/
 docs/
-log/
-src/dump.py
 *.zip
 pysim/.git/
 pysim/.git_bak/
