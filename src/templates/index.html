@@ -42,23 +42,24 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
 #fileListScroll:focus{outline:none}
 .file-table .cc{text-align:center}
 .file-table .cr{text-align:right;padding-right:12px}
-.data-pre{font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;font-size:0.78rem;white-space:pre-wrap;word-break:break-all;color:#333;background:#f8f9fa;padding:8px;margin:0}
-.rec-table{width:100%;border-collapse:collapse;font-size:0.76rem}
-.rec-table th{background:#a8c4e0;color:#1a3a5c;padding:4px 6px;font-size:0.72rem;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;font-weight:600;position:sticky;top:0;white-space:nowrap}
+.data-pre{font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;font-size:0.74rem;white-space:pre-wrap;word-break:break-all;color:#333;background:#f8f9fa;padding:8px;margin:0}
+.rec-table{width:100%;border-collapse:collapse;font-size:0.74rem}
+.rec-table th{background:#a8c4e0;color:#1a3a5c;padding:4px 6px;font-size:0.72rem;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;font-weight:600;position:sticky;top:0;z-index:1;white-space:nowrap}
 .rec-table td{padding:3px 8px;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;font-size:0.74rem;border-bottom:1px solid #eee}
-.rec-table td:first-child{text-align:center;width:80px;white-space:nowrap;color:#667eea;font-weight:600}
+.rec-table td:first-child{text-align:center;width:38px;white-space:nowrap;color:#667eea;font-weight:600}
 .overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;justify-content:center;align-items:center}
 .overlay.show{display:flex}
 .popup{background:white;border-radius:10px;width:710px;max-height:80vh;overflow:auto;box-shadow:0 8px 32px rgba(0,0,0,0.3);resize:both;min-width:400px;min-height:200px}
-#btnRead:disabled,#btnDecode:disabled,#btnWrite:disabled{opacity:0.3;cursor:not-allowed}
+#btnRead:disabled,#btnWrite:disabled,#btnCopy:disabled{opacity:0.3;cursor:not-allowed}
 .search-ph::placeholder{color:rgba(255,255,255,0.4);font-style:italic}
 .mono{font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;-webkit-text-size-adjust:100%}
 .toggle-switch{display:flex;background:#e9ecef;border-radius:4px;cursor:pointer;overflow:hidden;width:fit-content}
-.toggle-label{padding:4px 8px;font-size:0.68rem;font-weight:600;color:#888;transition:all 0.2s;user-select:none;text-align:center;width:50px}
+.toggle-label{padding:4px 0;font-size:0.68rem;font-weight:600;color:#888;transition:all 0.2s;user-select:none;text-align:center;width:68px;border-right:1px solid #ccc}
+.toggle-label:last-child{border-right:none}
 .toggle-label.toggle-active{background:#6b7eec;color:white}
-.tree-display{padding:12px;background:#f8f9fa;border-radius:4.8px;overflow:auto;margin:0;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;font-size:0.78rem;white-space:pre;line-height:1.3;color:#333}
+.tree-display{padding:12px;background:#f8f9fa;border-radius:4.8px;overflow:auto;margin:0;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;font-size:0.74rem;white-space:pre;line-height:1.3;color:#333}
 .json-display{padding:12px;background:#f8f9fa;border-radius:4.8px;overflow:auto}
-.json-hl{margin:0;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;font-size:0.78rem;white-space:pre;line-height:1.3}
+.json-hl{margin:0;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;font-size:0.74rem;white-space:pre;line-height:1.3}
 .json-key{color:#881391}.json-string{color:#0451a5}.json-number{color:#098658}.json-boolean{color:#0000ff}.json-null{color:#808080}
 </style>
 </head>
@@ -92,13 +93,13 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
     <div class="card" style="padding:12px;margin-bottom:0;flex:1;display:flex;flex-direction:column;min-height:0">
         <div id="panelContainer" style="display:flex;flex:1;min-height:0">
             <div id="leftPanel" class="card" style="flex:5;display:flex;flex-direction:column;min-width:200px">
-                <div class="panel-title">
+                <div class="panel-title" style="min-height:36px;padding:6px 12px">
                     <span>🗂️ File List</span>
                     <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-                        <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.2);border-radius:5px;padding:4px 10px;height:30px;width:250px">
-                            <span style="font-size:0.76rem;font-weight:600;color:rgba(255,255,255,0.9);white-space:nowrap;min-width:56px">Search</span>
-                            <input type="text" id="fileFilter" oninput="onFilterInput()" onkeydown="if(event.key==='Enter')applyFilter()" placeholder="FID or File Name" style="border:none;background:transparent;color:white;font-size:0.78rem;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;flex:1;min-width:0;outline:none" class="search-ph">
-                            <span id="filterClear" onclick="clearFilter()" style="display:none;color:white;cursor:pointer;font-size:1rem;line-height:1;font-weight:700;flex-shrink:0">✕</span>
+                        <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.2);border-radius:5px;padding:2px 8px;height:24px;width:250px">
+                            <span style="font-size:0.72rem;font-weight:600;color:rgba(255,255,255,0.9);white-space:nowrap;min-width:48px">Search</span>
+                            <input type="text" id="fileFilter" oninput="applyFilter()" placeholder="FID or File Name" style="border:none;background:transparent;color:white;font-size:0.74rem;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;flex:1;min-width:0;outline:none" class="search-ph">
+                            <span id="filterClear" onclick="clearFilter()" style="display:none;color:white;cursor:pointer;font-size:0.9rem;line-height:1;font-weight:700;flex-shrink:0">✕</span>
                         </div>
                     </div>
                 </div>
@@ -114,15 +115,29 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
             </div>
             <div id="rightPanel" style="flex:5;display:flex;flex-direction:column;min-height:0;min-width:200px">
                 <div class="card" style="flex:1;display:flex;flex-direction:column;min-height:0">
-                    <div class="panel-title">
-                        <span>📄 Raw Data</span>
-                        <div style="margin-left:auto;display:flex;gap:6px">
-                            <button id="btnRead" onclick="onReadClick()" style="display:none;padding:4px 14px;font-size:0.76rem;font-weight:600;border:none;border-radius:5px;cursor:pointer;background:rgba(255,255,255,0.2);color:rgba(255,255,255,0.9);width:110px;height:30px;transition:all 0.2s;align-items:center;justify-content:center;white-space:nowrap">📖 Read</button>
-                            <button id="btnDecode" onclick="openDecodePopup()" disabled style="padding:4px 14px;font-size:0.76rem;font-weight:600;border:none;border-radius:5px;cursor:pointer;background:rgba(255,255,255,0.2);color:rgba(255,255,255,0.9);width:110px;height:30px;transition:all 0.2s;white-space:nowrap">🔍 Decoding</button>
-                            <button id="btnWrite" onclick="onWriteClick()" disabled style="padding:4px 14px;font-size:0.76rem;font-weight:600;border:none;border-radius:5px;cursor:pointer;background:rgba(255,255,255,0.2);color:rgba(255,255,255,0.9);width:110px;height:30px;transition:all 0.2s;white-space:nowrap">✏️ Write</button>
+                    <div class="panel-title" style="min-height:36px;padding:6px 12px">
+                        <span>📄 File Contents</span>
+                        <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
+                            <button id="btnRead" onclick="onReadClick()" style="display:none;padding:3px 8px;font-size:0.68rem;font-weight:600;border:none;border-radius:5px;cursor:pointer;background:rgba(255,255,255,0.2);color:rgba(255,255,255,0.9);min-width:60px;transition:all 0.2s;white-space:nowrap">📖 Read</button>
+                            <div class="toggle-switch" id="inlineDecodeToggle">
+                                <span class="toggle-label toggle-active" id="inline-toggle-decode" onclick="switchInlineView('decode')">🔍 Decode</span>
+                                <span class="toggle-label" id="inline-toggle-raw" onclick="switchInlineView('raw')">🔢 Raw</span>
+                            </div>
+                            <div class="toggle-switch" id="plmnToggle" style="display:none">
+                                <span class="toggle-label toggle-active" id="plmn-toggle-table" onclick="switchPlmnView('table')">🔍 Decode</span>
+                                <span class="toggle-label" id="plmn-toggle-raw" onclick="switchPlmnView('raw')">🔢 Raw</span>
+                            </div>
+                            <button id="btnCopy" onclick="copyInlineDecode(this)" disabled style="padding:3px 8px;font-size:0.68rem;font-weight:600;border:none;border-radius:5px;cursor:pointer;background:rgba(255,255,255,0.2);color:rgba(255,255,255,0.9);min-width:60px;transition:all 0.2s">📋 Copy</button>
+                            <button id="btnWrite" onclick="onWriteClick()" disabled style="padding:3px 8px;font-size:0.68rem;font-weight:600;border:none;border-radius:5px;cursor:pointer;background:rgba(255,255,255,0.2);color:rgba(255,255,255,0.9);min-width:60px;transition:all 0.2s;white-space:nowrap">✏️ Write</button>
                         </div>
                     </div>
-                    <div id="rawDataBox" class="data-pre" style="flex:1;overflow:auto"></div>
+                    <div id="inlineDecodeBox" style="flex:1;overflow:auto;padding:0">
+                        <pre id="inlineTreeView" class="tree-display" style="min-height:40px;margin:8px"></pre>
+                        <div id="inlineJsonView" class="json-display" style="display:none;min-height:40px;margin:8px"></div>
+                        <div id="inlineRawView" class="data-pre" style="display:none;min-height:40px;margin:8px"></div>
+                        <textarea id="inlineTreeRaw" style="display:none"></textarea>
+                        <textarea id="inlineJsonRaw" style="display:none"></textarea>
+                    </div>
                 </div>
             </div>
         </div>
@@ -250,11 +265,10 @@ async function connectReader(){
         dumpData=null;selectedPath=null;selectedFd=null;sortedEntries=[];isOfflineMode=false;
         clearFilter();
         document.getElementById('fileListBody').innerHTML='';
-        document.getElementById('rawDataBox').innerHTML='<span style="color:#999">(no data)</span>';
-        document.getElementById('rawDataBox').style.padding='8px';
+        document.getElementById('inlineRawView').innerHTML='<span style="color:#999">(no data)</span>';
         document.getElementById('btnRead').style.display='none';
-        document.getElementById('btnDecode').disabled=true;
         document.getElementById('btnWrite').disabled=true;
+        document.getElementById('btnCopy').disabled=true;
         document.getElementById('btnExport').disabled=true;
         document.getElementById('btnReadAll').disabled=false;
     }else{setStatus('connectStatus','❌ '+r.error,'err');}
@@ -264,7 +278,7 @@ const SMAP={transparent:'TF',linear_fixed:'LF',cyclic:'CF',ber_tlv:'BER-TLV',no_
 function pathCols(fd){const p=fd.path||[];let d=p[0]==='MF'?p.slice(1):p;if(p.length===1&&p[0]==='MF')d=['MF'];while(d.length<3)d.push('');return d.slice(0,3);}
 function getStruct(fd){var fdb=((fd.fcp||{}).file_descriptor||{}).file_descriptor_byte||{};return fdb.structure||'';}
 function getFid(fd){return((fd.fcp||{}).file_identifier||'').toUpperCase();}
-function getFt(fd){var fdb=((fd.fcp||{}).file_descriptor||{}).file_descriptor_byte||{};return fdb.file_type==='df'?'DF':(fdb.file_type?'EF':'');}
+function getFt(fd){var fdb=((fd.fcp||{}).file_descriptor||{}).file_descriptor_byte||{};var ft=fdb.file_type==='df'?'DF':(fdb.file_type?'EF':'');if(!ft){var p=fd.path||[];var last=p[p.length-1]||'';if(last.startsWith('EF.'))ft='EF';else if(last.startsWith('DF.'))ft='DF';}return ft;}
 
 function sortKey(path,fd){
     var group;
@@ -323,29 +337,19 @@ function renderFileList(){
             selectedPath=sortedEntries[idx][0];selectedFd=sortedEntries[idx][1];
             if(selectedFd.decoded)selectedFd._ursp_decoded=selectedFd.decoded;
             showDetail(selectedPath,selectedFd);
+            updateInlineDecode(selectedPath,selectedFd);
             var isEf=getFt(selectedFd)==='EF';
             var is6982=selectedFd.error&&selectedFd.error.sw_actual==='6982';
             document.getElementById('btnRead').style.display=(is6982&&!isOfflineMode)?'inline-flex':'none';
-            document.getElementById('btnDecode').disabled=!isEf||is6982;
             document.getElementById('btnWrite').disabled=!isEf||is6982||isOfflineMode;
-            document.getElementById('btnWrite').style.display=isOfflineMode?'none':'';
         };
         tbody.appendChild(tr);
     }
 }
 
 function showDetail(path,fd){
-    var rawBox=document.getElementById('rawDataBox');
-    if(fd.error&&!fd.bytes){rawBox.style.padding='8px';rawBox.innerHTML='<span style="color:#c0392b">'+(fd.error.sw_actual||'ERR')+': '+(fd.error.message||'')+'</span>';}
-    else if(fd.bytes){
-        var b=fd.bytes;
-        if(Array.isArray(b)){
-            var html='<table class="rec-table" style="margin:0"><thead><tr><th>Record #</th><th style="text-align:left">Hex Data</th></tr></thead><tbody>';
-            b.forEach(function(r,i){html+='<tr><td>'+(i+1)+'</td><td>'+String(r).toUpperCase()+'</td></tr>';});
-            html+='</tbody></table>';rawBox.style.padding='0';rawBox.innerHTML=html;
-        }else if(typeof b==='string'){rawBox.style.padding='8px';rawBox.innerHTML='<pre class="data-pre">'+b.toUpperCase()+'</pre>';}
-        else{rawBox.style.padding='8px';rawBox.innerHTML='<pre class="data-pre">'+JSON.stringify(b,null,2)+'</pre>';}
-    }else{rawBox.style.padding='8px';rawBox.innerHTML='<span style="color:#999">(no data)</span>';}
+    var rawView=document.getElementById('inlineRawView');
+    _renderRawView(rawView,fd);
 }
 
 function syntaxHL(obj){
@@ -567,6 +571,334 @@ function copyDecodeContent(btn){
     navigator.clipboard.writeText(text).then(function(){btn.textContent='✓ Copied';setTimeout(function(){btn.textContent='📋 Copy';},1500);});
 }
 
+/* === Inline Decode Panel === */
+function isPlmnFile(path){
+    if(!path)return false;
+    var plmnNames=['EF.PLMNwAcT','EF.HPLMNwAcT','EF.OPLMNwAcT','EF.PLMNsel','EF.FPLMN','EF.EHPLMN','EF.HPLMNwAcT'];
+    for(var i=0;i<plmnNames.length;i++){if(path.endsWith(plmnNames[i]))return true;}
+    return false;
+}
+
+function parsePlmnFromBytes(bytesHex,hasAcT){
+    if(!bytesHex||typeof bytesHex!=='string')return[];
+    var hex=bytesHex.toUpperCase().replace(/\s/g,'');
+    var step=hasAcT?10:6;
+    var rows=[];
+    for(var i=0;i+step<=hex.length;i+=step){
+        var chunk=hex.substr(i,step);
+        if(chunk.substr(0,6)==='FFFFFF'){
+            rows.push({mcc:'-',mnc:'-',act:hasAcT?'-':''});
+            continue;
+        }
+        // Nibble-swap BCD: byte0=D1D0, byte1=D3D2, byte2=D5D4
+        var d=[];for(var j=0;j<6;j++)d.push(chunk.charAt(j));
+        // MCC = d[1] d[0] d[3]  (byte0_lo, byte0_hi, byte1_lo)
+        var mcc=d[1]+d[0]+d[3];
+        // MNC = d[5]+d[4] + (d[2] if not F)  (byte2_lo, byte2_hi, byte1_hi)
+        var mnc=d[5]+d[4];
+        if(d[2]!=='F')mnc+=d[2];
+        var act=hasAcT?chunk.substr(6,4):'';
+        rows.push({mcc:mcc,mnc:mnc,act:act});
+    }
+    return rows;
+}
+
+function renderPlmnTable(rows,hasAcT){
+    var cs='padding:3px 12px 3px 6px;text-align:left;width:50px';
+    var hs='padding:4px 12px 4px 6px;text-align:left;width:50px';
+    var html='<table class="rec-table" style="margin:0;width:auto"><thead><tr><th style="padding:4px 8px;width:38px">#</th><th style="'+hs+'">MCC</th><th style="'+hs+'">MNC</th>';
+    if(hasAcT)html+='<th style="'+hs+'">AcT</th>';
+    html+='</tr></thead><tbody>';
+    for(var i=0;i<rows.length;i++){
+        html+='<tr><td style="padding:3px 8px;width:38px">'+(i+1)+'</td><td style="'+cs+'">'+rows[i].mcc+'</td><td style="'+cs+'">'+rows[i].mnc+'</td>';
+        if(hasAcT)html+='<td style="'+cs+'">'+rows[i].act+'</td>';
+        html+='</tr>';
+    }
+    html+='</tbody></table>';
+    return html;
+}
+
+function updateInlineDecode(path,fd){
+    var treeView=document.getElementById('inlineTreeView');
+    var jsonView=document.getElementById('inlineJsonView');
+    var rawView=document.getElementById('inlineRawView');
+    var treeRaw=document.getElementById('inlineTreeRaw');
+    var jsonRaw=document.getElementById('inlineJsonRaw');
+    var box=document.getElementById('inlineDecodeBox');
+    var toggle=document.getElementById('inlineDecodeToggle');
+
+    // Remove any PLMN/Service/ACC table that was previously inserted
+    var oldPlmn=document.getElementById('inlinePlmnTable');
+    if(oldPlmn)oldPlmn.remove();
+    var oldSvc=document.getElementById('inlineSvcTable');
+    if(oldSvc)oldSvc.remove();
+    var oldAcc=document.getElementById('inlineAccTable');
+    if(oldAcc)oldAcc.remove();
+
+    // Ensure core elements are back in the box (they may have been detached)
+    if(!box.contains(treeView)){box.appendChild(treeView);}
+    if(!box.contains(jsonView)){box.appendChild(jsonView);}
+    if(!box.contains(rawView)){box.appendChild(rawView);}
+    if(!box.contains(treeRaw)){box.appendChild(treeRaw);}
+    if(!box.contains(jsonRaw)){box.appendChild(jsonRaw);}
+
+    // Reset: default to decode view
+    _isUrspDecode=false;
+    switchInlineView('decode');
+
+    // Update Raw view
+    _renderRawView(rawView,fd);
+
+    if(!fd||getFt(fd)!=='EF'){
+        toggle.style.display='none';
+        document.getElementById('plmnToggle').style.display='none';
+        document.getElementById('btnCopy').disabled=true;
+        treeView.innerHTML='';treeView.style.display='none';
+        jsonView.innerHTML='';jsonView.style.display='none';
+        rawView.innerHTML='';rawView.style.display='none';
+        treeRaw.value='';jsonRaw.value='';
+        return;
+    }
+
+    // Enable copy for any EF with data
+    document.getElementById('btnCopy').disabled=!(fd.bytes||fd.body!==undefined&&fd.body!==null);
+
+    // PLMN table view
+    if(isPlmnFile(path)&&fd.bytes){
+        var hasAcT=path.indexOf('wAcT')>=0;
+        var rawHex;
+        if(typeof fd.bytes==='string'){rawHex=fd.bytes.toUpperCase();}
+        else if(Array.isArray(fd.bytes)){rawHex=fd.bytes.join('').toUpperCase();}
+        else{rawHex='';}
+        if(rawHex){
+            var rows=parsePlmnFromBytes(rawHex,hasAcT);
+            treeView.style.display='none';jsonView.style.display='none';rawView.style.display='none';
+            var plmnDiv=document.createElement('div');
+            plmnDiv.id='inlinePlmnTable';
+            var tableHtml=renderPlmnTable(rows,hasAcT);
+            plmnDiv.innerHTML='<div id="plmnTableContent">'+tableHtml+'</div>'
+                +'<div id="plmnRawContent" style="display:none"><pre class="data-pre" style="margin:0">'+rawHex+'</pre></div>';
+            box.appendChild(plmnDiv);
+            toggle.style.display='none';
+            document.getElementById('plmnToggle').style.display='flex';
+            document.getElementById('plmn-toggle-table').classList.add('toggle-active');
+            document.getElementById('plmn-toggle-raw').classList.remove('toggle-active');
+            treeRaw.value='';jsonRaw.value='';
+            return;
+        }
+    }
+
+    toggle.style.display='flex';
+    document.getElementById('plmnToggle').style.display='none';
+
+    // Service Table (UST/IST/EST) view
+    if(isServiceTableFile(path)&&fd.bytes&&typeof fd.bytes==='string'){
+        _renderServiceTableView(path,fd,box,treeView,jsonView,rawView,toggle,treeRaw,jsonRaw);
+        return;
+    }
+
+    // ACC (Access Control Class) table view
+    if(path&&path.endsWith('/EF.ACC')&&fd.body&&typeof fd.body==='object'){
+        _renderAccTableView(fd,box,treeView,jsonView,rawView,toggle,treeRaw,jsonRaw);
+        return;
+    }
+
+    // URSP special handling — Decode shows Tree format
+    if(isUrspFile(path)&&fd._ursp_decoded){
+        var normalized=normalizeUrspRules(fd._ursp_decoded);
+        if(normalized){
+            _isUrspDecode=true;
+            var ts=formatUrspTree(normalized);
+            var js=JSON.stringify(normalized,null,2);
+            treeView.textContent=ts;jsonView.innerHTML=syntaxHLJson(js);
+            treeRaw.value=ts;jsonRaw.value=js;
+            switchInlineView('decode');
+            return;
+        }
+    }
+
+    // Normal EF decoding
+    if(fd.body!==undefined&&fd.body!==null){
+        var displayBody=fd.body;
+        // Single-key object: show just the value
+        if(displayBody&&typeof displayBody==='object'&&!Array.isArray(displayBody)){
+            var keys=Object.keys(displayBody);
+            if(keys.length===1)displayBody=displayBody[keys[0]];
+        }
+        var jsonStr=(typeof displayBody==='string')?displayBody:JSON.stringify(displayBody,null,2);
+        jsonView.innerHTML=(typeof displayBody==='string')?'<span style="font-family:Consolas,monospace;font-size:0.74rem">'+displayBody+'</span>':syntaxHLJson(jsonStr);
+        jsonRaw.value=jsonStr;
+        treeRaw.value='';
+        switchInlineView('decode');
+    }else if(fd.error){
+        toggle.style.display='none';
+        var sw=fd.error.sw_actual||'';
+        var msg=fd.error.message||'';
+        var errText=sw?(sw+': '+msg):msg;
+        jsonView.innerHTML='<span style="color:#c0392b;font-size:0.74rem">'+errText+'</span>';
+        jsonView.style.display='block';
+        treeRaw.value='';jsonRaw.value='';
+    }else{
+        toggle.style.display='none';
+        jsonView.innerHTML='<span style="color:#999;font-size:0.74rem">(no data)</span>';
+        jsonView.style.display='block';
+        treeRaw.value='';jsonRaw.value='';
+    }
+}
+
+function _renderRawView(rawView,fd){
+    if(!fd){rawView.innerHTML='<span style="color:#999">(no data)</span>';return;}
+    if(fd.error&&!fd.bytes){rawView.innerHTML='<span style="color:#c0392b">'+(fd.error.sw_actual||'ERR')+': '+(fd.error.message||'')+'</span>';return;}
+    if(fd.bytes){
+        var b=fd.bytes;
+        if(Array.isArray(b)){
+            var html='<table class="rec-table" style="margin:0"><thead><tr><th>Record #</th><th style="text-align:left">Hex Data</th></tr></thead><tbody>';
+            b.forEach(function(r,i){html+='<tr><td>'+(i+1)+'</td><td>'+String(r).toUpperCase()+'</td></tr>';});
+            html+='</tbody></table>';rawView.innerHTML=html;
+        }else if(typeof b==='string'){rawView.innerHTML='<pre class="data-pre" style="margin:0">'+b.toUpperCase()+'</pre>';}
+        else{rawView.innerHTML='<pre class="data-pre" style="margin:0">'+JSON.stringify(b,null,2)+'</pre>';}
+    }else{rawView.innerHTML='<span style="color:#999">(no data)</span>';}
+}
+
+async function _renderServiceTableView(path,fd,box,treeView,jsonView,rawView,toggle,treeRaw,jsonRaw){
+    var efName=path.endsWith('/EF.UST')?'UST':path.endsWith('/EF.IST')?'IST':'EST';
+    var r=await api('/sim/service_map',{ef:efName});
+    if(!r.success||!r.map){return;}
+    var rawHex=(typeof fd.bytes==='string')?fd.bytes.toUpperCase().replace(/\s/g,''):'';
+    var bits=hexToBits(rawHex);
+    var keys=Object.keys(r.map).sort(function(a,b){return parseInt(a)-parseInt(b);});
+    var tblWidth=(efName==='EST')?'auto':'100%';
+    var html='<table class="rec-table" style="margin:0;width:'+tblWidth+'"><thead><tr>'
+        +'<th style="padding:4px 8px;width:38px">#</th>'
+        +'<th style="padding:4px 12px 4px 6px;text-align:left">Service</th>'
+        +'<th style="padding:4px 12px 4px 6px;text-align:left">Status</th>'
+        +'</tr></thead><tbody>';
+    for(var i=0;i<keys.length;i++){
+        var num=keys[i],label=r.map[num],enabled=!!bits[parseInt(num)];
+        var statusStyle=enabled?'color:#27ae60;font-weight:600':'color:#aaa';
+        html+='<tr><td style="padding:3px 8px;width:38px">'+num+'</td>'
+            +'<td style="padding:3px 12px 3px 6px;text-align:left">'+label+'</td>'
+            +'<td style="padding:3px 12px 3px 6px;text-align:left;'+statusStyle+'">'+(enabled?'ON':'OFF')+'</td></tr>';
+    }
+    html+='</tbody></table>';
+    treeView.style.display='none';jsonView.style.display='none';rawView.style.display='none';
+    // Remove old service table
+    var old=document.getElementById('inlineSvcTable');if(old)old.remove();
+    var svcDiv=document.createElement('div');
+    svcDiv.id='inlineSvcTable';
+    svcDiv.innerHTML='<div id="svcTableContent">'+html+'</div>'
+        +'<div id="svcRawContent" style="display:none"><pre class="data-pre" style="margin:0">'+rawHex+'</pre></div>';
+    box.appendChild(svcDiv);
+    toggle.style.display='none';
+    document.getElementById('plmnToggle').style.display='flex';
+    document.getElementById('plmn-toggle-table').classList.add('toggle-active');
+    document.getElementById('plmn-toggle-raw').classList.remove('toggle-active');
+    treeRaw.value='';jsonRaw.value='';
+}
+
+function _renderAccTableView(fd,box,treeView,jsonView,rawView,toggle,treeRaw,jsonRaw){
+    var body=fd.body;
+    var keys=Object.keys(body).sort(function(a,b){
+        var na=parseInt(a.replace(/\D/g,''),10),nb=parseInt(b.replace(/\D/g,''),10);
+        return na-nb;
+    });
+    var html='<table class="rec-table" style="margin:0;width:auto"><thead><tr>'
+        +'<th style="padding:4px 8px;width:38px">#</th>'
+        +'<th style="padding:4px 12px 4px 6px;text-align:left">Class</th>'
+        +'<th style="padding:4px 12px 4px 6px;text-align:left">Status</th>'
+        +'</tr></thead><tbody>';
+    for(var i=0;i<keys.length;i++){
+        var k=keys[i],enabled=!!body[k];
+        var num=k.replace(/\D/g,'');
+        var statusStyle=enabled?'color:#27ae60;font-weight:600':'color:#aaa';
+        html+='<tr><td style="padding:3px 8px;width:38px">'+num+'</td>'
+            +'<td style="padding:3px 12px 3px 6px;text-align:left">'+k+'</td>'
+            +'<td style="padding:3px 12px 3px 6px;text-align:left;'+statusStyle+'">'+(enabled?'ON':'OFF')+'</td></tr>';
+    }
+    html+='</tbody></table>';
+    treeView.style.display='none';jsonView.style.display='none';rawView.style.display='none';
+    var old=document.getElementById('inlineAccTable');if(old)old.remove();
+    var accDiv=document.createElement('div');
+    accDiv.id='inlineAccTable';
+    var rawHex=(typeof fd.bytes==='string')?fd.bytes.toUpperCase():'';
+    accDiv.innerHTML='<div id="accTableContent">'+html+'</div>'
+        +'<div id="accRawContent" style="display:none"><pre class="data-pre" style="margin:0">'+rawHex+'</pre></div>';
+    box.appendChild(accDiv);
+    toggle.style.display='none';
+    document.getElementById('plmnToggle').style.display='flex';
+    document.getElementById('plmn-toggle-table').classList.add('toggle-active');
+    document.getElementById('plmn-toggle-raw').classList.remove('toggle-active');
+    treeRaw.value='';jsonRaw.value='';
+}
+
+var _isUrspDecode=false;
+function switchInlineView(mode){
+    var tv=document.getElementById('inlineTreeView'),jv=document.getElementById('inlineJsonView'),rv=document.getElementById('inlineRawView');
+    var dl=document.getElementById('inline-toggle-decode'),rl=document.getElementById('inline-toggle-raw');
+    tv.style.display='none';jv.style.display='none';rv.style.display='none';
+    dl.classList.remove('toggle-active');rl.classList.remove('toggle-active');
+    if(mode==='raw'){rv.style.display='block';rl.classList.add('toggle-active');}
+    else{
+        // decode mode: URSP shows tree, others show JSON
+        if(_isUrspDecode){tv.style.display='block';}
+        else{jv.style.display='block';}
+        dl.classList.add('toggle-active');
+    }
+}
+
+function switchPlmnView(mode){
+    var tl=document.getElementById('plmn-toggle-table'),rl=document.getElementById('plmn-toggle-raw');
+    tl.classList.remove('toggle-active');rl.classList.remove('toggle-active');
+    // PLMN
+    var tc=document.getElementById('plmnTableContent'),rc=document.getElementById('plmnRawContent');
+    if(tc&&rc){
+        if(mode==='raw'){tc.style.display='none';rc.style.display='block';}
+        else{tc.style.display='block';rc.style.display='none';}
+    }
+    // Service Table
+    var sc=document.getElementById('svcTableContent'),sr=document.getElementById('svcRawContent');
+    if(sc&&sr){
+        if(mode==='raw'){sc.style.display='none';sr.style.display='block';}
+        else{sc.style.display='block';sr.style.display='none';}
+    }
+    // ACC Table
+    var ac=document.getElementById('accTableContent'),ar=document.getElementById('accRawContent');
+    if(ac&&ar){
+        if(mode==='raw'){ac.style.display='none';ar.style.display='block';}
+        else{ac.style.display='block';ar.style.display='none';}
+    }
+    if(mode==='raw'){rl.classList.add('toggle-active');}
+    else{tl.classList.add('toggle-active');}
+}
+
+function copyInlineDecode(btn){
+    var rv=document.getElementById('inlineRawView'),jv=document.getElementById('inlineJsonView');
+    var plmnTable=document.getElementById('plmnTableContent'),plmnRaw=document.getElementById('plmnRawContent');
+    var svcTable=document.getElementById('svcTableContent'),svcRaw=document.getElementById('svcRawContent');
+    var accTable=document.getElementById('accTableContent'),accRaw=document.getElementById('accRawContent');
+    var text;
+    // ACC Table mode
+    if(accTable&&accRaw){
+        if(accRaw.style.display!=='none'){text=accRaw.innerText||accRaw.textContent||'';}
+        else{text=accTable.innerText||accTable.textContent||'';}
+    }
+    // Service Table mode
+    else if(svcTable&&svcRaw){
+        if(svcRaw.style.display!=='none'){text=svcRaw.innerText||svcRaw.textContent||'';}
+        else{text=svcTable.innerText||svcTable.textContent||'';}
+    }
+    // PLMN mode
+    else if(plmnTable&&plmnRaw){
+        if(plmnRaw.style.display!=='none'){text=plmnRaw.innerText||plmnRaw.textContent||'';}
+        else{text=plmnTable.innerText||plmnTable.textContent||'';}
+    }
+    // Normal mode
+    else if(rv&&rv.style.display!=='none'){text=rv.innerText||rv.textContent||'';}
+    else if(_isUrspDecode){text=document.getElementById('inlineTreeRaw').value;}
+    else{text=document.getElementById('inlineJsonRaw').value;}
+    navigator.clipboard.writeText(text).then(function(){btn.textContent='✓ Copied';setTimeout(function(){btn.textContent='📋 Copy';},1500);});
+}
+
 function openDecodePopup(){
     if(!selectedFd)return;
     document.getElementById('decodeEfName').textContent=selectedPath.replace(/\//g,' / ');
@@ -681,7 +1013,6 @@ async function doReadEf(admHex,admType){
         if(rd.bytes){selectedFd.bytes=rd.bytes;if(rd.body)selectedFd.body=rd.body;delete selectedFd.error;
             showDetail(selectedPath,selectedFd);renderFileList();
             document.getElementById('btnRead').style.display='none';
-            document.getElementById('btnDecode').disabled=false;
             document.getElementById('btnWrite').disabled=false;
             return true;}
     }
@@ -690,13 +1021,11 @@ async function doReadEf(admHex,admType){
 function onReadClick(){
     if(!selectedFd)return;
     requireVerify(function(){
-        // Show reading status in raw data panel
-        var rawBox=document.getElementById('rawDataBox');
-        rawBox.style.padding='8px';
-        rawBox.innerHTML='<span style="color:#888">⏳ Verifying and reading...</span>';
+        var rawView=document.getElementById('inlineRawView');
+        rawView.innerHTML='<span style="color:#888">⏳ Verifying and reading...</span>';
         doReadEf(verifiedAdm,verifiedAdmType).then(function(ok){
             if(!ok){
-                rawBox.innerHTML='<span style="color:#c0392b">⚠️ Read failed</span>';
+                rawView.innerHTML='<span style="color:#c0392b">⚠️ Read failed</span>';
             }
         });
     });
@@ -950,6 +1279,13 @@ document.getElementById('fileListScroll').addEventListener('keydown',function(e)
     var next=e.key==='ArrowDown'?Math.min(cur+1,rows.length-1):Math.max(cur-1,0);
     if(next!==cur&&next>=0){rows[next].click();rows[next].scrollIntoView({block:'nearest'});}
 });
+document.getElementById('fileFilter').addEventListener('keydown',function(e){
+    if(e.key!=='ArrowDown'&&e.key!=='ArrowUp')return;e.preventDefault();
+    var rows=document.getElementById('fileListBody').querySelectorAll('tr');if(!rows.length)return;
+    var cur=-1;rows.forEach(function(r,i){if(r.classList.contains('selected'))cur=i;});
+    var next=e.key==='ArrowDown'?Math.min(cur+1,rows.length-1):Math.max(cur-1,0);
+    if(next!==cur&&next>=0){rows[next].click();rows[next].scrollIntoView({block:'nearest'});}
+});
 
 async function exportData(){
     if(!dumpData)return;setStatus('exportStatus','⏳ Exporting...','warn');
@@ -967,8 +1303,7 @@ function loadDumpFile(input){
     setStatus('connectStatus','','');
     setStatus('exportStatus','','');
     document.getElementById('fileListBody').innerHTML='';
-    document.getElementById('rawDataBox').innerHTML='<span style="color:#999">(no data)</span>';
-    document.getElementById('rawDataBox').style.padding='8px';
+    document.getElementById('inlineRawView').innerHTML='<span style="color:#999">(no data)</span>';
     dumpData=null;selectedPath=null;selectedFd=null;sortedEntries=[];
     clearFilter();
     var reader=new FileReader();
@@ -1005,7 +1340,6 @@ function loadDumpFile(input){
             document.getElementById('btnExport').disabled=true;
             document.getElementById('btnReadAll').disabled=true;
             document.getElementById('btnWrite').disabled=true;
-            document.getElementById('btnWrite').style.display='none';
             document.getElementById('btnRead').style.display='none';
             document.getElementById('admBadge').style.display='none';
             writeVerified=false;verifiedAdm='';verifiedAdmType='';

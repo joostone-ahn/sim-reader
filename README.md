@@ -53,11 +53,17 @@ Your browser will automatically open `http://127.0.0.1:8082`.
 
 4. **Load Dump** — Open a previously exported `dump.json` to browse without a SIM card
 
-#### File Operations
+#### File Contents Panel
 
-5. **Search** — Filter files by FID or name (press Enter to apply)
-6. **Decoding** — View decoded data in Tree or JSON format
-7. **Write** — Write hex data to an EF (ADM verification required)
+- **Decode / Raw toggle** — Switch between decoded view and raw hex data
+- **PLMN files** (PLMNwAcT, OPLMNwAcT, HPLMNwAcT, FPLMN, EHPLMN) — Table view with MCC, MNC, AcT columns
+- **Service tables** (UST, IST, EST) — Table view with service name and ON/OFF status
+- **ACC** — Table view with access control class and ON/OFF status
+- **URSP** — Tree-formatted decode view
+- **Other EFs** — JSON decode view
+- **Search** — Filter files by FID or name
+- **Copy** — Copy current view content to clipboard
+- **Write** — Write hex data to an EF (ADM verification required)
 
 ---
 
