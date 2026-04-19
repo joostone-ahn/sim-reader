@@ -28,6 +28,9 @@ if ! "$PYTHON" -c "import pySim" &>/dev/null; then
     "$PIP" install -q --disable-pip-version-check -e "$DIR/pysim"
 fi
 
+# Kill existing process on the same port
+lsof -ti:$PORT | xargs kill -9 2>/dev/null || true
+
 # Open browser after short delay
 (sleep 2 && open "$URL" 2>/dev/null || xdg-open "$URL" 2>/dev/null || echo "🌐 Open $URL in your browser") &
 
