@@ -466,9 +466,9 @@ function updateInlineDecode(path,fd){
     if(!box.contains(treeRaw)){box.appendChild(treeRaw);}
     if(!box.contains(jsonRaw)){box.appendChild(jsonRaw);}
 
-    // Reset: default to decode view
+    // Reset: restore last selected view mode
     _isUrspDecode=false;
-    switchInlineView('decode');
+    switchInlineView(_lastViewMode);
 
     // Update Raw view
     _renderRawView(rawView,fd);
@@ -505,8 +505,7 @@ function updateInlineDecode(path,fd){
             box.appendChild(plmnDiv);
             toggle.style.display='none';
             document.getElementById('plmnToggle').style.display='flex';
-            document.getElementById('plmn-toggle-table').classList.add('toggle-active');
-            document.getElementById('plmn-toggle-raw').classList.remove('toggle-active');
+            switchPlmnView(_lastViewMode==='raw'?'raw':'table');
             treeRaw.value='';jsonRaw.value='';
             return;
         }
@@ -592,7 +591,7 @@ function updateInlineDecode(path,fd){
             var js=JSON.stringify(decoded,null,2);
             treeView.textContent=ts;jsonView.innerHTML=syntaxHLJson(js);
             treeRaw.value=ts;jsonRaw.value=js;
-            switchInlineView('decode');
+            switchInlineView(_lastViewMode);
             return;
         }
     }
@@ -609,35 +608,35 @@ function updateInlineDecode(path,fd){
         jsonView.innerHTML=(typeof displayBody==='string')?'<span style="font-family:Consolas,monospace;font-size:0.74rem">'+displayBody+'</span>':syntaxHLJson(jsonStr);
         jsonRaw.value=jsonStr;
         treeRaw.value='';
-        switchInlineView('decode');
+        switchInlineView(_lastViewMode);
     }else if(fd.error){
         toggle.style.display='none';
         var sw=fd.error.sw_actual||'';
         var msg=fd.error.message||'';
         var errText=sw?(sw+': '+msg):msg;
         jsonView.innerHTML='<span style="color:#c0392b;font-size:0.74rem">'+errText+'</span>';
-        jsonView.style.display='block';
+        jsonView.style.display='block';rawView.style.display='none';
         treeRaw.value='';jsonRaw.value='';
     }else{
         toggle.style.display='none';
         jsonView.innerHTML='<span style="color:#999;font-size:0.74rem">(no data)</span>';
-        jsonView.style.display='block';
+        jsonView.style.display='block';rawView.style.display='none';
         treeRaw.value='';jsonRaw.value='';
     }
 }
 
 function _renderRawView(rawView,fd){
-    if(!fd){rawView.innerHTML='<span style="color:#999">(no data)</span>';return;}
-    if(fd.error&&!fd.bytes){rawView.innerHTML='<span style="color:#c0392b">'+(fd.error.sw_actual||'ERR')+': '+(fd.error.message||'')+'</span>';return;}
+    if(!fd){rawView.innerHTML='<span style="color:#999">(no data)</span>';rawView.style.margin='8px';rawView.style.padding='8px';return;}
+    if(fd.error&&!fd.bytes){rawView.innerHTML='<span style="color:#c0392b">'+(fd.error.sw_actual||'ERR')+': '+(fd.error.message||'')+'</span>';rawView.style.margin='8px';rawView.style.padding='8px';return;}
     if(fd.bytes){
         var b=fd.bytes;
         if(Array.isArray(b)){
-            var html='<table class="rec-table" style="margin:0"><thead><tr><th>Record #</th><th style="text-align:left">Hex Data</th></tr></thead><tbody>';
-            b.forEach(function(r,i){html+='<tr><td>'+(i+1)+'</td><td>'+String(r).toUpperCase()+'</td></tr>';});
-            html+='</tbody></table>';rawView.innerHTML=html;
-        }else if(typeof b==='string'){rawView.innerHTML='<pre class="data-pre" style="margin:0">'+b.toUpperCase()+'</pre>';}
-        else{rawView.innerHTML='<pre class="data-pre" style="margin:0">'+JSON.stringify(b,null,2)+'</pre>';}
-    }else{rawView.innerHTML='<span style="color:#999">(no data)</span>';}
+            var html='<table class="rec-table" style="margin:0;width:100%"><thead><tr><th style="width:38px">#</th><th style="padding:4px 12px 4px 6px;text-align:left">Hex Data</th></tr></thead><tbody>';
+            b.forEach(function(r,i){html+='<tr><td>'+(i+1)+'</td><td style="padding:3px 12px 3px 6px;text-align:left">'+String(r).toUpperCase()+'</td></tr>';});
+            html+='</tbody></table>';rawView.innerHTML=html;rawView.style.margin='0';rawView.style.padding='0';
+        }else if(typeof b==='string'){rawView.innerHTML='<pre class="data-pre" style="margin:0">'+b.toUpperCase()+'</pre>';rawView.style.margin='8px';rawView.style.padding='8px';}
+        else{rawView.innerHTML='<pre class="data-pre" style="margin:0">'+JSON.stringify(b,null,2)+'</pre>';rawView.style.margin='8px';rawView.style.padding='8px';}
+    }else{rawView.innerHTML='<span style="color:#999">(no data)</span>';rawView.style.margin='8px';rawView.style.padding='8px';}
 }
 
 async function _renderServiceTableView(path,fd,box,treeView,jsonView,rawView,toggle,treeRaw,jsonRaw){
@@ -671,8 +670,7 @@ async function _renderServiceTableView(path,fd,box,treeView,jsonView,rawView,tog
     box.appendChild(svcDiv);
     toggle.style.display='none';
     document.getElementById('plmnToggle').style.display='flex';
-    document.getElementById('plmn-toggle-table').classList.add('toggle-active');
-    document.getElementById('plmn-toggle-raw').classList.remove('toggle-active');
+    switchPlmnView(_lastViewMode==='raw'?'raw':'table');
     treeRaw.value='';jsonRaw.value='';
 }
 
@@ -706,13 +704,14 @@ function _renderAccTableView(fd,box,treeView,jsonView,rawView,toggle,treeRaw,jso
     box.appendChild(accDiv);
     toggle.style.display='none';
     document.getElementById('plmnToggle').style.display='flex';
-    document.getElementById('plmn-toggle-table').classList.add('toggle-active');
-    document.getElementById('plmn-toggle-raw').classList.remove('toggle-active');
+    switchPlmnView(_lastViewMode==='raw'?'raw':'table');
     treeRaw.value='';jsonRaw.value='';
 }
 
 var _isUrspDecode=false;
+var _lastViewMode='decode';
 function switchInlineView(mode){
+    _lastViewMode=mode;
     var tv=document.getElementById('inlineTreeView'),jv=document.getElementById('inlineJsonView'),rv=document.getElementById('inlineRawView');
     var dl=document.getElementById('inline-toggle-decode'),rl=document.getElementById('inline-toggle-raw');
     tv.style.display='none';jv.style.display='none';rv.style.display='none';
@@ -727,6 +726,7 @@ function switchInlineView(mode){
 }
 
 function switchPlmnView(mode){
+    _lastViewMode=mode==='raw'?'raw':'decode';
     var tl=document.getElementById('plmn-toggle-table'),rl=document.getElementById('plmn-toggle-raw');
     tl.classList.remove('toggle-active');rl.classList.remove('toggle-active');
     // PLMN
