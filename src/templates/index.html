@@ -144,30 +144,6 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
     </div>
 </div>
 
-<!-- Decode Popup -->
-<div id="decodeOverlay" class="overlay" onclick="if(event.target===this)closeDecodePopup()">
-<div class="popup" style="width:780px">
-    <div class="panel-title" style="border-radius:10px 10px 0 0">
-        <span>🔍 Decoding</span>
-        <span id="decodeEfName" style="margin-left:8px;font-weight:400;font-size:0.78rem;opacity:0.9"></span>
-        <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
-            <div class="toggle-switch" id="decodeToggle" onclick="toggleDecodeView()">
-                <span class="toggle-label toggle-active" id="toggle-tree">Tree</span>
-                <span class="toggle-label" id="toggle-json">JSON</span>
-            </div>
-            <button class="btn btn-dark" id="decodeCopyBtn" onclick="copyDecodeContent(this)" style="padding:3px 8px;font-size:0.68rem;min-width:60px">📋 Copy</button>
-            <button onclick="closeDecodePopup()" style="background:none;border:none;color:white;font-size:1.1rem;cursor:pointer">✕</button>
-        </div>
-    </div>
-    <div style="padding:12px;max-height:calc(80vh - 50px);overflow:auto">
-        <pre id="decodeTreeView" class="tree-display" style="min-height:100px"></pre>
-        <div id="decodeJsonView" class="json-display" style="display:none;min-height:100px"></div>
-        <textarea id="decodeTreeRaw" style="display:none"></textarea>
-        <textarea id="decodeJsonRaw" style="display:none"></textarea>
-    </div>
-</div>
-</div>
-
 <!-- Verification Popup -->
 <div id="verifyOverlay" class="overlay" onclick="if(event.target===this)closeVerifyPopup()">
 <div class="popup" style="width:420px;min-width:350px;min-height:auto;resize:none">
@@ -313,7 +289,6 @@ async function readAllFiles(){
 }
 
 function applyFilter(){document.getElementById('filterClear').style.display=document.getElementById('fileFilter').value?'inline':'none';renderFileList();}
-function onFilterInput(){if(!document.getElementById('fileFilter').value){clearFilter();}}
 function clearFilter(){document.getElementById('fileFilter').value='';document.getElementById('filterClear').style.display='none';renderFileList();}
 
 function renderFileList(){
@@ -352,74 +327,8 @@ function showDetail(path,fd){
     _renderRawView(rawView,fd);
 }
 
-function syntaxHL(obj){
-    var j=JSON.stringify(obj,null,2);
-    return j.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-        .replace(/"([^"]+)"(?=\s*:)/g,'<span style="color:#9c27b0">"$1"</span>')
-        .replace(/:\s*"([^"]*)"/g,': <span style="color:#2e7d32">"$1"</span>')
-        .replace(/:\s*(\d+\.?\d*)/g,': <span style="color:#1565c0">$1</span>')
-        .replace(/:\s*(true|false)/g,': <span style="color:#e65100">$1</span>')
-        .replace(/:\s*(null)/g,': <span style="color:#757575">$1</span>');
-}
-
-/* === Decode Popup === */
+/* === File Contents Panel === */
 function isUrspFile(path){return path&&path.indexOf('EF.URSP')>=0;}
-
-/* RSD zero-value types */
-var RSD_ZERO_TYPES={'Multi-access preference':1,'Non-seamless non-3GPP offload indication':1,'5G ProSe layer-3 UE-to-network relay offload indication':1,'5G ProSe multi-path preference':1};
-
-function normalizeTdValue(type,val){
-    if(type==='OS Id + OS App Id'&&typeof val==='string'&&val.indexOf(':')>=0){
-        var p=val.split(':');return{'OS Id':p[0],'OS App Id':p.slice(1).join(':')};}
-    if(type==='IPv4 remote address'&&typeof val==='string'&&val.indexOf('/')>=0){
-        var p=val.split('/');return{'IPv4 address':p[0],'Subnet mask':p[1]};}
-    if(type==='IPv6 remote address/prefix length'&&typeof val==='string'&&val.indexOf('/')>=0){
-        var p=val.split('/');return{'IPv6 address':p[0],'Prefix length':parseInt(p[1])};}
-    if(type==='Remote port range'&&typeof val==='string'&&val.indexOf('-')>=0){
-        var p=val.split('-');return{'Low limit':parseInt(p[0]),'High limit':parseInt(p[1])};}
-    if(type==='Connection capabilities'&&typeof val==='string'){
-        return val.split(',').map(function(s){return s.trim();}).filter(function(s){return s;});}
-    if(type==='Destination MAC address range'&&typeof val==='string'&&val.indexOf('-')>=0){
-        var p=val.split('-');return{'Low limit':p[0].trim(),'High limit':p[1].trim()};}
-    if(type==='IP 3 tuple'&&val&&typeof val==='object'){
-        var r={};
-        if(val.ipType==='IPv4'&&val.address){r['IPv4 address']=val.address;if(val.mask)r['Subnet mask']=val.mask;}
-        else if(val.ipType==='IPv6'&&val.address){r['IPv6 address']=val.address;if(val.prefix)r['Prefix length']=parseInt(val.prefix);}
-        if(val.protocol){
-            if(val.ipType==='IPv4'&&val.address)r['Protocol identifier']=val.protocol;
-            else if(val.ipType==='IPv6'&&val.address)r['Next header']=val.protocol;
-            else r['Protocol identifier/Next header']=val.protocol;}
-        if(val.portType==='Single'&&val.port)r['Port']=parseInt(val.port);
-        else if(val.portType==='Range'){if(val.portLow)r['Port low limit']=parseInt(val.portLow);if(val.portHigh)r['Port high limit']=parseInt(val.portHigh);}
-        return r;}
-    return val;
-}
-function normalizeRsdValue(type,val){
-    if(type==='S-NSSAI'&&typeof val==='string'){
-        var r={};
-        if(val.indexOf(' + SD ')>=0){var p=val.split(' + ');r['SST']=parseInt(p[0].replace('SST ',''));r['SD']=parseInt(p[1].replace('SD ',''));}
-        else{r['SST']=parseInt(val.replace('SST ',''));}
-        return r;}
-    return val;
-}
-function normalizeUrspRules(decoded){
-    if(!decoded||!decoded.ursp_rules)return null;
-    var rules=decoded.ursp_rules.map(function(rule){
-        var tdList=rule.td_components.map(function(td){
-            if(td.type==='Match-all')return{type:'Match-all'};
-            return{type:td.type,value:normalizeTdValue(td.type,td.value)};
-        });
-        var rsdList=rule.rsd_list.map(function(rsd){
-            var conts=rsd.rsd_components.map(function(c){
-                if(RSD_ZERO_TYPES[c.type])return{type:c.type};
-                return{type:c.type,value:normalizeRsdValue(c.type,c.value)};
-            });
-            return{'Precedence value':rsd.precedence_value,'Route selection descriptor contents':conts};
-        });
-        return{'Precedence value':rule.precedence_value,'Traffic descriptor':tdList,'Route selection descriptor list':rsdList};
-    });
-    return{'URSP rules':rules};
-}
 
 function renderValueTree(val,prefix,cont){
     var lines=[];
@@ -477,8 +386,6 @@ function formatUrspTree(normalized){
     return result.join('\n');
 }
 
-function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-
 function syntaxHLJson(json){
     if(!json)return'';
     return'<pre class="json-hl">'+json.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
@@ -486,89 +393,6 @@ function syntaxHLJson(json){
         function(m){var c='json-number';if(/^"/.test(m)){c=/:$/.test(m)?'json-key':'json-string';}
         else if(/true|false/.test(m)){c='json-boolean';}else if(/null/.test(m)){c='json-null';}
         return'<span class="'+c+'">'+m+'</span>';})+'</pre>';
-}
-
-function jsonToTree(obj,prefix,cont){
-    if(prefix===undefined)prefix='';
-    if(cont===undefined)cont='';
-    var lines=[];
-    if(Array.isArray(obj)){
-        for(var i=0;i<obj.length;i++){
-            var last=i===obj.length-1;
-            var p=prefix+(last?'└─ ':'├─ ');
-            var c=cont+(last?'   ':'│  ');
-            var v=obj[i];
-            if(v&&typeof v==='object'){
-                if(Array.isArray(v)){lines.push(p+'['+i+']');lines=lines.concat(jsonToTree(v,c,c));}
-                else{lines.push(p+'['+i+']');lines=lines.concat(jsonToTree(v,c,c));}
-            }else{lines.push(p+formatVal(v));}
-        }
-    }else if(obj&&typeof obj==='object'){
-        var keys=Object.keys(obj);
-        for(var k=0;k<keys.length;k++){
-            var key=keys[k],val=obj[key];
-            var last=k===keys.length-1;
-            var p=prefix+(last?'└─ ':'├─ ');
-            var c=cont+(last?'   ':'│  ');
-            if(val===null||val===undefined){lines.push(p+key);}
-            else if(Array.isArray(val)){
-                if(val.length===0){lines.push(p+key+' = []');}
-                else{lines.push(p+key);lines=lines.concat(jsonToTree(val,c,c));}
-            }else if(typeof val==='object'){
-                if(Object.keys(val).length===0){lines.push(p+key+' = {}');}
-                else{lines.push(p+key);lines=lines.concat(jsonToTree(val,c,c));}
-            }else{lines.push(p+key+' = '+formatVal(val));}
-        }
-    }
-    return lines;
-}
-function formatVal(v){if(typeof v==='string')return v;if(typeof v==='boolean')return v?'true':'false';if(v===null)return'null';return String(v);}
-
-function buildDecodeViews(jsonObj,efName){
-    var jsonStr=JSON.stringify(jsonObj,null,2);
-    var treeLines=[];
-    if(efName)treeLines.push(efName);
-    treeLines=treeLines.concat(jsonToTree(jsonObj,'',''));
-    var treeStr=treeLines.join('\n');
-    document.getElementById('decodeTreeView').textContent=treeStr;
-    document.getElementById('decodeJsonView').innerHTML=syntaxHLJson(jsonStr);
-    document.getElementById('decodeTreeRaw').value=treeStr;
-    document.getElementById('decodeJsonRaw').value=jsonStr;
-}
-
-function showDecodeEmpty(msg){
-    var m=msg||'(no decoded data)';
-    document.getElementById('decodeTreeView').innerHTML='<span style="color:#999">'+m+'</span>';
-    document.getElementById('decodeJsonView').innerHTML='<span style="color:#999">'+m+'</span>';
-    document.getElementById('decodeTreeRaw').value='';
-    document.getElementById('decodeJsonRaw').value='';
-}
-
-function showDecodeError(msg){
-    document.getElementById('decodeTreeView').innerHTML='<span style="color:#e67e22">'+escHtml(msg)+'</span>';
-    document.getElementById('decodeJsonView').innerHTML='<span style="color:#e67e22">'+escHtml(msg)+'</span>';
-    document.getElementById('decodeTreeRaw').value='';
-    document.getElementById('decodeJsonRaw').value='';
-}
-
-function resetDecodeToggle(){
-    document.getElementById('decodeTreeView').style.display='block';
-    document.getElementById('decodeJsonView').style.display='none';
-    document.getElementById('toggle-tree').classList.add('toggle-active');
-    document.getElementById('toggle-json').classList.remove('toggle-active');
-}
-
-function toggleDecodeView(){
-    var tv=document.getElementById('decodeTreeView'),jv=document.getElementById('decodeJsonView');
-    var tl=document.getElementById('toggle-tree'),jl=document.getElementById('toggle-json');
-    if(jv.style.display==='none'){tv.style.display='none';jv.style.display='block';tl.classList.remove('toggle-active');jl.classList.add('toggle-active');}
-    else{tv.style.display='block';jv.style.display='none';tl.classList.add('toggle-active');jl.classList.remove('toggle-active');}
-}
-
-function copyDecodeContent(btn){
-    var jv=document.getElementById('decodeJsonView');
-    var text=(jv&&jv.style.display!=='none')?document.getElementById('decodeJsonRaw').value:document.getElementById('decodeTreeRaw').value;
-    navigator.clipboard.writeText(text).then(function(){btn.textContent='✓ Copied';setTimeout(function(){btn.textContent='📋 Copy';},1500);});
 }
 
 /* === Inline Decode Panel === */
@@ -705,11 +529,23 @@ function updateInlineDecode(path,fd){
 
     // URSP special handling — Decode shows Tree format
     if(isUrspFile(path)&&fd._ursp_decoded){
-        var normalized=normalizeUrspRules(fd._ursp_decoded);
-        if(normalized){
+        var decoded=fd._ursp_decoded;
+        // Convert old format (ursp_rules) to new format (URSP rules) for legacy dump files
+        if(decoded&&!decoded['URSP rules']&&decoded['ursp_rules']){
+            decoded['URSP rules']=decoded['ursp_rules'].map(function(rule){
+                return{
+                    'Precedence value':rule.precedence_value,
+                    'Traffic descriptor':rule.td_components.map(function(td){return td.type==='Match-all'?{type:'Match-all'}:{type:td.type,value:td.value};}),
+                    'Route selection descriptor list':rule.rsd_list.map(function(rsd){
+                        return{'Precedence value':rsd.precedence_value,'Route selection descriptor contents':rsd.rsd_components.map(function(c){return c.value!==undefined&&c.value!==''?{type:c.type,value:c.value}:{type:c.type};})};
+                    })
+                };
+            });
+        }
+        if(decoded&&decoded['URSP rules']){
             _isUrspDecode=true;
-            var ts=formatUrspTree(normalized);
-            var js=JSON.stringify(normalized,null,2);
+            var ts=formatUrspTree(decoded);
+            var js=JSON.stringify(decoded,null,2);
             treeView.textContent=ts;jsonView.innerHTML=syntaxHLJson(js);
             treeRaw.value=ts;jsonRaw.value=js;
             switchInlineView('decode');
@@ -871,6 +707,18 @@ function switchPlmnView(mode){
     else{tl.classList.add('toggle-active');}
 }
 
+function _tableToTsv(container){
+    var table=container.querySelector('table');
+    if(!table)return container.innerText||container.textContent||'';
+    var lines=[];
+    table.querySelectorAll('tr').forEach(function(tr){
+        var cells=[];
+        tr.querySelectorAll('th,td').forEach(function(c){cells.push((c.innerText||c.textContent||'').trim());});
+        lines.push(cells.join('\t'));
+    });
+    return lines.join('\n');
+}
+
 function copyInlineDecode(btn){
     var rv=document.getElementById('inlineRawView'),jv=document.getElementById('inlineJsonView');
     var plmnTable=document.getElementById('plmnTableContent'),plmnRaw=document.getElementById('plmnRawContent');
@@ -880,17 +728,17 @@ function copyInlineDecode(btn){
     // ACC Table mode
     if(accTable&&accRaw){
         if(accRaw.style.display!=='none'){text=accRaw.innerText||accRaw.textContent||'';}
-        else{text=accTable.innerText||accTable.textContent||'';}
+        else{text=_tableToTsv(accTable);}
     }
     // Service Table mode
     else if(svcTable&&svcRaw){
         if(svcRaw.style.display!=='none'){text=svcRaw.innerText||svcRaw.textContent||'';}
-        else{text=svcTable.innerText||svcTable.textContent||'';}
+        else{text=_tableToTsv(svcTable);}
     }
     // PLMN mode
     else if(plmnTable&&plmnRaw){
         if(plmnRaw.style.display!=='none'){text=plmnRaw.innerText||plmnRaw.textContent||'';}
-        else{text=plmnTable.innerText||plmnTable.textContent||'';}
+        else{text=_tableToTsv(plmnTable);}
     }
     // Normal mode
     else if(rv&&rv.style.display!=='none'){text=rv.innerText||rv.textContent||'';}
@@ -898,32 +746,6 @@ function copyInlineDecode(btn){
     else{text=document.getElementById('inlineJsonRaw').value;}
     navigator.clipboard.writeText(text).then(function(){btn.textContent='✓ Copied';setTimeout(function(){btn.textContent='📋 Copy';},1500);});
 }
-
-function openDecodePopup(){
-    if(!selectedFd)return;
-    document.getElementById('decodeEfName').textContent=selectedPath.replace(/\//g,' / ');
-    resetDecodeToggle();
-    var efName=selectedPath?selectedPath.split('/').pop():'';
-    if(isUrspFile(selectedPath)&&selectedFd._ursp_decoded){
-        var normalized=normalizeUrspRules(selectedFd._ursp_decoded);
-        if(normalized){
-            var treeStr=formatUrspTree(normalized);
-            var jsonStr=JSON.stringify(normalized,null,2);
-            document.getElementById('decodeTreeView').textContent=treeStr;
-            document.getElementById('decodeJsonView').innerHTML=syntaxHLJson(jsonStr);
-            document.getElementById('decodeTreeRaw').value=treeStr;
-            document.getElementById('decodeJsonRaw').value=jsonStr;
-        }else if(selectedFd.body){buildDecodeViews(selectedFd.body,efName);}
-        else{showDecodeEmpty();}
-        document.getElementById('decodeOverlay').classList.add('show');
-        return;
-    }
-    if(selectedFd.body!==undefined&&selectedFd.body!==null){buildDecodeViews(selectedFd.body,efName);}
-    else if(selectedFd.error&&selectedFd.bytes){showDecodeError('Decoding error: '+(selectedFd.error.message||''));}
-    else{showDecodeEmpty(selectedFd.error?'':'(no decoded data)');}
-    document.getElementById('decodeOverlay').classList.add('show');
-}
-function closeDecodePopup(){document.getElementById('decodeOverlay').classList.remove('show');}
 
 /* === ARR Access Condition Lookup === */
 function getUpdateCondition(path){
