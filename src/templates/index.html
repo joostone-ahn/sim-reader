@@ -535,9 +535,53 @@ function updateInlineDecode(path,fd){
             decoded['URSP rules']=decoded['ursp_rules'].map(function(rule){
                 return{
                     'Precedence value':rule.precedence_value,
-                    'Traffic descriptor':rule.td_components.map(function(td){return td.type==='Match-all'?{type:'Match-all'}:{type:td.type,value:td.value};}),
+                    'Traffic descriptor':rule.td_components.map(function(td){
+                        if(td.type==='Match-all')return{type:'Match-all'};
+                        var v=td.value;
+                        // Clean up legacy IP 3 tuple: remove empty fields, rename keys
+                        if(td.type==='IP 3 tuple'&&v&&typeof v==='object'){
+                            var r={};
+                            if(v.ipType==='IPv4'&&v.address){r['IPv4 address']=v.address;if(v.mask)r['Subnet mask']=v.mask;}
+                            else if(v.ipType==='IPv6'&&v.address){r['IPv6 address']=v.address;if(v.prefix)r['Prefix length']=parseInt(v.prefix);}
+                            if(v.protocol){r[v.ipType==='IPv4'?'Protocol identifier':(v.ipType==='IPv6'?'Next header':'Protocol')]=v.protocol;}
+                            if(v.portType==='Single'&&v.port)r['Port']=parseInt(v.port);
+                            if(v.portType==='Range'){if(v.portLow)r['Port low limit']=parseInt(v.portLow);if(v.portHigh)r['Port high limit']=parseInt(v.portHigh);}
+                            v=r;
+                        }
+                        // Clean up legacy OS Id + OS App Id
+                        if(td.type==='OS Id + OS App Id'&&typeof v==='string'&&v.indexOf(':')>=0){
+                            var p=v.split(':',2);v={'OS Id':p[0],'OS App Id':p[1]};
+                        }
+                        // Clean up legacy IPv4/IPv6
+                        if(td.type==='IPv4 remote address'&&typeof v==='string'&&v.indexOf('/')>=0){
+                            var p=v.split('/');v={'IPv4 address':p[0],'Subnet mask':p[1]};
+                        }
+                        if(td.type==='IPv6 remote address/prefix length'&&typeof v==='string'&&v.indexOf('/')>=0){
+                            var p=v.split('/');v={'IPv6 address':p[0],'Prefix length':parseInt(p[1])};
+                        }
+                        // Clean up legacy Remote port range
+                        if(td.type==='Remote port range'&&typeof v==='string'&&v.indexOf('-')>=0){
+                            var p=v.split('-');v={'Low limit':parseInt(p[0]),'High limit':parseInt(p[1])};
+                        }
+                        // Clean up legacy Connection capabilities
+                        if(td.type==='Connection capabilities'&&typeof v==='string'){
+                            v=v.split(',').map(function(s){return s.trim();}).filter(function(s){return s;});
+                        }
+                        // Clean up legacy S-NSSAI in RSD
+                        return{type:td.type,value:v};
+                    }),
                     'Route selection descriptor list':rule.rsd_list.map(function(rsd){
-                        return{'Precedence value':rsd.precedence_value,'Route selection descriptor contents':rsd.rsd_components.map(function(c){return c.value!==undefined&&c.value!==''?{type:c.type,value:c.value}:{type:c.type};})};
+                        return{'Precedence value':rsd.precedence_value,'Route selection descriptor contents':rsd.rsd_components.map(function(c){
+                            if(c.value===undefined||c.value==='')return{type:c.type};
+                            var v=c.value;
+                            if(c.type==='S-NSSAI'&&typeof v==='string'){
+                                var r={};
+                                if(v.indexOf(' + SD ')>=0){var p=v.split(' + ');r['SST']=parseInt(p[0].replace('SST ',''));r['SD']=parseInt(p[1].replace('SD ',''));}
+                                else{r['SST']=parseInt(v.replace('SST ',''));}
+                                v=r;
+                            }
+                            return{type:c.type,value:v};
+                        })};
                     })
                 };
             });
