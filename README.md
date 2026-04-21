@@ -43,40 +43,73 @@ Double-click `run.bat` to launch.
 
 Your browser will automatically open `http://127.0.0.1:8082`.
 
-#### SIM Card Mode
+---
 
-1. **Connect** — Connect to reader and view card info (ICCID, IMSI, MSISDN, HPLMNwAcT, IMPI, IMPU)
-2. **Read All Files** — Read the entire SIM file system and auto-export to `logs/<ICCID>/` (dump.json, dump.xlsx, decoded JSONs)
-3. **Verify ADM** — Verify ADM1~4 keys independently; auto-reads 6982 protected files after verification
+## Usage
 
-#### Offline Mode
+### 1. Connect
 
-4. **Load Dump** — Open a previously exported `dump.json` to browse without a SIM card
+Click **Connect** to connect to the card reader. Card info (ICCID, IMSI, MSISDN, HPLMNwAcT, IMPI, IMPU) is displayed automatically.
 
-#### File List
+### 2. Read All Files
 
-- **Columns** — Level 1/2/3, FID, Type (DF/TF/LF/CF/BER-TLV), ARR record number, Size, Rec#
-- **Search** — Filter files by FID or name
+Click **READ ALL FILES** to read the entire SIM file system.
 
-#### File Contents Panel
+> After reading, the dump is automatically exported to `logs/<ICCID>/` as dump.json, dump.xlsx, and individual decoded JSON files.
+
+### 3. Verify ADM
+
+Click **VERIFY ADM** to open the verification popup. ADM1 through ADM4 can be verified independently.
+
+- Status dots next to the button show each ADM key's verification state (gray = not verified, green = verified).
+- ADM keys can be verified before or after Read All Files.
+
+> After a successful ADM verification, any 6982 (security-protected) files that require the verified key are automatically re-read in the background. The dump is re-saved with updated data and verification state.
+
+### 4. Load Dump (Offline Mode)
+
+Click **Load Dump** to open a previously exported `dump.json` and browse file contents without a SIM card. ADM verification state from the original session is restored.
+
+### 5. Browse Files
+
+The **File List** shows all files with the following columns:
+
+| Column | Description |
+|--------|-------------|
+| Level 1/2/3 | File path hierarchy |
+| FID | File Identifier (hex) |
+| Type | DF, TF (transparent), LF (linear fixed), CF (cyclic), BER-TLV |
+| ARR | Access Rule Reference record number |
+| Size | File size in bytes |
+| Rec# | Number of records (for record-based files) |
+
+### 6. View File Contents
+
+Select a file to view its contents in the **File Contents** panel.
 
 - **Decode / Raw toggle** — Switch between decoded view and raw hex data
-- **PLMN files** (PLMNwAcT, OPLMNwAcT, HPLMNwAcT, FPLMN, EHPLMN) — Table view with MCC, MNC, AcT columns
-- **Service tables** (UST, IST, EST) — Table view with service name and ON/OFF status
-- **ACC** — Table view with access control class and ON/OFF status
-- **ARR** — Table view with Read/Update/Write/Activate/Deactivate access conditions per record
-- **URSP** — Tree-formatted decode view
-- **Other EFs** — JSON decode view
 - **Copy** — Copy current view content to clipboard
-- **Write** — Write hex data to an EF (ADM verification required for protected files; tooltip shows required ADM type)
 
-#### ADM Verification
+Special decode views for specific file types:
 
-- Supports ADM1, ADM2, ADM3, ADM4 independently
-- Status indicators (colored dots) show verification state per ADM key
-- After verification, 6982 protected files are automatically re-read in the background
-- Dump files are auto-saved with updated data and ADM verification state
-- 6982 error display shows ARR-based access condition info (required ADM type, verification status)
+| File Type | Decode View |
+|-----------|-------------|
+| PLMN files (PLMNwAcT, OPLMNwAcT, etc.) | Table with MCC, MNC, AcT |
+| Service tables (UST, IST, EST) | Table with service name and ON/OFF status |
+| ACC | Table with access control class and ON/OFF status |
+| ARR | Table with Read/Update/Write/Activate/Deactivate conditions per record |
+| URSP | Tree-formatted decode view |
+| Other EFs | JSON decode view |
+
+### 7. Write
+
+Click **Write** to modify an EF's hex data.
+
+> For files protected by ADM, the Write button is disabled until the required ADM key is verified. A tooltip on the disabled button shows which ADM key is needed.
+
+### 8. 6982 Error Files
+
+Files that returned 6982 (security status not satisfied) during Read All Files are displayed with an error message. In connected mode, an info panel shows the ARR-based access conditions (required ADM type and current verification status).
 
 ---
 
