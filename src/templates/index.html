@@ -503,10 +503,14 @@ async function readAllFiles(){
             if(r.export_path){setStatus('exportStatus','✅ Saved to '+r.export_path,'ok');}
             else{setStatus('exportStatus','⚠️ Auto-export failed','warn');}
             // Auto-read 6982 files with any verified ADM keys
+            var extraCount=0;
             for(var ak in admVerified){
                 if(admVerified[ak]&&admKeys[ak]){
-                    await autoRead6982Files(ak,admKeys[ak]);
+                    extraCount+=await autoRead6982Files(ak,admKeys[ak]);
                 }
+            }
+            if(extraCount>0){
+                document.getElementById('readAllStatus').textContent='✅ '+sortedEntries.length+' files ('+elapsed+'s) +'+extraCount+' protected';
             }
         }else{document.getElementById('readAllStatus').textContent='❌ '+(r.error||'Error');document.getElementById('readAllStatus').style.color='#c0392b';document.getElementById('btnReadAll').disabled=false;}
     }catch(ex){document.getElementById('readAllStatus').textContent='❌ '+ex.message;document.getElementById('readAllStatus').style.color='#c0392b';document.getElementById('btnReadAll').disabled=false;}
@@ -1227,7 +1231,7 @@ async function autoRead6982Files(admType,admHex){
             if(vals[i].trim()===admType){paths.push(path);break;}
         }
     }
-    if(paths.length===0)return;
+    if(paths.length===0)return 0;
     var structures={};
     for(var i=0;i<paths.length;i++){
         var fd=dumpData.files[paths[i]];
@@ -1248,7 +1252,9 @@ async function autoRead6982Files(admType,admHex){
             renderFileList();
             autoSaveDump();
         }
+        return count;
     }
+    return 0;
 }
 async function autoSaveDump(){
     if(!dumpData)return;
