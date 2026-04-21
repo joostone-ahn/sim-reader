@@ -230,6 +230,23 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
             <div style="font-size:0.76rem;font-weight:600;color:#555;margin-bottom:4px">Service Table</div>
             <div id="writeServiceList" style="max-height:400px;overflow-y:auto;border:1px solid #ddd;border-radius:6px;font-size:0.72rem"></div>
         </div>
+        <div id="writeAccSection" style="display:none">
+            <div style="font-size:0.76rem;font-weight:600;color:#555;margin-bottom:4px">Access Control Class</div>
+            <div id="writeAccList" style="max-height:400px;overflow-y:auto;border:1px solid #ddd;border-radius:6px;font-size:0.74rem"></div>
+        </div>
+        <div id="writePlmnSection" style="display:none;flex-direction:column;flex:1">
+            <div style="display:flex;align-items:center;margin-bottom:4px">
+                <span style="font-size:0.76rem;font-weight:600;color:#555">PLMN List</span>
+                <span style="margin-left:auto;display:flex;gap:0;font-size:0.66rem">
+                    <span id="plmnModeTable" class="svc-mode-active" onclick="switchPlmnWriteMode('table')" style="padding:3px 10px;cursor:pointer;border:1px solid #ddd;border-radius:4px 0 0 4px;background:#667eea;color:white">Table</span>
+                    <span id="plmnModeHex" onclick="switchPlmnWriteMode('hex')" style="padding:3px 10px;cursor:pointer;border:1px solid #ddd;border-left:none;border-radius:0 4px 4px 0;background:white;color:#555">Hex</span>
+                </span>
+            </div>
+            <div id="writePlmnList" style="flex:1;overflow-y:auto;border:1px solid #ddd;border-radius:6px;font-size:0.72rem"></div>
+            <div id="writePlmnHex" style="display:none">
+                <textarea id="writePlmnHexInput" rows="8" oninput="onPlmnHexInput()" style="width:100%;font-family:Menlo,Consolas,monospace;font-size:0.82rem;padding:8px;border:1px solid #ddd;border-radius:6px;resize:vertical"></textarea>
+            </div>
+        </div>
         <div id="writeHexRow">
             <div style="font-size:0.76rem;font-weight:600;color:#555;margin-bottom:4px">Hex Data <span id="writeEfSize" style="font-weight:400;color:#888"></span></div>
             <div style="position:relative">
@@ -965,6 +982,7 @@ async function _renderServiceTableView(path,fd,box,treeView,jsonView,rawView,tog
 
 function _renderAccTableView(fd,box,treeView,jsonView,rawView,toggle,treeRaw,jsonRaw){
     var body=fd.body;
+    var accDesc={'10':'Emergency calls','11':'PLMN use','12':'Security services','13':'Public utilities','14':'Emergency services','15':'PLMN staff'};
     var keys=Object.keys(body).sort(function(a,b){
         var na=parseInt(a.replace(/\D/g,''),10),nb=parseInt(b.replace(/\D/g,''),10);
         return na-nb;
@@ -977,9 +995,11 @@ function _renderAccTableView(fd,box,treeView,jsonView,rawView,toggle,treeRaw,jso
     for(var i=0;i<keys.length;i++){
         var k=keys[i],enabled=!!body[k];
         var num=k.replace(/\D/g,'');
+        var desc=accDesc[num];
+        var label=k+(desc?' ('+desc+')':'');
         var statusStyle=enabled?'color:#27ae60;font-weight:600':'color:#aaa';
         html+='<tr><td style="padding:3px 8px;width:38px">'+num+'</td>'
-            +'<td style="padding:3px 12px 3px 6px;text-align:left">'+k+'</td>'
+            +'<td style="padding:3px 12px 3px 6px;text-align:left">'+label+'</td>'
             +'<td style="padding:3px 12px 3px 6px;text-align:left;'+statusStyle+'">'+(enabled?'ON':'OFF')+'</td></tr>';
     }
     html+='</tbody></table>';
@@ -1433,11 +1453,13 @@ function openWritePopup(){
     document.getElementById('writeEfName').textContent=selectedPath;
     document.getElementById('writeStatus').textContent='';
     document.getElementById('writeSubmitBtn').disabled=true;
-    var isTlv=st==='ber_tlv',isLf=st==='linear_fixed'||st==='cyclic',isSvcTable=isServiceTableFile(selectedPath);
+    var isTlv=st==='ber_tlv',isLf=st==='linear_fixed'||st==='cyclic',isSvcTable=isServiceTableFile(selectedPath),isAcc=isAccFile(selectedPath),isPlmn=isPlmnFile(selectedPath);
     document.getElementById('writeTlvSection').style.display=isTlv?'block':'none';
-    document.getElementById('writeHexRow').style.display=(isTlv||isSvcTable)?'none':'block';
+    document.getElementById('writeHexRow').style.display=(isTlv||isSvcTable||isAcc||isPlmn)?'none':'block';
     document.getElementById('writeButtonRow').style.display=isTlv?'none':'flex';
     document.getElementById('writeServiceTable').style.display='none';
+    document.getElementById('writeAccSection').style.display='none';
+    document.getElementById('writePlmnSection').style.display='none';
     document.getElementById('writeRecordRow').style.display=isLf?'block':'none';
     if(isLf&&selectedFd.bytes&&Array.isArray(selectedFd.bytes)){
         var sel=document.getElementById('writeRecordSelect');sel.innerHTML='';
@@ -1457,6 +1479,8 @@ function openWritePopup(){
     checkWriteChanged();
     document.getElementById('writeOverlay').classList.add('show');
     if(isSvcTable){document.getElementById('writeServiceTable').style.display='block';renderServiceTable();}
+    if(isAcc){document.getElementById('writeAccSection').style.display='block';renderAccEditor();}
+    if(isPlmn){document.getElementById('writePlmnSection').style.display='flex';renderPlmnEditor();}
     if(isTlv){loadTlvFromRaw();}
 }
 function closeWritePopup(){document.getElementById('writeOverlay').classList.remove('show');}
@@ -1487,6 +1511,132 @@ function restoreOrigHex(){
         var selects=document.querySelectorAll('#writeServiceList select');
         for(var i=0;i<selects.length;i++){var svc=parseInt(selects[i].getAttribute('data-svc'));selects[i].value=writeServiceOrig[svc]?'true':'false';}
     }
+    if(isAccFile(selectedPath))renderAccEditor();
+    if(isPlmnFile(selectedPath))renderPlmnEditor();
+    checkWriteChanged();
+}
+
+/* === ACC Write Editor === */
+var accOrigBits={};
+function isAccFile(path){return path&&path.endsWith('/EF.ACC');}
+function parseAccBits(hex){
+    var bits={};
+    if(!hex||hex.length<4)return bits;
+    var val=parseInt(hex.substr(0,4),16);
+    for(var i=0;i<16;i++)bits[i]=!!(val&(1<<i));
+    return bits;
+}
+function accBitsToHex(bits){
+    var val=0;
+    for(var i=0;i<16;i++)if(bits[i])val|=(1<<i);
+    return('0000'+val.toString(16).toUpperCase()).slice(-4);
+}
+function renderAccEditor(){
+    var hex=writeOrigHex||'';
+    var bits=parseAccBits(hex);
+    accOrigBits=JSON.parse(JSON.stringify(bits));
+    var accDesc={'10':'Emergency calls','11':'PLMN use','12':'Security services','13':'Public utilities','14':'Emergency services','15':'PLMN staff'};
+    var html='<table class="rec-table" style="width:auto"><thead><tr><th>#</th><th style="text-align:left">Class</th><th style="text-align:left">Status</th></tr></thead><tbody>';
+    for(var i=0;i<16;i++){
+        var desc=accDesc[String(i)];
+        var label='ACC'+i+(desc?' ('+desc+')':'');
+        html+='<tr><td>'+i+'</td><td style="text-align:left">'+label+'</td>';
+        html+='<td style="text-align:left"><select data-acc="'+i+'" onchange="onAccChange()" style="font-size:0.72rem;padding:1px 4px;border:1px solid #ddd;border-radius:3px">';
+        html+='<option value="true"'+(bits[i]?' selected':'')+'>True</option>';
+        html+='<option value="false"'+(!bits[i]?' selected':'')+'>False</option>';
+        html+='</select></td></tr>';
+    }
+    html+='</tbody></table>';
+    document.getElementById('writeAccList').innerHTML=html;
+}
+function onAccChange(){
+    var bits={};
+    var selects=document.querySelectorAll('#writeAccList select');
+    for(var i=0;i<selects.length;i++){bits[parseInt(selects[i].getAttribute('data-acc'))]=(selects[i].value==='true');}
+    var hex=accBitsToHex(bits);
+    document.getElementById('writeHexInput').value=hex;
+    checkWriteChanged();
+}
+
+/* === PLMN Write Editor === */
+var plmnOrigEntries=[],plmnHasAcT=false;
+function parsePlmnList(hex,hasAcT){
+    var step=hasAcT?10:6;
+    var entries=[];
+    for(var i=0;i+step<=hex.length;i+=step){
+        var chunk=hex.substr(i,step);
+        if(chunk.substr(0,6)==='FFFFFF'){entries.push({mcc:'',mnc:'',act:''});continue;}
+        var d=[];for(var j=0;j<6;j++)d.push(chunk.charAt(j));
+        var mcc=d[1]+d[0]+d[3];
+        var mnc=d[5]+d[4];
+        if(d[2]!=='F')mnc+=d[2];
+        var act=hasAcT?chunk.substr(6,4):'';
+        entries.push({mcc:mcc.replace(/F/gi,''),mnc:mnc.replace(/F/gi,''),act:act});
+    }
+    return entries;
+}
+function plmnEditorToHex(){
+    var rows=document.querySelectorAll('#writePlmnList tr[data-idx]');
+    var hex='';
+    for(var i=0;i<rows.length;i++){
+        var inputs=rows[i].querySelectorAll('input');
+        var mcc=inputs[0].value.trim(),mnc=inputs[1].value.trim();
+        var act=inputs.length>2?inputs[2].value.trim().toUpperCase():'';
+        if(!mcc&&!mnc){hex+='FFFFFF';if(plmnHasAcT)hex+=(act||'0000').padEnd(4,'0');continue;}
+        // BCD encode: byte0=MCC2|MCC1, byte1=MNC3|MCC3, byte2=MNC2|MNC1
+        var m=mcc.padEnd(3,'F'),n=mnc.length>=3?mnc:mnc.padEnd(2,'F')+'F';
+        if(mnc.length===3)n=mnc;
+        var b0=m[1]+m[0],b1=(n.length===3?n[2]:'F')+m[2],b2=n[1]+n[0];
+        hex+=b0+b1+b2;
+        if(plmnHasAcT)hex+=(act||'0000').padEnd(4,'0');
+    }
+    return hex.toUpperCase();
+}
+function renderPlmnEditor(){
+    var hex=writeOrigHex||'';
+    plmnHasAcT=selectedPath&&selectedPath.indexOf('wAcT')>=0;
+    var entries=parsePlmnList(hex,plmnHasAcT);
+    plmnOrigEntries=JSON.parse(JSON.stringify(entries));
+    var html='<table class="rec-table" style="width:auto"><thead><tr>';
+    html+='<th>#</th>';
+    html+='<th style="text-align:left">MCC</th>';
+    html+='<th style="text-align:left">MNC</th>';
+    if(plmnHasAcT)html+='<th style="text-align:left">AcT</th>';
+    html+='</tr></thead><tbody>';
+    for(var i=0;i<entries.length;i++){
+        var e=entries[i];
+        html+='<tr data-idx="'+i+'">';
+        html+='<td>'+(i+1)+'</td>';
+        html+='<td style="text-align:left"><input type="text" value="'+e.mcc+'" maxlength="3" oninput="onPlmnEdit()" style="width:40px;border:1px solid #ddd;border-radius:3px;padding:2px 4px;font-family:Menlo,Consolas,monospace;font-size:0.74rem;text-align:center"></td>';
+        html+='<td style="text-align:left"><input type="text" value="'+e.mnc+'" maxlength="3" oninput="onPlmnEdit()" style="width:40px;border:1px solid #ddd;border-radius:3px;padding:2px 4px;font-family:Menlo,Consolas,monospace;font-size:0.74rem;text-align:center"></td>';
+        if(plmnHasAcT)html+='<td style="text-align:left"><input type="text" value="'+e.act+'" maxlength="4" oninput="onPlmnEdit()" style="width:50px;border:1px solid #ddd;border-radius:3px;padding:2px 4px;font-family:Menlo,Consolas,monospace;font-size:0.74rem;text-align:center"></td>';
+        html+='</tr>';
+    }
+    html+='</tbody></table>';
+    document.getElementById('writePlmnList').innerHTML=html;
+    switchPlmnWriteMode('table');
+}
+function onPlmnEdit(){
+    var hex=plmnEditorToHex();
+    document.getElementById('writeHexInput').value=hex;
+    document.getElementById('writePlmnHexInput').value=hex;
+    checkWriteChanged();
+}
+function switchPlmnWriteMode(mode){
+    var tbl=document.getElementById('writePlmnList'),hx=document.getElementById('writePlmnHex');
+    var mt=document.getElementById('plmnModeTable'),mh=document.getElementById('plmnModeHex');
+    if(mode==='hex'){
+        tbl.style.display='none';hx.style.display='block';
+        document.getElementById('writePlmnHexInput').value=document.getElementById('writeHexInput').value;
+        mt.style.background='white';mt.style.color='#555';mh.style.background='#667eea';mh.style.color='white';
+    }else{
+        tbl.style.display='block';hx.style.display='none';
+        mt.style.background='#667eea';mt.style.color='white';mh.style.background='white';mh.style.color='#555';
+    }
+}
+function onPlmnHexInput(){
+    var hex=document.getElementById('writePlmnHexInput').value.toUpperCase().replace(/\s/g,'');
+    document.getElementById('writeHexInput').value=hex;
     checkWriteChanged();
 }
 
