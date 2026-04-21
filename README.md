@@ -53,7 +53,7 @@ Click **Connect** to connect to the card reader. Card info (ICCID, IMSI, MSISDN,
 
 ### 2. Read All Files
 
-Click **READ ALL FILES** to read the entire SIM file system.
+Click **READ ALL FILES** to read the entire SIM file system. This walks through all DFs (MF, ADF.USIM, ADF.ISIM, DF.GSM, DF.5GS, etc.) and attempts to read every EF within them — typically around 200~300 files depending on the card profile. Files protected by ADM keys will return 6982 errors and can be read later after ADM verification.
 
 > After reading, the dump is automatically exported to `logs/<ICCID>/` as dump.json, dump.xlsx, and individual decoded JSON files.
 
