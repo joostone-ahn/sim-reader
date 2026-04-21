@@ -45,13 +45,18 @@ Your browser will automatically open `http://127.0.0.1:8082`.
 
 #### SIM Card Mode
 
-1. **Connect** — Connect to reader and view card info (ICCID, IMSI, MSISDN, HPLMNwAcT)
-2. **Read All Files** — Read the entire SIM file system
-3. **Export Dump** — Save to `logs/<ICCID>/` (dump.json, dump.xlsx, decoded JSONs)
+1. **Connect** — Connect to reader and view card info (ICCID, IMSI, MSISDN, HPLMNwAcT, IMPI, IMPU)
+2. **Read All Files** — Read the entire SIM file system and auto-export to `logs/<ICCID>/` (dump.json, dump.xlsx, decoded JSONs)
+3. **Verify ADM** — Verify ADM1~4 keys independently; auto-reads 6982 protected files after verification
 
 #### Offline Mode
 
 4. **Load Dump** — Open a previously exported `dump.json` to browse without a SIM card
+
+#### File List
+
+- **Columns** — Level 1/2/3, FID, Type (DF/TF/LF/CF/BER-TLV), ARR record number, Size, Rec#
+- **Search** — Filter files by FID or name
 
 #### File Contents Panel
 
@@ -59,11 +64,19 @@ Your browser will automatically open `http://127.0.0.1:8082`.
 - **PLMN files** (PLMNwAcT, OPLMNwAcT, HPLMNwAcT, FPLMN, EHPLMN) — Table view with MCC, MNC, AcT columns
 - **Service tables** (UST, IST, EST) — Table view with service name and ON/OFF status
 - **ACC** — Table view with access control class and ON/OFF status
+- **ARR** — Table view with Read/Update/Write/Activate/Deactivate access conditions per record
 - **URSP** — Tree-formatted decode view
 - **Other EFs** — JSON decode view
-- **Search** — Filter files by FID or name
 - **Copy** — Copy current view content to clipboard
-- **Write** — Write hex data to an EF (ADM verification required)
+- **Write** — Write hex data to an EF (ADM verification required for protected files; tooltip shows required ADM type)
+
+#### ADM Verification
+
+- Supports ADM1, ADM2, ADM3, ADM4 independently
+- Status indicators (colored dots) show verification state per ADM key
+- After verification, 6982 protected files are automatically re-read in the background
+- Dump files are auto-saved with updated data and ADM verification state
+- 6982 error display shows ARR-based access condition info (required ADM type, verification status)
 
 ---
 
@@ -85,6 +98,20 @@ logs/                # Export output directory (auto-created)
 
 ---
 
+## pySim Modifications
+
+The `pysim/` directory contains a modified version of pySim with the following custom changes:
+
+- **`pySim-shell.py`** — `fsdump_custom` command: raw hex + decoded JSON in single pass
+- **`pySim/filesystem.py`** — `read_binary_raw_dec`, `read_records_raw_dec`, `retrieve_data_raw_dec` helper functions
+- **`pySim/ts_24_526.py`** — URSP decoder (3GPP TS 24.526)
+- **`pySim/ts_31_102.py`** — EF.URSP changed to BerTlvEF with `decode_tag_data`
+- **`pySim/ts_102_221.py`** — `SecurityAttribReferenced` fix: handles 6-byte long format with SEID for correct ARR record number
+- **`pySim/commands.py`** — APDU logging (`INFO: ->` / `INFO: <-`) for all commands
+- **`setup.py`** — Removed `smpp.twisted3` dependency (Windows build fix)
+
+---
+
 ## License
 
 ### This Project
@@ -92,7 +119,6 @@ logs/                # Export output directory (auto-created)
 
 ### pySim (Third-party, modified)
 The `pysim/` directory contains a modified version of pySim, an open source project by Osmocom.
-Modifications were made to support URSP-related functionality.
 
 - Original project: [pySim - Osmocom](https://osmocom.org/projects/pysim/wiki)
 - Original source: [https://gitea.osmocom.org/sim-card/pysim](https://gitea.osmocom.org/sim-card/pysim)
