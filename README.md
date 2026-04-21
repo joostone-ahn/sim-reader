@@ -45,7 +45,7 @@ Your browser will automatically open `http://127.0.0.1:8082`.
 
 ---
 
-## Usage
+## How to Use
 
 ### 1. Connect
 
