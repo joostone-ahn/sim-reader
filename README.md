@@ -106,9 +106,6 @@ Click **Write** to modify an EF's hex data.
 
 > For files protected by ADM, the Write button is disabled until the required ADM key is verified. A tooltip on the disabled button shows which ADM key is needed.
 
-### 8. 6982 Error Files
-
-Files that returned 6982 (security status not satisfied) during Read All Files are displayed with an error message. In connected mode, an info panel shows the ARR-based access conditions (required ADM type and current verification status).
 
 ---
 
