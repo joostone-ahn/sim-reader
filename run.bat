@@ -3,9 +3,9 @@ REM SIM Card Reader - One-click launcher (Windows)
 setlocal
 
 echo.
-echo ╔══════════════════════════════════════╗
-echo ║  SIM Card Reader — Web UI            ║
-echo ╚══════════════════════════════════════╝
+echo ========================================
+echo   SIM Card Reader -- Web UI
+echo ========================================
 echo.
 
 set DIR=%~dp0
