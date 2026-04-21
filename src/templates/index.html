@@ -277,6 +277,14 @@ let dumpData=null,selectedPath=null,selectedFd=null,sortedEntries=[],writeOrigHe
 let admVerified={ADM1:false,ADM2:false,ADM3:false,ADM4:false};
 let admKeys={ADM1:'',ADM2:'',ADM3:'',ADM4:''};
 let isOfflineMode=false;
+let _readCount=0,_readElapsed='';
+function _countReadFiles(){
+    if(!dumpData||!dumpData.files)return 0;
+    var c=0;for(var p in dumpData.files){var fd=dumpData.files[p];if(fd&&!fd.error&&fd.bytes)c++;}return c;
+}
+function _updateReadStatus(){
+    document.getElementById('readAllStatus').textContent='✅ '+_readCount+' files read'+(_readElapsed?' ('+_readElapsed+')':'');
+}
 /* Get best verified ADM key/value for the currently selected file's update condition */
 function _getVerifiedAdm(){
     if(selectedPath){
@@ -496,7 +504,7 @@ async function readAllFiles(){
         var elapsed=((Date.now()-startTime)/1000).toFixed(1);
         if(r.success){dumpData=r.data;sortedEntries=Object.entries(r.data.files).sort(function(a,b){return sortKey(a[0],a[1]).localeCompare(sortKey(b[0],b[1]));});
             renderFileList();setStatus('actionStatus','','');
-            document.getElementById('readAllStatus').textContent='✅ '+sortedEntries.length+' files ('+elapsed+'s)';
+            _readCount=_countReadFiles();_readElapsed=elapsed;_updateReadStatus();
             document.getElementById('readAllStatus').style.color='#888';
             document.getElementById('btnReadAll').disabled=true;
             fillIsimInfo(r.data);
@@ -510,7 +518,7 @@ async function readAllFiles(){
                 }
             }
             if(extraCount>0){
-                document.getElementById('readAllStatus').textContent='✅ '+sortedEntries.length+' files ('+elapsed+'s) +'+extraCount+' protected';
+                _readCount=_countReadFiles();_updateReadStatus();
             }
         }else{document.getElementById('readAllStatus').textContent='❌ '+(r.error||'Error');document.getElementById('readAllStatus').style.color='#c0392b';document.getElementById('btnReadAll').disabled=false;}
     }catch(ex){document.getElementById('readAllStatus').textContent='❌ '+ex.message;document.getElementById('readAllStatus').style.color='#c0392b';document.getElementById('btnReadAll').disabled=false;}
@@ -1212,10 +1220,7 @@ async function doAdmVerify(btn,admType){
         // Auto-read 6982 files that need this ADM type for read access
         var extra=await autoRead6982Files(admType,a);
         if(extra>0){
-            var cur=document.getElementById('readAllStatus').textContent;
-            if(cur.indexOf('+')>=0){cur=cur.replace(/\+\d+ protected/,'+'+(parseInt(cur.match(/\+(\d+)/)[1])+extra)+' protected');}
-            else if(cur.indexOf('✅')>=0){cur=cur+' +'+extra+' protected';}
-            document.getElementById('readAllStatus').textContent=cur;
+            _readCount=_countReadFiles();_updateReadStatus();
         }
     }else{
         status.innerHTML='<span style="color:#c0392b">❌ '+admType+': '+(r.error||'Verification failed')+'</span>';
@@ -1596,10 +1601,10 @@ function loadDumpFile(input){
             }
             fillIsimInfo(data);
             renderFileList();
-            setStatus('actionStatus','✅ Loaded ('+sortedEntries.length+' files)','ok');
+            setStatus('actionStatus','','');
             document.getElementById('btnReadAll').disabled=true;
             document.getElementById('btnAdm').disabled=true;
-            document.getElementById('readAllStatus').textContent='Offline mode';
+            document.getElementById('readAllStatus').textContent='✅ '+_countReadFiles()+' files loaded';
             document.getElementById('readAllStatus').style.color='#ccc';
             document.getElementById('admDots').style.color='#ccc';
             resetDetailButtons();
