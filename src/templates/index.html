@@ -1604,8 +1604,9 @@ function loadDumpFile(input){
             setStatus('actionStatus','','');
             document.getElementById('btnReadAll').disabled=true;
             document.getElementById('btnAdm').disabled=true;
-            document.getElementById('readAllStatus').textContent='✅ '+_countReadFiles()+' files loaded';
+            document.getElementById('readAllStatus').textContent='Card reader not connected';
             document.getElementById('readAllStatus').style.color='#ccc';
+            setStatus('connectStatus','✅ Loaded ('+_countReadFiles()+' files)','ok');
             document.getElementById('admDots').style.color='#ccc';
             resetDetailButtons();
             // Restore ADM verified state from dump if available
