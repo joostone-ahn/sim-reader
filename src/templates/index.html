@@ -1210,7 +1210,13 @@ async function doAdmVerify(btn,admType){
             updateDetailButtons({isEf:isEf,is6982:is6982,is6A82:is6A82,isOffline:isOfflineMode,path:selectedPath,fd:selectedFd});
         }
         // Auto-read 6982 files that need this ADM type for read access
-        autoRead6982Files(admType,a);
+        var extra=await autoRead6982Files(admType,a);
+        if(extra>0){
+            var cur=document.getElementById('readAllStatus').textContent;
+            if(cur.indexOf('+')>=0){cur=cur.replace(/\+\d+ protected/,'+'+(parseInt(cur.match(/\+(\d+)/)[1])+extra)+' protected');}
+            else if(cur.indexOf('✅')>=0){cur=cur+' +'+extra+' protected';}
+            document.getElementById('readAllStatus').textContent=cur;
+        }
     }else{
         status.innerHTML='<span style="color:#c0392b">❌ '+admType+': '+(r.error||'Verification failed')+'</span>';
         btn.disabled=false;
