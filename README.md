@@ -55,20 +55,19 @@ Click **Connect** to connect to the card reader. Card info (ICCID, IMSI, MSISDN,
 
 Click **READ ALL FILES** to read the entire SIM file system. This walks through all DFs (MF, ADF.USIM, ADF.ISIM, DF.GSM, DF.5GS, etc.) and attempts to read every EF within them — typically around 200~300 files depending on the card profile. Files protected by ADM keys will return 6982 errors and can be read later after ADM verification.
 
-> After reading, the dump is automatically exported to `logs/<ICCID>/` as dump.json, dump.xlsx, and individual decoded JSON files.
+> **Note:** The dump is automatically exported to `logs/<ICCID>/` as dump.json, dump.xlsx, and individual decoded JSON files.
 
 ### 3. Verify ADM
 
-Click **VERIFY ADM** to open the verification popup. ADM1 through ADM4 can be verified independently.
+Click **VERIFY ADM** to open the verification popup. ADM1 through ADM4 can be verified independently. Status dots next to the button show each ADM key's verification state (gray = not verified, green = verified). ADM keys can be verified before or after Read All Files.
 
-- Status dots next to the button show each ADM key's verification state (gray = not verified, green = verified).
-- ADM keys can be verified before or after Read All Files.
-
-> After a successful ADM verification, any 6982 (security-protected) files that require the verified key are automatically re-read in the background. The dump is re-saved with updated data and verification state.
+> **Note:** After a successful verification, any 6982 (security-protected) files that require the verified key are automatically re-read in the background. The dump is re-saved with updated data and verification state.
 
 ### 4. Load Dump (Offline Mode)
 
-Click **Load Dump** to open a previously exported `dump.json` and browse file contents without a SIM card. ADM verification state from the original session is restored.
+Click **Load Dump** to open a previously exported `dump.json` and browse file contents without a SIM card.
+
+> **Note:** ADM verification state from the original session is restored.
 
 ### 5. Browse Files
 
