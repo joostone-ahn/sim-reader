@@ -102,9 +102,13 @@ Special decode views for specific file types:
 
 ### 7. Write
 
-Click **Write** to modify an EF's hex data.
+Click **Write** to modify an EF's contents. The write popup provides specialized editors depending on file type:
 
-> For files protected by ADM, the Write button is disabled until the required ADM key is verified. A tooltip on the disabled button shows which ADM key is needed.
+- **Hex editor** — Direct hex input for any writable EF
+- **Service table editor** — ON/OFF toggles per service (UST, IST, EST), with Table/Hex mode toggle
+- **BER-TLV editor** — Tag-based write with tag selector dropdown (URSP etc.)
+
+> **Note:** For files protected by ADM, the Write button is disabled until the required ADM key is verified. A tooltip on the disabled button shows which ADM key is needed.
 
 
 ---
