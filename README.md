@@ -98,7 +98,7 @@ Special decode views for specific file types:
 | ACC | Table with access control class and ON/OFF status |
 | ARR | Table with Read/Update/Write/Activate/Deactivate conditions per record |
 | URSP | Tree-formatted decode view |
-| Other EFs | JSON decode view |
+| Other EFs | JSON decode view (pySim-based decoding) |
 
 ### 7. Write
 
