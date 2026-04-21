@@ -26,31 +26,38 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
 .status-warn{background:#fff3cd;color:#856404}
 .sim-info-cards{display:flex;gap:10px}
 .info-card{background:linear-gradient(135deg,#f5f5f5,#eeeeee);border-radius:6px;padding:4px 14px;border-left:3px solid #667eea;display:flex;align-items:center;gap:8px}
-.info-label{font-size:0.76rem;color:#888;font-weight:600;text-transform:uppercase;white-space:nowrap;padding-right:4px}
+.info-label{font-size:0.76rem;color:#888;font-weight:600;text-transform:uppercase;white-space:nowrap;padding-right:4px;display:inline-block;width:100px}
 .info-value{font-size:0.76rem;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;color:#2c3e50}
 .card{background:rgba(255,255,255,0.95);border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);overflow:hidden}
 .panel-title{background:linear-gradient(45deg,#667eea,#764ba2);color:white;padding:10px 12px;font-size:0.85rem;font-weight:700;display:flex;align-items:center}
-.file-table{width:100%;border-collapse:collapse;font-size:0.76rem}
-.file-table thead th{background:#a8c4e0;color:#1a3a5c;padding:4px 6px;position:sticky;top:0;z-index:2;font-weight:600;font-size:0.72rem;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;border-right:1px solid #eee;text-align:center}
-.file-table thead th:last-child{border-right:none}
+.file-table{width:100%;border-collapse:collapse;font-size:0.76rem;table-layout:auto}
+.file-table thead th{background:#a8c4e0;color:#1a3a5c;padding:3px 8px;position:sticky;top:0;z-index:2;font-weight:600;font-size:0.72rem;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;text-align:left}
+.file-table thead th:nth-child(-n+3){padding-left:4px;padding-right:4px}
+.file-table thead th:first-child{padding-left:12px}
+.file-table thead th:last-child{padding-right:12px}
 .file-table tbody tr{border-bottom:1px solid #eee;cursor:pointer}
 .file-table tbody tr:hover{background:#eef2ff}
 .file-table tbody tr.selected{outline:2px solid #667eea}
 .file-table tbody tr.df-row{background:#d4edda}
-.file-table td{padding:3px 8px;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;font-size:0.74rem;border-right:1px solid #eee}
-.file-table td:last-child{border-right:none}
+.file-table td{padding:3px 8px;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;font-size:0.74rem}
+.file-table td:nth-child(-n+3){padding-left:4px;padding-right:4px}
+.file-table td:first-child{padding-left:12px}
+.file-table td:last-child{padding-right:12px}
 #fileListScroll:focus{outline:none}
-.file-table .cc{text-align:center}
-.file-table .cr{text-align:right;padding-right:12px}
+.file-table .cc{text-align:left}
+.file-table .cr{text-align:left}
 .data-pre{font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;font-size:0.74rem;white-space:pre-wrap;word-break:break-all;color:#333;background:#f8f9fa;padding:8px;margin:0}
 .rec-table{width:100%;border-collapse:collapse;font-size:0.74rem}
-.rec-table th{background:#a8c4e0;color:#1a3a5c;padding:4px 6px;font-size:0.72rem;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;font-weight:600;position:sticky;top:0;z-index:1;white-space:nowrap}
-.rec-table td{padding:3px 8px;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;font-size:0.74rem;border-bottom:1px solid #eee}
+.rec-table th{background:#a8c4e0;color:#1a3a5c;padding:4px 10px;font-size:0.72rem;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;font-weight:600;position:sticky;top:0;z-index:1;white-space:nowrap;text-align:left}
+.rec-table td{padding:3px 10px;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;font-size:0.74rem;border-bottom:1px solid #eee}
 .rec-table td:first-child{text-align:center;width:38px;white-space:nowrap;color:#667eea;font-weight:600}
+.rec-table th:first-child{text-align:center}
 .overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;justify-content:center;align-items:center}
 .overlay.show{display:flex}
 .popup{background:white;border-radius:10px;width:710px;max-height:80vh;overflow:auto;box-shadow:0 8px 32px rgba(0,0,0,0.3);resize:both;min-width:400px;min-height:200px}
-#btnRead:disabled,#btnWrite:disabled,#btnCopy:disabled{opacity:0.3;cursor:not-allowed}
+#btnRead:disabled,#btnWrite:disabled,#btnCopy:disabled,#btnAdm:disabled,#btnReadAll:disabled{opacity:0.4;cursor:not-allowed;pointer-events:auto}
+#btnWrite[data-tip]{position:relative}
+.custom-tooltip{position:fixed;background:linear-gradient(135deg,#e67e22,#d35400);color:#fff;font-size:0.68rem;font-weight:600;padding:5px 12px;border-radius:6px;white-space:nowrap;z-index:9999;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,0.2);display:none}
 .search-ph::placeholder{color:rgba(255,255,255,0.4);font-style:italic}
 .mono{font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;-webkit-text-size-adjust:100%}
 .toggle-switch{display:flex;background:#e9ecef;border-radius:4px;cursor:pointer;overflow:hidden;width:fit-content}
@@ -70,24 +77,42 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
     </div>
     <div class="header" style="display:flex;flex-direction:column;gap:0;margin-bottom:8px;padding:8px 12px">
         <div style="display:flex;align-items:center;gap:8px">
-            <button class="btn btn-primary" onclick="connectReader()" style="width:145px;white-space:nowrap;height:32px;flex-shrink:0">🔌 Connect</button>
             <button class="btn btn-primary" onclick="document.getElementById('loadDumpInput').click()" style="width:145px;white-space:nowrap;height:32px;flex-shrink:0">🗂️ Load Dump</button>
             <input type="file" id="loadDumpInput" accept=".json" style="display:none" onchange="loadDumpFile(this)">
-            <button class="btn btn-primary" id="btnReadAll" onclick="readAllFiles()" disabled style="width:145px;white-space:nowrap;height:32px;flex-shrink:0">📂 Read All Files</button>
-            <button class="btn btn-primary" id="btnExport" onclick="exportData()" disabled style="width:145px;white-space:nowrap;height:32px;flex-shrink:0">📥 Export Dump</button>
+            <button class="btn btn-primary" onclick="connectReader()" style="width:145px;white-space:nowrap;height:32px;flex-shrink:0">🔌 Connect</button>
             <span id="connectStatus" class="status"></span>
             <span id="actionStatus" class="status"></span>
-            <span id="admBadge" style="display:none;font-size:0.74rem;padding:3px 8px;border-radius:4px;background:#fff3cd;color:#856404">🔐 ADM1 Verified</span>
             <span id="exportStatus" class="status"></span>
         </div>
         <hr style="border:none;border-top:1px solid #e0e0e0;margin:8px 0">
-        <div style="display:flex;gap:10px">
-            <div class="info-card"><div class="info-label">ICCID</div><div class="info-value" id="infoIccid">-</div></div>
-            <div class="info-card"><div class="info-label">IMSI</div><div class="info-value" id="infoImsi">-</div></div>
-            <div class="info-card"><div class="info-label">MSISDN</div><div class="info-value" id="infoMsisdn">-</div></div>
-            <div class="info-card"><div class="info-label">IMPI</div><div class="info-value" id="infoImpi">-</div></div>
-            <div class="info-card"><div class="info-label">IMPU</div><div class="info-value" id="infoImpu">-</div></div>
-            <div class="info-card"><div class="info-label" style="text-transform:none">HPLMNwAcT</div><div class="info-value" id="infoHplmn">-</div></div>
+        <div style="display:flex;align-items:stretch;gap:0">
+            <div style="width:1px;background:#ddd;margin:0 12px 0 0;flex-shrink:0"></div>
+            <div style="flex:1;display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px 10px">
+                <div class="info-card"><div class="info-label">ICCID</div><div class="info-value" id="infoIccid">-</div></div>
+                <div class="info-card"><div class="info-label">IMSI</div><div class="info-value" id="infoImsi">-</div></div>
+                <div class="info-card"><div class="info-label">MSISDN</div><div class="info-value" id="infoMsisdn">-</div></div>
+                <div class="info-card"><div class="info-label" style="text-transform:none">HPLMNwAcT</div><div class="info-value" id="infoHplmn">-</div></div>
+                <div class="info-card"><div class="info-label">IMPI</div><div class="info-value" id="infoImpi">-</div></div>
+                <div class="info-card"><div class="info-label">IMPU</div><div class="info-value" id="infoImpu">-</div></div>
+            </div>
+            <div style="width:1px;background:#ddd;margin:0 12px;flex-shrink:0"></div>
+            <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:140px">
+                <button class="btn" id="btnReadAll" onclick="readAllFiles()" disabled style="width:140px;white-space:nowrap;height:26px;font-size:0.68rem;background:#f0f2f5;color:#555;border:1px solid #ccc;border-radius:5px;cursor:pointer;justify-content:flex-start;padding:0 10px">📂 READ ALL FILES</button>
+                <hr style="border:none;border-top:1px solid #eee;width:100%;margin:4px 0">
+                <span id="readAllStatus" style="font-size:0.60rem;color:#ccc;white-space:nowrap;min-height:14px;line-height:14px">🔌 Connect reader first</span>
+            </div>
+            <div style="width:1px;background:#ddd;margin:0 12px;flex-shrink:0"></div>
+            <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:140px">
+                <button class="btn" id="btnAdm" onclick="openAdmPopup()" disabled style="width:140px;white-space:nowrap;height:26px;font-size:0.68rem;background:#f0f2f5;color:#555;border:1px solid #ccc;border-radius:5px;cursor:pointer;justify-content:center;padding:0 10px">🔐 VERIFY ADM</button>
+                <hr style="border:none;border-top:1px solid #eee;width:100%;margin:4px 0">
+                <div id="admDots" style="display:flex;gap:6px;font-size:0.60rem;font-family:Consolas,monospace;color:#ccc;min-height:14px;line-height:14px">
+                    <span><span id="admDot1" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#ccc;margin-right:2px;vertical-align:middle"></span>ADM1</span>
+                    <span><span id="admDot2" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#ccc;margin-right:2px;vertical-align:middle"></span>ADM2</span>
+                    <span><span id="admDot3" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#ccc;margin-right:2px;vertical-align:middle"></span>ADM3</span>
+                    <span><span id="admDot4" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#ccc;margin-right:2px;vertical-align:middle"></span>ADM4</span>
+                </div>
+            </div>
+            <div style="width:1px;background:#ddd;margin:0 0 0 12px;flex-shrink:0"></div>
         </div>
     </div>
     <div class="card" style="padding:12px;margin-bottom:0;flex:1;display:flex;flex-direction:column;min-height:0">
@@ -104,9 +129,9 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
                     </div>
                 </div>
                 <div id="fileListScroll" style="flex:1;overflow:auto" tabindex="0">
-                    <table class="file-table"><thead><tr>
-                        <th style="width:14%">Level 1</th><th style="width:14%">Level 2</th><th style="width:14%">Level 3</th>
-                        <th style="width:7%">FID</th><th style="width:6%">Type</th><th style="width:7%">EF Type</th><th style="width:6%">Size</th><th style="width:5%">Rec#</th>
+                    <table class="file-table" style="table-layout:auto"><thead><tr>
+                        <th>Level 1</th><th>Level 2</th><th>Level 3</th>
+                        <th>FID</th><th>Type</th><th>ARR</th><th>Size</th><th>Rec#</th>
                     </tr></thead><tbody id="fileListBody"></tbody></table>
                 </div>
             </div>
@@ -118,7 +143,6 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
                     <div class="panel-title" style="min-height:36px;padding:6px 12px">
                         <span>📄 File Contents</span>
                         <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-                            <button id="btnRead" onclick="onReadClick()" style="display:none;padding:3px 8px;font-size:0.68rem;font-weight:600;border:none;border-radius:5px;cursor:pointer;background:rgba(255,255,255,0.2);color:rgba(255,255,255,0.9);min-width:60px;transition:all 0.2s;white-space:nowrap">📖 Read</button>
                             <div class="toggle-switch" id="inlineDecodeToggle">
                                 <span class="toggle-label toggle-active" id="inline-toggle-decode" onclick="switchInlineView('decode')">🔍 Decode</span>
                                 <span class="toggle-label" id="inline-toggle-raw" onclick="switchInlineView('raw')">🔢 Raw</span>
@@ -128,7 +152,7 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
                                 <span class="toggle-label" id="plmn-toggle-raw" onclick="switchPlmnView('raw')">🔢 Raw</span>
                             </div>
                             <button id="btnCopy" onclick="copyInlineDecode(this)" disabled style="padding:3px 8px;font-size:0.68rem;font-weight:600;border:none;border-radius:5px;cursor:pointer;background:rgba(255,255,255,0.2);color:rgba(255,255,255,0.9);min-width:60px;transition:all 0.2s">📋 Copy</button>
-                            <button id="btnWrite" onclick="onWriteClick()" disabled style="padding:3px 8px;font-size:0.68rem;font-weight:600;border:none;border-radius:5px;cursor:pointer;background:rgba(255,255,255,0.2);color:rgba(255,255,255,0.9);min-width:60px;transition:all 0.2s;white-space:nowrap">✏️ Write</button>
+                            <button id="btnWrite" onclick="onWriteClick()" disabled style="display:none;padding:3px 8px;font-size:0.68rem;font-weight:600;border:none;border-radius:5px;cursor:pointer;background:rgba(255,255,255,0.2);color:rgba(255,255,255,0.9);min-width:60px;transition:all 0.2s;white-space:nowrap">✏️ Write</button>
                         </div>
                     </div>
                     <div id="inlineDecodeBox" style="flex:1;overflow:auto;padding:0">
@@ -145,16 +169,46 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
 </div>
 
 <!-- Verification Popup -->
-<div id="verifyOverlay" class="overlay" onclick="if(event.target===this)closeVerifyPopup()">
-<div class="popup" style="width:420px;min-width:350px;min-height:auto;resize:none">
+<div id="verifyOverlay" class="overlay" onclick="if(event.target===this)closeAdmPopup()">
+<div class="popup" style="width:480px;min-width:400px;min-height:auto;resize:none">
     <div class="panel-title" style="border-radius:10px 10px 0 0">
-        <span>🔐 ADM Verification Required</span>
-        <button onclick="closeVerifyPopup()" style="margin-left:auto;background:none;border:none;color:white;font-size:1.1rem;cursor:pointer">✕</button>
+        <span>🔐 ADM Verification</span>
+        <button onclick="closeAdmPopup()" style="margin-left:auto;background:none;border:none;color:white;font-size:1.1rem;cursor:pointer">✕</button>
     </div>
-    <div style="padding:16px;display:flex;flex-direction:column;gap:10px">
-        <div id="verifyDesc" style="font-size:0.74rem;color:#666"></div>
-        <div id="verifyFields"></div>
-        <div id="verifyResult" style="display:none;font-size:0.72rem"></div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:8px">
+        <div id="admRow1" class="adm-row" data-key="ADM1">
+            <div style="display:flex;align-items:center;gap:6px;background:#f0f2f5;border-radius:6px;padding:4px 10px">
+                <span style="font-size:0.72rem;font-weight:600;color:#888;min-width:42px">ADM1</span>
+                <input type="text" class="adm-input" placeholder="16-digit hex" oninput="updateAdmRow(this)" style="border:none;background:transparent;flex:1;font-size:0.78rem;font-family:Consolas,monospace;padding:3px 4px">
+                <span class="adm-count" style="font-size:0.66rem;color:#bbb;white-space:nowrap">(0/16)</span>
+                <button class="btn btn-dark adm-verify-btn" onclick="doAdmVerify(this,'ADM1')" disabled style="padding:4px 10px;font-size:0.72rem;min-width:70px">Verify</button>
+            </div>
+        </div>
+        <div id="admRow2" class="adm-row" data-key="ADM2">
+            <div style="display:flex;align-items:center;gap:6px;background:#f0f2f5;border-radius:6px;padding:4px 10px">
+                <span style="font-size:0.72rem;font-weight:600;color:#888;min-width:42px">ADM2</span>
+                <input type="text" class="adm-input" placeholder="16-digit hex" oninput="updateAdmRow(this)" style="border:none;background:transparent;flex:1;font-size:0.78rem;font-family:Consolas,monospace;padding:3px 4px">
+                <span class="adm-count" style="font-size:0.66rem;color:#bbb;white-space:nowrap">(0/16)</span>
+                <button class="btn btn-dark adm-verify-btn" onclick="doAdmVerify(this,'ADM2')" disabled style="padding:4px 10px;font-size:0.72rem;min-width:70px">Verify</button>
+            </div>
+        </div>
+        <div id="admRow3" class="adm-row" data-key="ADM3">
+            <div style="display:flex;align-items:center;gap:6px;background:#f0f2f5;border-radius:6px;padding:4px 10px">
+                <span style="font-size:0.72rem;font-weight:600;color:#888;min-width:42px">ADM3</span>
+                <input type="text" class="adm-input" placeholder="16-digit hex" oninput="updateAdmRow(this)" style="border:none;background:transparent;flex:1;font-size:0.78rem;font-family:Consolas,monospace;padding:3px 4px">
+                <span class="adm-count" style="font-size:0.66rem;color:#bbb;white-space:nowrap">(0/16)</span>
+                <button class="btn btn-dark adm-verify-btn" onclick="doAdmVerify(this,'ADM3')" disabled style="padding:4px 10px;font-size:0.72rem;min-width:70px">Verify</button>
+            </div>
+        </div>
+        <div id="admRow4" class="adm-row" data-key="ADM4">
+            <div style="display:flex;align-items:center;gap:6px;background:#f0f2f5;border-radius:6px;padding:4px 10px">
+                <span style="font-size:0.72rem;font-weight:600;color:#888;min-width:42px">ADM4</span>
+                <input type="text" class="adm-input" placeholder="16-digit hex" oninput="updateAdmRow(this)" style="border:none;background:transparent;flex:1;font-size:0.78rem;font-family:Consolas,monospace;padding:3px 4px">
+                <span class="adm-count" style="font-size:0.66rem;color:#bbb;white-space:nowrap">(0/16)</span>
+                <button class="btn btn-dark adm-verify-btn" onclick="doAdmVerify(this,'ADM4')" disabled style="padding:4px 10px;font-size:0.72rem;min-width:70px">Verify</button>
+            </div>
+        </div>
+        <div id="admStatus" style="display:none;font-size:0.72rem;padding:2px 10px"></div>
     </div>
 </div>
 </div>
@@ -216,18 +270,180 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
 </div>
 <div style="height:30px;flex-shrink:0;display:flex;align-items:center;justify-content:center"><span style="font-size:0.66rem;color:rgba(255,255,255,0.5)">Copyright © 2026 JUSEOK AHN &lt;ajs3013@lguplus.co.kr&gt; All rights reserved.</span></div>
 
+<div id="customTooltip" class="custom-tooltip"></div>
+
 <script>
 let dumpData=null,selectedPath=null,selectedFd=null,sortedEntries=[],writeOrigHex='',writeExpectedSize=0;
-let writeVerified=false,verifiedAdm='',verifiedAdmType='';
+let admVerified={ADM1:false,ADM2:false,ADM3:false,ADM4:false};
+let admKeys={ADM1:'',ADM2:'',ADM3:'',ADM4:''};
 let isOfflineMode=false;
-let verifyCallback=null;
+/* Get best verified ADM key/value for the currently selected file's update condition */
+function _getVerifiedAdm(){
+    if(selectedPath){
+        var cond=getArrCondition(selectedPath,'update_erase');
+        if(cond&&cond.type==='adm'){
+            var vals=(cond.value||'').split(' | ');
+            for(var i=0;i<vals.length;i++){var k=vals[i].trim();if(admVerified[k])return admKeys[k];}
+        }
+    }
+    for(var k in admVerified){if(admVerified[k])return admKeys[k];}return'';
+}
+function _getVerifiedAdmType(){
+    if(selectedPath){
+        var cond=getArrCondition(selectedPath,'update_erase');
+        if(cond&&cond.type==='adm'){
+            var vals=(cond.value||'').split(' | ');
+            for(var i=0;i<vals.length;i++){var k=vals[i].trim();if(admVerified[k])return k;}
+        }
+    }
+    for(var k in admVerified){if(admVerified[k])return k;}return'';
+}
 async function api(u,b){try{const r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b||{})});return await r.json();}catch(e){console.error('API error:',u,e);return{success:false,error:e.message};}}
 function setStatus(id,t,c){const e=document.getElementById(id);e.className='status status-'+c;e.textContent=t;e.style.display=t?'':'none';}
+
+/* === Custom Tooltip === */
+(function(){
+    var tip=document.getElementById('customTooltip');
+    document.addEventListener('mouseover',function(e){
+        var el=e.target.closest('[data-tip]');
+        if(el&&el.getAttribute('data-tip')){
+            tip.textContent=el.getAttribute('data-tip');
+            tip.style.display='block';
+            var r=el.getBoundingClientRect();
+            var tipW=tip.offsetWidth,tipH=tip.offsetHeight;
+            var left=r.left+r.width/2-tipW/2;
+            if(left<4)left=4;
+            if(left+tipW>window.innerWidth-4)left=window.innerWidth-tipW-4;
+            var top=r.bottom+6;
+            if(top+tipH>window.innerHeight-4)top=r.top-tipH-6;
+            tip.style.left=left+'px';
+            tip.style.top=top+'px';
+        }
+    });
+    document.addEventListener('mouseout',function(e){
+        var el=e.target.closest('[data-tip]');
+        if(el)tip.style.display='none';
+    });
+})();
+
+/* === Unified button/toggle state control === */
+/* Get ARR condition for a specific access mode (update_erase, read_search_compare, etc.) */
+function getArrCondition(path, accessMode){
+    if(!dumpData||!dumpData.files)return null;
+    var fd=dumpData.files[path];if(!fd||!fd.fcp)return null;
+    var sar=fd.fcp.security_attrib_referenced;if(!sar)return null;
+    var arrFid=sar.ef_arr_file_id,arrRec=sar.ef_arr_record_nr;if(!arrFid||!arrRec)return null;
+    var parts=path.split('/'),arrPath=null;
+    for(var i=parts.length-1;i>=1;i--){var c=parts.slice(0,i).join('/')+'/EF.ARR';if(dumpData.files[c]){arrPath=c;break;}}
+    if(!arrPath)arrPath='MF/EF.ARR';
+    var arrFd=dumpData.files[arrPath];if(!arrFd||!arrFd.body||!Array.isArray(arrFd.body))return null;
+    var record=arrFd.body[arrRec-1];if(!record||!Array.isArray(record))return null;
+    for(var r=0;r<record.length;r++){
+        var rule=record[r];if(!Array.isArray(rule)||rule.length<2)continue;
+        var am=rule[0];if(!am||!am.access_mode)continue;
+        if(am.access_mode.indexOf(accessMode)<0)continue;
+        var cond=rule[1];if(!cond)continue;
+        if(cond.always===null||cond.always===undefined&&Object.keys(cond).length===0)return{type:'always'};
+        if(cond.never===null)return{type:'never'};
+        if(cond.control_reference_template){var t=cond.control_reference_template;if(t.toUpperCase().indexOf('ADM')===0)return{type:'adm',value:t};return{type:'pin',value:t};}
+        if(cond.or&&Array.isArray(cond.or)){
+            var adms=[],hasNonAdm=false;
+            for(var k=0;k<cond.or.length;k++){var c=cond.or[k];if(c.control_reference_template){var cv=c.control_reference_template;if(cv.toUpperCase().indexOf('ADM')===0)adms.push(cv);else hasNonAdm=true;}}
+            if(adms.length>0&&!hasNonAdm)return{type:'adm',value:adms.join(' | ')};
+            if(hasNonAdm&&adms.length===0)return{type:'pin',value:'PIN'};
+            if(hasNonAdm&&adms.length>0)return{type:'pin_or_adm',value:cond.or.map(function(c){return c.control_reference_template||'?';}).join(' | ')};
+        }
+        return{type:'unknown'};
+    }
+    return null;
+}
+/* Check if required ADM types for a condition are all verified */
+function isAdmSatisfied(cond){
+    if(!cond||cond.type!=='adm')return true;
+    var vals=(cond.value||'').split(' | ');
+    // For OR conditions, any one verified is enough
+    for(var i=0;i<vals.length;i++){
+        var k=vals[i].trim();
+        if(admVerified[k])return true;
+    }
+    return false;
+}
+function updateDetailButtons(opts){
+    var hideAll=!opts.isEf||opts.is6A82;
+    var hasError=opts.is6982||opts.is6A82;
+    var noContent=opts.fd&&opts.fd.error&&!opts.fd.bytes;
+    var btn=document.getElementById('btnWrite');
+    if(hideAll){
+        btn.style.display='none';
+        document.getElementById('btnCopy').style.display='none';
+        document.getElementById('inlineDecodeToggle').style.display='none';
+        document.getElementById('plmnToggle').style.display='none';
+        btn.removeAttribute('data-tip');
+        return;
+    }
+    if(noContent){
+        document.getElementById('btnCopy').style.display='none';
+    }else{
+        document.getElementById('btnCopy').style.display='';
+        document.getElementById('btnCopy').disabled=false;
+    }
+    var cond=getArrCondition(opts.path,'update_erase');
+    var needsAdm=cond&&cond.type==='adm';
+    if(!opts.is6982&&!opts.isOffline){
+        btn.style.display='';
+        if(needsAdm&&!isAdmSatisfied(cond)){
+            btn.disabled=true;
+            var tip='🔐 '+( cond.value||'ADM')+' verification required';
+            btn.setAttribute('data-tip',tip);
+        }else{
+            btn.disabled=false;
+            btn.removeAttribute('data-tip');
+        }
+    }else{
+        btn.style.display='none';
+        btn.removeAttribute('data-tip');
+    }
+}
+function resetDetailButtons(){
+    document.getElementById('btnWrite').style.display='none';
+    document.getElementById('btnWrite').disabled=true;
+    document.getElementById('btnWrite').removeAttribute('data-tip');
+    document.getElementById('btnCopy').style.display='none';
+    document.getElementById('inlineDecodeToggle').style.display='none';
+    document.getElementById('plmnToggle').style.display='none';
+}
 
 async function connectReader(){
     setStatus('connectStatus','Connecting...','warn');
     setStatus('actionStatus','','');
     setStatus('exportStatus','','');
+    // Reset immediately on click
+    dumpData=null;selectedPath=null;selectedFd=null;sortedEntries=[];isOfflineMode=false;
+    admVerified={ADM1:false,ADM2:false,ADM3:false,ADM4:false};
+    admKeys={ADM1:'',ADM2:'',ADM3:'',ADM4:''};
+    clearFilter();
+    document.getElementById('fileListBody').innerHTML='';
+    document.getElementById('inlineRawView').innerHTML='<span style="color:#999">(no data)</span>';
+    document.getElementById('inlineTreeView').innerHTML='';document.getElementById('inlineTreeView').style.display='none';
+    document.getElementById('inlineJsonView').innerHTML='';document.getElementById('inlineJsonView').style.display='none';
+    var _old;
+    _old=document.getElementById('inlinePlmnTable');if(_old)_old.remove();
+    _old=document.getElementById('inlineSvcTable');if(_old)_old.remove();
+    _old=document.getElementById('inlineAccTable');if(_old)_old.remove();
+    _old=document.getElementById('inlineArrTable');if(_old)_old.remove();
+    resetDetailButtons();
+    document.getElementById('btnReadAll').disabled=true;
+    document.getElementById('readAllStatus').textContent='Read & Export all EFs';
+    document.getElementById('btnAdm').disabled=true;
+    for(var d=1;d<=4;d++)document.getElementById('admDot'+d).style.background='#ccc';
+    document.getElementById('admDots').style.color='#888';
+    document.getElementById('readAllStatus').style.color='#888';
+    document.getElementById('infoIccid').textContent='-';
+    document.getElementById('infoImsi').textContent='-';
+    document.getElementById('infoMsisdn').textContent='-';
+    document.getElementById('infoHplmn').textContent='-';
+    document.getElementById('infoImpi').textContent='-';
+    document.getElementById('infoImpu').textContent='-';
     const r=await api('/sim/connect',{reader:0});
     if(r.success){setStatus('connectStatus','✅ Connected','ok');
         document.getElementById('infoIccid').textContent=r.info.iccid||'-';
@@ -236,17 +452,12 @@ async function connectReader(){
         document.getElementById('infoHplmn').textContent=r.info.hplmn||'-';
         document.getElementById('infoImpi').textContent=r.info.impi||'-';
         document.getElementById('infoImpu').textContent=r.info.impu||'-';
-        writeVerified=false;verifiedAdm='';verifiedAdmType='';
-        document.getElementById('admBadge').style.display='none';
-        dumpData=null;selectedPath=null;selectedFd=null;sortedEntries=[];isOfflineMode=false;
-        clearFilter();
-        document.getElementById('fileListBody').innerHTML='';
-        document.getElementById('inlineRawView').innerHTML='<span style="color:#999">(no data)</span>';
-        document.getElementById('btnRead').style.display='none';
-        document.getElementById('btnWrite').disabled=true;
-        document.getElementById('btnCopy').disabled=true;
-        document.getElementById('btnExport').disabled=true;
         document.getElementById('btnReadAll').disabled=false;
+        document.getElementById('readAllStatus').textContent='Read & Export all EFs';
+        document.getElementById('readAllStatus').style.color='#888';
+        document.getElementById('btnAdm').disabled=false;
+        document.getElementById('btnAdm').textContent='🔐 VERIFY ADM';
+        document.getElementById('admDots').style.color='#888';
     }else{setStatus('connectStatus','❌ '+r.error,'err');}
 }
 
@@ -274,18 +485,31 @@ function sortKey(path,fd){
 }
 
 async function readAllFiles(){
-    setStatus('actionStatus','⏳ Reading... (may take a few seconds)','warn');
+    document.getElementById('btnReadAll').disabled=true;
+    document.getElementById('readAllStatus').textContent='⏳ Reading...';
+    document.getElementById('readAllStatus').style.color='#888';
+    setStatus('actionStatus','','');
+    setStatus('exportStatus','','');
     var startTime=Date.now();
     try{
         var r=await api('/sim/read_all',{});
         var elapsed=((Date.now()-startTime)/1000).toFixed(1);
         if(r.success){dumpData=r.data;sortedEntries=Object.entries(r.data.files).sort(function(a,b){return sortKey(a[0],a[1]).localeCompare(sortKey(b[0],b[1]));});
-            renderFileList();setStatus('actionStatus','✅ '+sortedEntries.length+' files (elapsed '+elapsed+'s)','ok');
-            document.getElementById('btnExport').disabled=false;
+            renderFileList();setStatus('actionStatus','','');
+            document.getElementById('readAllStatus').textContent='✅ '+sortedEntries.length+' files ('+elapsed+'s)';
+            document.getElementById('readAllStatus').style.color='#888';
             document.getElementById('btnReadAll').disabled=true;
             fillIsimInfo(r.data);
-        }else{setStatus('actionStatus','❌ '+(r.error||'Unknown error'),'err');}
-    }catch(ex){setStatus('actionStatus','❌ JS Error: '+ex.message,'err');}
+            if(r.export_path){setStatus('exportStatus','✅ Saved to '+r.export_path,'ok');}
+            else{setStatus('exportStatus','⚠️ Auto-export failed','warn');}
+            // Auto-read 6982 files with any verified ADM keys
+            for(var ak in admVerified){
+                if(admVerified[ak]&&admKeys[ak]){
+                    await autoRead6982Files(ak,admKeys[ak]);
+                }
+            }
+        }else{document.getElementById('readAllStatus').textContent='❌ '+(r.error||'Error');document.getElementById('readAllStatus').style.color='#c0392b';document.getElementById('btnReadAll').disabled=false;}
+    }catch(ex){document.getElementById('readAllStatus').textContent='❌ '+ex.message;document.getElementById('readAllStatus').style.color='#c0392b';document.getElementById('btnReadAll').disabled=false;}
 }
 
 function applyFilter(){document.getElementById('filterClear').style.display=document.getElementById('fileFilter').value?'inline':'none';renderFileList();}
@@ -296,14 +520,16 @@ function renderFileList(){
     var q=(document.getElementById('fileFilter').value||'').trim().toUpperCase();
     for(var i=0;i<sortedEntries.length;i++){
         var path=sortedEntries[i][0],fd=sortedEntries[i][1];
-        var fid=getFid(fd),ft=getFt(fd),st=ft==='DF'?'':SMAP[getStruct(fd)]||'';
+        var fid=getFid(fd),ft=getFt(fd),typeCol=ft==='DF'?'DF':(SMAP[getStruct(fd)]||'');
         var fcp=fd.fcp||{},size=fcp.file_size||'',numRec=(fcp.file_descriptor||{}).num_of_rec||'';
+        var arrRec=((fcp.security_attrib_referenced||{}).ef_arr_record_nr);
+        var arrVal=(arrRec!=null&&arrRec!==undefined)?arrRec:'';
         var cols=pathCols(fd);
         if(q){var name=(cols[0]+' '+cols[1]+' '+cols[2]).toUpperCase();if(name.indexOf(q)<0&&fid.indexOf(q)<0)continue;}
         var tr=document.createElement('tr');
         if(ft==='DF')tr.className='df-row';
         if(fd.error&&!fd.bytes)tr.style.color='#aaa';
-        tr.innerHTML='<td>'+cols[0]+'</td><td>'+cols[1]+'</td><td>'+cols[2]+'</td><td class="cc">'+fid+'</td><td class="cc">'+ft+'</td><td class="cc">'+st+'</td><td class="cr">'+size+'</td><td class="cr">'+numRec+'</td>';
+        tr.innerHTML='<td>'+cols[0]+'</td><td>'+cols[1]+'</td><td>'+cols[2]+'</td><td class="cc">'+fid+'</td><td class="cc">'+typeCol+'</td><td class="cc">'+arrVal+'</td><td class="cr">'+size+'</td><td class="cr">'+numRec+'</td>';
         tr.setAttribute('data-idx',i);
         tr.onclick=function(){
             document.querySelectorAll('#fileListBody tr.selected').forEach(function(r){r.classList.remove('selected');});
@@ -313,10 +539,14 @@ function renderFileList(){
             if(selectedFd.decoded)selectedFd._ursp_decoded=selectedFd.decoded;
             showDetail(selectedPath,selectedFd);
             updateInlineDecode(selectedPath,selectedFd);
-            var isEf=getFt(selectedFd)==='EF';
-            var is6982=selectedFd.error&&selectedFd.error.sw_actual==='6982';
-            document.getElementById('btnRead').style.display=(is6982&&!isOfflineMode)?'inline-flex':'none';
-            document.getElementById('btnWrite').disabled=!isEf||is6982||isOfflineMode;
+            updateDetailButtons({
+                isEf:getFt(selectedFd)==='EF',
+                is6982:selectedFd.error&&selectedFd.error.sw_actual==='6982',
+                is6A82:selectedFd.error&&selectedFd.error.sw_actual==='6a82',
+                isOffline:isOfflineMode,
+                path:selectedPath,
+                fd:selectedFd
+            });
         };
         tbody.appendChild(tr);
     }
@@ -458,6 +688,8 @@ function updateInlineDecode(path,fd){
     if(oldSvc)oldSvc.remove();
     var oldAcc=document.getElementById('inlineAccTable');
     if(oldAcc)oldAcc.remove();
+    var oldArr=document.getElementById('inlineArrTable');
+    if(oldArr)oldArr.remove();
 
     // Ensure core elements are back in the box (they may have been detached)
     if(!box.contains(treeView)){box.appendChild(treeView);}
@@ -476,16 +708,12 @@ function updateInlineDecode(path,fd){
     if(!fd||getFt(fd)!=='EF'){
         toggle.style.display='none';
         document.getElementById('plmnToggle').style.display='none';
-        document.getElementById('btnCopy').disabled=true;
         treeView.innerHTML='';treeView.style.display='none';
         jsonView.innerHTML='';jsonView.style.display='none';
         rawView.innerHTML='';rawView.style.display='none';
         treeRaw.value='';jsonRaw.value='';
         return;
     }
-
-    // Enable copy for any EF with data
-    document.getElementById('btnCopy').disabled=!(fd.bytes||fd.body!==undefined&&fd.body!==null);
 
     // PLMN table view
     if(isPlmnFile(path)&&fd.bytes){
@@ -496,16 +724,22 @@ function updateInlineDecode(path,fd){
         else{rawHex='';}
         if(rawHex){
             var rows=parsePlmnFromBytes(rawHex,hasAcT);
-            treeView.style.display='none';jsonView.style.display='none';rawView.style.display='none';
+            treeView.style.display='none';jsonView.style.display='none';
             var plmnDiv=document.createElement('div');
             plmnDiv.id='inlinePlmnTable';
-            var tableHtml=renderPlmnTable(rows,hasAcT);
-            plmnDiv.innerHTML='<div id="plmnTableContent">'+tableHtml+'</div>'
-                +'<div id="plmnRawContent" style="display:none"><pre class="data-pre" style="margin:0">'+rawHex+'</pre></div>';
+            plmnDiv.innerHTML=renderPlmnTable(rows,hasAcT);
             box.appendChild(plmnDiv);
-            toggle.style.display='none';
-            document.getElementById('plmnToggle').style.display='flex';
-            switchPlmnView(_lastViewMode==='raw'?'raw':'table');
+            toggle.style.display='flex';
+            document.getElementById('plmnToggle').style.display='none';
+            if(_lastViewMode==='raw'){
+                plmnDiv.style.display='none';rawView.style.display='block';
+                document.getElementById('inline-toggle-decode').classList.remove('toggle-active');
+                document.getElementById('inline-toggle-raw').classList.add('toggle-active');
+            }else{
+                plmnDiv.style.display='block';rawView.style.display='none';
+                document.getElementById('inline-toggle-decode').classList.add('toggle-active');
+                document.getElementById('inline-toggle-raw').classList.remove('toggle-active');
+            }
             treeRaw.value='';jsonRaw.value='';
             return;
         }
@@ -523,6 +757,12 @@ function updateInlineDecode(path,fd){
     // ACC (Access Control Class) table view
     if(path&&path.endsWith('/EF.ACC')&&fd.body&&typeof fd.body==='object'){
         _renderAccTableView(fd,box,treeView,jsonView,rawView,toggle,treeRaw,jsonRaw);
+        return;
+    }
+
+    // ARR (Access Rule Reference) table view
+    if(path&&path.endsWith('/EF.ARR')&&fd.body&&Array.isArray(fd.body)){
+        _renderArrTableView(fd,box,treeView,jsonView,rawView,toggle,treeRaw,jsonRaw);
         return;
     }
 
@@ -627,7 +867,38 @@ function updateInlineDecode(path,fd){
 
 function _renderRawView(rawView,fd){
     if(!fd){rawView.innerHTML='<span style="color:#999">(no data)</span>';rawView.style.margin='8px';rawView.style.padding='8px';return;}
-    if(fd.error&&!fd.bytes){rawView.innerHTML='<span style="color:#c0392b">'+(fd.error.sw_actual||'ERR')+': '+(fd.error.message||'')+'</span>';rawView.style.margin='8px';rawView.style.padding='8px';return;}
+    if(fd.error&&!fd.bytes){
+        var errMsg='<span style="color:#c0392b;font-size:0.76rem">'+(fd.error.sw_actual||'ERR')+': '+(fd.error.message||'')+'</span>';
+        if(fd.error.sw_actual==='6982'&&selectedPath&&!isOfflineMode){
+            var readCond=getArrCondition(selectedPath,'read_search_compare');
+            var writeCond=getArrCondition(selectedPath,'update_erase');
+            var infoHtml='<div style="margin-top:10px;padding:10px 12px;background:#fff8f0;border:1px solid #f0d0a0;border-radius:6px;font-size:0.72rem">';
+            infoHtml+='<div style="font-weight:600;color:#d35400;margin-bottom:6px">📋 ARR Access Conditions</div>';
+            if(readCond){
+                var rc=readCond.value||readCond.type;
+                var rcColor=readCond.type==='adm'?'#e67e22':readCond.type==='pin'?'#3498db':'#888';
+                infoHtml+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px"><span style="color:#888;min-width:50px">Read:</span><span style="color:'+rcColor+';font-weight:600">'+rc+'</span>';
+                if(readCond.type==='adm'){
+                    var satisfied=isAdmSatisfied(readCond);
+                    infoHtml+=satisfied?'<span style="color:#27ae60;font-size:0.66rem">✅ Verified</span>':'<span style="color:#c0392b;font-size:0.66rem">❌ Not verified</span>';
+                }
+                infoHtml+='</div>';
+            }
+            if(writeCond){
+                var wc=writeCond.value||writeCond.type;
+                var wcColor=writeCond.type==='adm'?'#e67e22':writeCond.type==='pin'?'#3498db':'#888';
+                infoHtml+='<div style="display:flex;align-items:center;gap:6px"><span style="color:#888;min-width:50px">Update:</span><span style="color:'+wcColor+';font-weight:600">'+wc+'</span>';
+                if(writeCond.type==='adm'){
+                    var satisfied=isAdmSatisfied(writeCond);
+                    infoHtml+=satisfied?'<span style="color:#27ae60;font-size:0.66rem">✅ Verified</span>':'<span style="color:#c0392b;font-size:0.66rem">❌ Not verified</span>';
+                }
+                infoHtml+='</div>';
+            }
+            infoHtml+='</div>';
+            errMsg+=infoHtml;
+        }
+        rawView.innerHTML=errMsg;rawView.style.margin='8px';rawView.style.padding='8px';return;
+    }
     if(fd.bytes){
         var b=fd.bytes;
         if(Array.isArray(b)){
@@ -660,17 +931,23 @@ async function _renderServiceTableView(path,fd,box,treeView,jsonView,rawView,tog
             +'<td style="padding:3px 12px 3px 6px;text-align:left;'+statusStyle+'">'+(enabled?'ON':'OFF')+'</td></tr>';
     }
     html+='</tbody></table>';
-    treeView.style.display='none';jsonView.style.display='none';rawView.style.display='none';
-    // Remove old service table
+    treeView.style.display='none';jsonView.style.display='none';
     var old=document.getElementById('inlineSvcTable');if(old)old.remove();
     var svcDiv=document.createElement('div');
     svcDiv.id='inlineSvcTable';
-    svcDiv.innerHTML='<div id="svcTableContent">'+html+'</div>'
-        +'<div id="svcRawContent" style="display:none"><pre class="data-pre" style="margin:0">'+rawHex+'</pre></div>';
+    svcDiv.innerHTML=html;
     box.appendChild(svcDiv);
-    toggle.style.display='none';
-    document.getElementById('plmnToggle').style.display='flex';
-    switchPlmnView(_lastViewMode==='raw'?'raw':'table');
+    toggle.style.display='flex';
+    document.getElementById('plmnToggle').style.display='none';
+    if(_lastViewMode==='raw'){
+        svcDiv.style.display='none';rawView.style.display='block';
+        document.getElementById('inline-toggle-decode').classList.remove('toggle-active');
+        document.getElementById('inline-toggle-raw').classList.add('toggle-active');
+    }else{
+        svcDiv.style.display='block';rawView.style.display='none';
+        document.getElementById('inline-toggle-decode').classList.add('toggle-active');
+        document.getElementById('inline-toggle-raw').classList.remove('toggle-active');
+    }
     treeRaw.value='';jsonRaw.value='';
 }
 
@@ -694,17 +971,105 @@ function _renderAccTableView(fd,box,treeView,jsonView,rawView,toggle,treeRaw,jso
             +'<td style="padding:3px 12px 3px 6px;text-align:left;'+statusStyle+'">'+(enabled?'ON':'OFF')+'</td></tr>';
     }
     html+='</tbody></table>';
-    treeView.style.display='none';jsonView.style.display='none';rawView.style.display='none';
+    treeView.style.display='none';jsonView.style.display='none';
     var old=document.getElementById('inlineAccTable');if(old)old.remove();
     var accDiv=document.createElement('div');
     accDiv.id='inlineAccTable';
-    var rawHex=(typeof fd.bytes==='string')?fd.bytes.toUpperCase():'';
-    accDiv.innerHTML='<div id="accTableContent">'+html+'</div>'
-        +'<div id="accRawContent" style="display:none"><pre class="data-pre" style="margin:0">'+rawHex+'</pre></div>';
+    accDiv.innerHTML=html;
     box.appendChild(accDiv);
-    toggle.style.display='none';
-    document.getElementById('plmnToggle').style.display='flex';
-    switchPlmnView(_lastViewMode==='raw'?'raw':'table');
+    toggle.style.display='flex';
+    document.getElementById('plmnToggle').style.display='none';
+    if(_lastViewMode==='raw'){
+        accDiv.style.display='none';rawView.style.display='block';
+        document.getElementById('inline-toggle-decode').classList.remove('toggle-active');
+        document.getElementById('inline-toggle-raw').classList.add('toggle-active');
+    }else{
+        accDiv.style.display='block';rawView.style.display='none';
+        document.getElementById('inline-toggle-decode').classList.add('toggle-active');
+        document.getElementById('inline-toggle-raw').classList.remove('toggle-active');
+    }
+    treeRaw.value='';jsonRaw.value='';
+}
+
+function _arrCondLabel(cond){
+    if(!cond)return'-';
+    if(cond.always===null||cond.always===undefined&&Object.keys(cond).length===0)return'ALWAYS';
+    if(cond.never===null)return'NEVER';
+    if(cond.control_reference_template)return cond.control_reference_template;
+    if(cond.or&&Array.isArray(cond.or))return cond.or.map(function(c){return c.control_reference_template||'?';}).join(' | ');
+    return'?';
+}
+function _arrCondColor(label){
+    if(label==='-')return'#ddd';
+    if(label==='ALWAYS')return'#27ae60';
+    if(label==='NEVER')return'#aaa';
+    if(label.indexOf('ADM')>=0&&label.indexOf('PIN')<0)return'#e67e22';
+    if(label.indexOf('PIN')>=0&&label.indexOf('ADM')<0)return'#3498db';
+    if(label.indexOf('PIN')>=0&&label.indexOf('ADM')>=0)return'#8e44ad';
+    return'#888';
+}
+function _arrCondCell(label){
+    return label;
+}
+var _ARR_COLS=['read_search_compare','update_erase','write_append','activate_file_or_record','deactivate_file_or_record'];
+var _ARR_HDR=['Read','Update','Write','Activate','Deactivate'];
+function _parseArrRecord(rec){
+    var row={};
+    for(var i=0;i<_ARR_COLS.length;i++)row[_ARR_COLS[i]]='-';
+    if(!rec||!Array.isArray(rec))return row;
+    for(var r=0;r<rec.length;r++){
+        var rule=rec[r];
+        if(!Array.isArray(rule)||rule.length<2)continue;
+        var am=rule[0],cond=rule[1];
+        if(!am||!am.access_mode)continue;
+        if(am.command_header)continue;
+        var label=_arrCondLabel(cond);
+        for(var m=0;m<am.access_mode.length;m++){
+            var mode=am.access_mode[m];
+            if(row[mode]==='-')row[mode]=label;
+        }
+    }
+    return row;
+}
+function _renderArrTableView(fd,box,treeView,jsonView,rawView,toggle,treeRaw,jsonRaw){
+    var records=fd.body;
+    var html='<table class="rec-table" style="table-layout:fixed"><thead><tr>';
+    html+='<th style="width:38px">#</th>';
+    for(var h=0;h<_ARR_HDR.length;h++)html+='<th>'+_ARR_HDR[h]+'</th>';
+    html+='</tr></thead><tbody>';
+    for(var i=0;i<records.length;i++){
+        var rec=records[i];
+        var recNum=(i+1);
+        if(!rec||!Array.isArray(rec)||rec.length===0){
+            html+='<tr><td>'+recNum+'</td>';            for(var h=0;h<_ARR_COLS.length;h++)html+='<td>-</td>';
+            html+='</tr>';
+            continue;
+        }
+        var row=_parseArrRecord(rec);
+        html+='<tr><td>'+recNum+'</td>';
+        for(var h=0;h<_ARR_COLS.length;h++)html+='<td>'+_arrCondCell(row[_ARR_COLS[h]])+'</td>';
+        html+='</tr>';
+    }
+    html+='</tbody></table>';
+    treeView.style.display='none';jsonView.style.display='none';
+    var old=document.getElementById('inlineArrTable');if(old)old.remove();
+    var arrDiv=document.createElement('div');
+    arrDiv.id='inlineArrTable';
+    arrDiv.innerHTML=html;
+    box.appendChild(arrDiv);
+    // Use common Decode/Raw toggle — Decode shows ARR table, Raw shows common rawView
+    toggle.style.display='flex';
+    document.getElementById('plmnToggle').style.display='none';
+    _isUrspDecode=false;
+    if(_lastViewMode==='raw'){
+        arrDiv.style.display='none';rawView.style.display='block';
+        document.getElementById('inline-toggle-decode').classList.remove('toggle-active');
+        document.getElementById('inline-toggle-raw').classList.add('toggle-active');
+    }else{
+        arrDiv.style.display='block';rawView.style.display='none';
+        document.getElementById('inline-toggle-decode').classList.add('toggle-active');
+        document.getElementById('inline-toggle-raw').classList.remove('toggle-active');
+    }
     treeRaw.value='';jsonRaw.value='';
 }
 
@@ -714,12 +1079,15 @@ function switchInlineView(mode){
     _lastViewMode=mode;
     var tv=document.getElementById('inlineTreeView'),jv=document.getElementById('inlineJsonView'),rv=document.getElementById('inlineRawView');
     var dl=document.getElementById('inline-toggle-decode'),rl=document.getElementById('inline-toggle-raw');
+    var customDivs=[document.getElementById('inlineArrTable'),document.getElementById('inlinePlmnTable'),document.getElementById('inlineSvcTable'),document.getElementById('inlineAccTable')];
+    var hasCustom=false;
     tv.style.display='none';jv.style.display='none';rv.style.display='none';
+    customDivs.forEach(function(d){if(d){d.style.display='none';hasCustom=true;}});
     dl.classList.remove('toggle-active');rl.classList.remove('toggle-active');
     if(mode==='raw'){rv.style.display='block';rl.classList.add('toggle-active');}
     else{
-        // decode mode: URSP shows tree, others show JSON
-        if(_isUrspDecode){tv.style.display='block';}
+        if(hasCustom){customDivs.forEach(function(d){if(d)d.style.display='block';});}
+        else if(_isUrspDecode){tv.style.display='block';}
         else{jv.style.display='block';}
         dl.classList.add('toggle-active');
     }
@@ -765,109 +1133,127 @@ function _tableToTsv(container){
 
 function copyInlineDecode(btn){
     var rv=document.getElementById('inlineRawView'),jv=document.getElementById('inlineJsonView');
-    var plmnTable=document.getElementById('plmnTableContent'),plmnRaw=document.getElementById('plmnRawContent');
-    var svcTable=document.getElementById('svcTableContent'),svcRaw=document.getElementById('svcRawContent');
-    var accTable=document.getElementById('accTableContent'),accRaw=document.getElementById('accRawContent');
+    var customDivs=[document.getElementById('inlinePlmnTable'),document.getElementById('inlineSvcTable'),document.getElementById('inlineAccTable'),document.getElementById('inlineArrTable')];
     var text;
-    // ACC Table mode
-    if(accTable&&accRaw){
-        if(accRaw.style.display!=='none'){text=accRaw.innerText||accRaw.textContent||'';}
-        else{text=_tableToTsv(accTable);}
+    // Raw mode: copy from rawView
+    if(rv&&rv.style.display!=='none'){
+        text=rv.innerText||rv.textContent||'';
     }
-    // Service Table mode
-    else if(svcTable&&svcRaw){
-        if(svcRaw.style.display!=='none'){text=svcRaw.innerText||svcRaw.textContent||'';}
-        else{text=_tableToTsv(svcTable);}
+    // Custom table mode: copy as TSV
+    else{
+        var customDiv=null;
+        customDivs.forEach(function(d){if(d&&d.style.display!=='none')customDiv=d;});
+        if(customDiv){text=_tableToTsv(customDiv);}
+        else if(_isUrspDecode){text=document.getElementById('inlineTreeRaw').value;}
+        else{text=document.getElementById('inlineJsonRaw').value;}
     }
-    // PLMN mode
-    else if(plmnTable&&plmnRaw){
-        if(plmnRaw.style.display!=='none'){text=plmnRaw.innerText||plmnRaw.textContent||'';}
-        else{text=_tableToTsv(plmnTable);}
-    }
-    // Normal mode
-    else if(rv&&rv.style.display!=='none'){text=rv.innerText||rv.textContent||'';}
-    else if(_isUrspDecode){text=document.getElementById('inlineTreeRaw').value;}
-    else{text=document.getElementById('inlineJsonRaw').value;}
     navigator.clipboard.writeText(text).then(function(){btn.textContent='✓ Copied';setTimeout(function(){btn.textContent='📋 Copy';},1500);});
 }
 
-/* === ARR Access Condition Lookup === */
-function getUpdateCondition(path){
-    if(!dumpData||!dumpData.files)return null;
-    var fd=dumpData.files[path];if(!fd||!fd.fcp)return null;
-    var sar=fd.fcp.security_attrib_referenced;if(!sar)return null;
-    var arrFid=sar.ef_arr_file_id,arrRec=sar.ef_arr_record_nr;if(!arrFid||!arrRec)return null;
-    var parts=path.split('/'),arrPath=null;
-    for(var i=parts.length-1;i>=1;i--){var c=parts.slice(0,i).join('/')+'/EF.ARR';if(dumpData.files[c]){arrPath=c;break;}}
-    if(!arrPath)arrPath='MF/EF.ARR';
-    var arrFd=dumpData.files[arrPath];if(!arrFd||!arrFd.body||!Array.isArray(arrFd.body))return null;
-    var record=arrFd.body[arrRec-1];if(!record||!Array.isArray(record))return null;
-    for(var r=0;r<record.length;r++){
-        var rule=record[r];if(!Array.isArray(rule)||rule.length<2)continue;
-        var am=rule[0];if(!am||!am.access_mode)continue;
-        if(am.access_mode.indexOf('update_erase')<0)continue;
-        var cond=rule[1];if(!cond)continue;
-        if(cond.always===null||cond.always===undefined&&Object.keys(cond).length===0)return{type:'always'};
-        if(cond.control_reference_template){var t=cond.control_reference_template;if(t.toUpperCase().indexOf('ADM')===0)return{type:'adm',value:t};return{type:'pin',value:t};}
-        if(cond.or&&Array.isArray(cond.or)){
-            var adms=[],hasNonAdm=false;
-            for(var k=0;k<cond.or.length;k++){var c=cond.or[k];if(c.control_reference_template){var cv=c.control_reference_template;if(cv.toUpperCase().indexOf('ADM')===0)adms.push(cv);else hasNonAdm=true;}}
-            if(adms.length>0&&!hasNonAdm)return{type:'adm',value:adms.join(' | ')};
-            if(hasNonAdm&&adms.length===0)return{type:'pin',value:'PIN'};
-            if(hasNonAdm&&adms.length>0)return{type:'pin_or_adm',value:cond.or.map(function(c){return c.control_reference_template||'?';}).join(' | ')};
-        }
-        return{type:'unknown'};
-    }
-    return null;
-}
 
-/* === Common Verification Popup === */
-function requireVerify(callback){
-    var cond=getUpdateCondition(selectedPath);
-    if(!cond||cond.type!=='adm'){callback();return;}
-    if(writeVerified&&verifiedAdm&&verifiedAdmType){callback();return;}
-    // Show verification popup
-    verifyCallback=callback;
-    var admLabel=cond.value||'ADM1';
-    document.getElementById('verifyDesc').textContent='ARR: '+admLabel+' required for update';
-    document.getElementById('verifyResult').style.display='none';
-    var keys=admLabel.split(' | ');
-    var k=keys[0].trim();
-    document.getElementById('verifyFields').innerHTML=
-        '<div style="display:flex;align-items:center;gap:6px;background:#f0f2f5;border-radius:6px;padding:4px 10px">'+
-        '<span style="font-size:0.72rem;font-weight:600;color:#888;min-width:42px;padding-left:2px">'+k+'</span>'+
-        '<input type="text" id="verifyAdmInput" data-key="'+k+'" placeholder="16-digit hex" oninput="updateVerifyCount()" style="border:none;background:transparent;flex:1;font-size:0.78rem;font-family:Consolas,monospace;padding:3px 4px">'+
-        '<span id="verifyCount" style="font-size:0.66rem;color:#bbb;white-space:nowrap">(0/16)</span>'+
-        '<button class="btn btn-dark" id="verifyBtn" onclick="doVerify()" disabled style="padding:4px 10px;font-size:0.72rem;min-width:70px">Verify</button>'+
-        '</div>';
+/* === ADM Verification Popup === */
+function openAdmPopup(){
+    // Reset all rows to current state
+    var rows=document.querySelectorAll('.adm-row');
+    rows.forEach(function(row){
+        var key=row.getAttribute('data-key');
+        var input=row.querySelector('.adm-input');
+        var btn=row.querySelector('.adm-verify-btn');
+        var count=row.querySelector('.adm-count');
+        if(admVerified[key]){
+            input.value=admKeys[key];input.readOnly=true;
+            btn.textContent='Verified';btn.disabled=true;btn.style.background='linear-gradient(45deg,#27ae60,#2ecc71)';btn.style.color='white';
+            count.textContent='(16/16)';
+        }else{
+            input.value=admKeys[key]||'';input.readOnly=false;
+            btn.textContent='Verify';btn.disabled=!(input.value.replace(/\s/g,'').length===16&&/^[0-9a-fA-F]+$/.test(input.value.replace(/\s/g,'')));
+            btn.style.background='';btn.style.color='';
+            var v=input.value.replace(/\s/g,'');count.textContent='('+v.length+'/16)';
+        }
+    });
+    document.getElementById('admStatus').style.display='none';
     document.getElementById('verifyOverlay').classList.add('show');
 }
-function closeVerifyPopup(){document.getElementById('verifyOverlay').classList.remove('show');verifyCallback=null;}
-function updateVerifyCount(){
-    var val=document.getElementById('verifyAdmInput').value.replace(/\s/g,'');
-    document.getElementById('verifyCount').textContent='('+val.length+'/16)';
-    document.getElementById('verifyBtn').disabled=!(val.length===16&&/^[0-9a-fA-F]+$/.test(val));
+function closeAdmPopup(){document.getElementById('verifyOverlay').classList.remove('show');}
+function updateAdmRow(input){
+    var row=input.closest('.adm-row');
+    var val=input.value.replace(/\s/g,'');
+    row.querySelector('.adm-count').textContent='('+val.length+'/16)';
+    row.querySelector('.adm-verify-btn').disabled=!(val.length===16&&/^[0-9a-fA-F]+$/.test(val));
 }
-async function doVerify(){
-    var input=document.getElementById('verifyAdmInput');
+async function doAdmVerify(btn,admType){
+    var row=btn.closest('.adm-row');
+    var input=row.querySelector('.adm-input');
+    var status=document.getElementById('admStatus');
     var a=input.value.trim();
-    var admType=input.getAttribute('data-key')||'ADM1';
-    document.getElementById('verifyResult').innerHTML='<span style="color:#888">⏳ Verifying...</span>';
-    document.getElementById('verifyResult').style.display='block';
-    document.getElementById('verifyBtn').disabled=true;
+    status.innerHTML='<span style="color:#888">⏳ Verifying '+admType+'...</span>';
+    status.style.display='block';
+    btn.disabled=true;
     var r=await api('/sim/verify_adm',{adm:a,adm_type:admType});
     if(r.success){
-        writeVerified=true;verifiedAdm=a;verifiedAdmType=admType;
-        document.getElementById('admBadge').textContent='🔐 '+admType+' Verified';
-        document.getElementById('admBadge').style.display='inline';
-        document.getElementById('verifyResult').innerHTML='<span class="status status-ok">✅ Verified</span>';
+        admVerified[admType]=true;admKeys[admType]=a;
+        btn.textContent='Verified';btn.style.background='linear-gradient(45deg,#27ae60,#2ecc71)';btn.style.color='white';
         input.readOnly=true;
-        var cb=verifyCallback;
-        setTimeout(function(){closeVerifyPopup();if(cb)cb();},1000);
+        status.innerHTML='<span style="color:#27ae60">✅ '+admType+' verified successfully</span>';
+        // Update dot indicator
+        var dotIdx={'ADM1':'1','ADM2':'2','ADM3':'3','ADM4':'4'};
+        document.getElementById('admDot'+dotIdx[admType]).style.background='#27ae60';
+        // Refresh Write button for currently selected file
+        if(selectedPath&&selectedFd){
+            var isEf=getFt(selectedFd)==='EF';
+            var is6982=selectedFd.error&&selectedFd.error.sw_actual==='6982';
+            var is6A82=selectedFd.error&&selectedFd.error.sw_actual==='6a82';
+            updateDetailButtons({isEf:isEf,is6982:is6982,is6A82:is6A82,isOffline:isOfflineMode,path:selectedPath,fd:selectedFd});
+        }
+        // Auto-read 6982 files that need this ADM type for read access
+        autoRead6982Files(admType,a);
     }else{
-        document.getElementById('verifyResult').innerHTML='<span style="color:#c0392b">'+(r.error||'Verification failed')+'</span>';
-        document.getElementById('verifyBtn').disabled=false;
+        status.innerHTML='<span style="color:#c0392b">❌ '+admType+': '+(r.error||'Verification failed')+'</span>';
+        btn.disabled=false;
     }
+}
+/* Auto-read 6982 files after ADM verify */
+async function autoRead6982Files(admType,admHex){
+    if(!dumpData||!dumpData.files)return;
+    var paths=[];
+    for(var path in dumpData.files){
+        var fd=dumpData.files[path];
+        if(!fd||!fd.error||fd.error.sw_actual!=='6982')continue;
+        if(getFt(fd)!=='EF')continue;
+        var readCond=getArrCondition(path,'read_search_compare');
+        if(!readCond||readCond.type!=='adm')continue;
+        var vals=(readCond.value||'').split(' | ');
+        for(var i=0;i<vals.length;i++){
+            if(vals[i].trim()===admType){paths.push(path);break;}
+        }
+    }
+    if(paths.length===0)return;
+    var structures={};
+    for(var i=0;i<paths.length;i++){
+        var fd=dumpData.files[paths[i]];
+        structures[paths[i]]=getStruct(fd);
+    }
+    var r=await api('/sim/read_ef',{adm:admHex,adm_type:admType,paths:paths,structures:structures,log:false});
+    if(r.success&&r.results){
+        var count=0;
+        for(var p in r.results){
+            var rd=r.results[p];
+            if(rd.bytes){
+                var fd=dumpData.files[p];
+                if(fd){fd.bytes=rd.bytes;if(rd.body)fd.body=rd.body;delete fd.error;count++;}
+            }
+        }
+        if(count>0){
+            sortedEntries=Object.entries(dumpData.files).sort(function(a,b){return sortKey(a[0],a[1]).localeCompare(sortKey(b[0],b[1]));});
+            renderFileList();
+            autoSaveDump();
+        }
+    }
+}
+async function autoSaveDump(){
+    if(!dumpData)return;
+    dumpData.admVerified=JSON.parse(JSON.stringify(admVerified));
+    try{await api('/sim/export',{data:dumpData});}catch(e){}
 }
 
 /* === Read (6982 files) === */
@@ -878,22 +1264,17 @@ async function doReadEf(admHex,admType){
         var rd=r.results[selectedPath];
         if(rd.bytes){selectedFd.bytes=rd.bytes;if(rd.body)selectedFd.body=rd.body;delete selectedFd.error;
             showDetail(selectedPath,selectedFd);renderFileList();
-            document.getElementById('btnRead').style.display='none';
-            document.getElementById('btnWrite').disabled=false;
+            updateDetailButtons({isEf:true,is6982:false,is6A82:false,isOffline:false,path:selectedPath,fd:selectedFd});
             return true;}
     }
     return false;
 }
 function onReadClick(){
     if(!selectedFd)return;
-    requireVerify(function(){
-        var rawView=document.getElementById('inlineRawView');
-        rawView.innerHTML='<span style="color:#888">⏳ Verifying and reading...</span>';
-        doReadEf(verifiedAdm,verifiedAdmType).then(function(ok){
-            if(!ok){
-                rawView.innerHTML='<span style="color:#c0392b">⚠️ Read failed</span>';
-            }
-        });
+    var rawView=document.getElementById('inlineRawView');
+    rawView.innerHTML='<span style="color:#888">⏳ Reading...</span>';
+    doReadEf(_getVerifiedAdm(),_getVerifiedAdmType()).then(function(ok){
+        if(!ok){rawView.innerHTML='<span style="color:#c0392b">⚠️ Read failed</span>';}
     });
 }
 
@@ -996,11 +1377,11 @@ async function tlvWrite(){
     if(!tag||!data)return;
     document.getElementById('writeTlvStatus').innerHTML='<span style="color:#888">⏳ Writing...</span>';
     document.getElementById('writeTlvWriteBtn').disabled=true;
-    var r=await api('/sim/write_tlv',{path:selectedPath,tag:tag,data:data,adm:verifiedAdm,adm_type:verifiedAdmType});
+    var r=await api('/sim/write_tlv',{path:selectedPath,tag:tag,data:data,adm:_getVerifiedAdm(),adm_type:_getVerifiedAdmType()});
     if(r.success){document.getElementById('writeTlvStatus').innerHTML='<span class="status status-ok">✅ Done</span>';tlvTagData[tag]=data;tlvOrigHex=data.toUpperCase();updateTlvButtons(true);
         // Re-retrieve to update raw data and decoding
         var rr;
-        if(verifiedAdm){rr=await api('/sim/read_tlv',{path:selectedPath,tag:tag,adm:verifiedAdm,adm_type:verifiedAdmType});}
+        if(_getVerifiedAdm()){rr=await api('/sim/read_tlv',{path:selectedPath,tag:tag,adm:_getVerifiedAdm(),adm_type:_getVerifiedAdmType()});}
         else{rr=await api('/sim/read_tlv',{path:selectedPath,tag:tag});}
         if(rr.success&&rr.data){
             // Update raw bytes with full TLV from retrieve
@@ -1017,6 +1398,7 @@ async function tlvWrite(){
                 selectedFd.body[String(tagNum)]=rr.data;
                 if(rr.decoded)selectedFd._ursp_decoded=rr.decoded;
                 showDetail(selectedPath,selectedFd);
+                updateInlineDecode(selectedPath,selectedFd);
             }
         }
     }
@@ -1026,7 +1408,7 @@ async function tlvWrite(){
 /* === Write Popup === */
 function onWriteClick(){
     if(!selectedFd)return;
-    requireVerify(function(){openWritePopup();});
+    openWritePopup();
 }
 function openWritePopup(){
     var st=getStruct(selectedFd),ft=getFt(selectedFd);
@@ -1098,7 +1480,8 @@ async function submitWrite(){
     var recNr=isLf?parseInt(document.getElementById('writeRecordSelect').value)+1:0;
     document.getElementById('writeStatus').innerHTML='<span style="color:#888">⏳ Writing...</span>';
     document.getElementById('writeSubmitBtn').disabled=true;
-    var r=await api('/sim/write_ef',{path:selectedPath,hex:hex,adm:verifiedAdm,adm_type:verifiedAdmType,record_nr:recNr,structure:st});
+    var _adm=_getVerifiedAdm(),_admType=_getVerifiedAdmType();
+    var r=await api('/sim/write_ef',{path:selectedPath,hex:hex,adm:_adm,adm_type:_admType,record_nr:recNr,structure:st});
     if(r.success){
         writeOrigHex=hex.toUpperCase();
         if(isServiceTableFile(selectedPath)){
@@ -1110,18 +1493,26 @@ async function submitWrite(){
         if(isLf&&selectedFd.bytes&&Array.isArray(selectedFd.bytes)){selectedFd.bytes[recNr-1]=hex;}else{selectedFd.bytes=hex;}
         showDetail(selectedPath,selectedFd);
         // Re-read decoded
-        if(verifiedAdm){
-            var rb={adm:verifiedAdm,adm_type:verifiedAdmType,paths:[selectedPath],structures:{},log:false};
+        if(_adm){
+            var rb={adm:_adm,adm_type:_admType,paths:[selectedPath],structures:{},log:false};
             rb.structures[selectedPath]=st;
             var rr=await api('/sim/read_ef',rb);
             if(rr.success&&rr.results&&rr.results[selectedPath]){
                 var rd=rr.results[selectedPath];
                 if(rd.body)selectedFd.body=rd.body;
                 if(rd.bytes)selectedFd.bytes=rd.bytes;
+                showDetail(selectedPath,selectedFd);
+                updateInlineDecode(selectedPath,selectedFd);
             }
         }else{
-            var rr=await api('/sim/read_ef',{path:selectedPath,structure:st});
-            if(rr.success&&rr.body)selectedFd.body=rr.body;
+            var rr=await api('/sim/read_ef',{paths:[selectedPath],structures:{},log:false});
+            if(rr.success&&rr.results&&rr.results[selectedPath]){
+                var rd=rr.results[selectedPath];
+                if(rd.body)selectedFd.body=rd.body;
+                if(rd.bytes)selectedFd.bytes=rd.bytes;
+                showDetail(selectedPath,selectedFd);
+                updateInlineDecode(selectedPath,selectedFd);
+            }
         }
     }else{
         document.getElementById('writeStatus').innerHTML='<span style="color:#c0392b">'+((r.error||'Write failed'))+'</span>';
@@ -1152,15 +1543,6 @@ document.getElementById('fileFilter').addEventListener('keydown',function(e){
     var next=e.key==='ArrowDown'?Math.min(cur+1,rows.length-1):Math.max(cur-1,0);
     if(next!==cur&&next>=0){rows[next].click();rows[next].scrollIntoView({block:'nearest'});}
 });
-
-async function exportData(){
-    if(!dumpData)return;setStatus('exportStatus','⏳ Exporting...','warn');
-    try{
-        var r=await api('/sim/export',{data:dumpData});
-        if(r.success){setStatus('exportStatus','✅ Saved to '+r.path,'ok');}
-        else{setStatus('exportStatus','❌ '+(r.error||'Export failed'),'err');}
-    }catch(e){setStatus('exportStatus','❌ '+e.message,'err');}
-}
 
 function loadDumpFile(input){
     if(!input.files||!input.files[0])return;
@@ -1203,12 +1585,17 @@ function loadDumpFile(input){
             fillIsimInfo(data);
             renderFileList();
             setStatus('actionStatus','✅ Loaded ('+sortedEntries.length+' files)','ok');
-            document.getElementById('btnExport').disabled=true;
             document.getElementById('btnReadAll').disabled=true;
-            document.getElementById('btnWrite').disabled=true;
-            document.getElementById('btnRead').style.display='none';
-            document.getElementById('admBadge').style.display='none';
-            writeVerified=false;verifiedAdm='';verifiedAdmType='';
+            document.getElementById('btnAdm').disabled=true;
+            document.getElementById('readAllStatus').textContent='Offline mode';
+            document.getElementById('readAllStatus').style.color='#ccc';
+            document.getElementById('admDots').style.color='#ccc';
+            resetDetailButtons();
+            // Restore ADM verified state from dump if available
+            var savedAdm=data.admVerified||{};
+            admVerified={ADM1:!!savedAdm.ADM1,ADM2:!!savedAdm.ADM2,ADM3:!!savedAdm.ADM3,ADM4:!!savedAdm.ADM4};
+            admKeys={ADM1:'',ADM2:'',ADM3:'',ADM4:''};
+            for(var d=1;d<=4;d++)document.getElementById('admDot'+d).style.background=admVerified['ADM'+d]?'#27ae60':'#ddd';
             isOfflineMode=true;
         }catch(ex){setStatus('actionStatus','❌ Parse error: '+ex.message,'err');}
     };

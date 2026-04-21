@@ -2,6 +2,12 @@
 REM SIM Card Reader - One-click launcher (Windows)
 setlocal
 
+echo.
+echo ╔══════════════════════════════════════╗
+echo ║  SIM Card Reader — Web UI            ║
+echo ╚══════════════════════════════════════╝
+echo.
+
 set DIR=%~dp0
 set VENV=%DIR%.venv
 set PORT=8082

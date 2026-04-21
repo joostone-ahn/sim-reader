@@ -386,7 +386,22 @@ def read_all():
         data["files"] = files
         print(f"[read_all_files_btn] Processed {len(files)} files, sending response")
 
-        return jsonify({'success': True, 'data': data})
+        # Auto-export: save dump.json + xlsx + decoded/
+        export_path = None
+        try:
+            iccid = data.get('iccid', 'unknown')
+            card_dir = DATA_DIR / iccid
+            card_dir.mkdir(parents=True, exist_ok=True)
+            json_path = card_dir / "dump.json"
+            with open(json_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+            convert_to_excel(str(json_path))
+            export_path = str(card_dir)
+            print(f"[read_all_files_btn] Auto-export done: {export_path}")
+        except Exception as ex:
+            print(f"[read_all_files_btn] Auto-export failed: {ex}")
+
+        return jsonify({'success': True, 'data': data, 'export_path': export_path})
 
     except subprocess.TimeoutExpired:
         print("[read_all_files_btn] TIMEOUT")
@@ -394,6 +409,28 @@ def read_all():
     except Exception as e:
         print(f"[read_all_files_btn] EXCEPTION: {e}")
         return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/sim/export', methods=['POST'])
+def export_sim():
+    try:
+        data = request.json.get('data')
+        if not data:
+            return jsonify({'success': False, 'error': 'No data'}), 400
+
+        iccid = data.get('iccid', 'unknown')
+        card_dir = DATA_DIR / iccid
+        card_dir.mkdir(parents=True, exist_ok=True)
+
+        json_path = card_dir / "dump.json"
+        with open(json_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+
+        convert_to_excel(str(json_path))
+        return jsonify({'success': True, 'path': str(card_dir)})
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 def _path_to_select_cmds(file_path: str) -> list[str]:
@@ -728,31 +765,6 @@ def write_ef():
 
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
-
-
-@app.route('/sim/export', methods=['POST'])
-def export_sim():
-    try:
-        data = request.json.get('data')
-        if not data:
-            return jsonify({'success': False, 'error': 'No data'}), 400
-
-        iccid = data.get('iccid', 'unknown')
-        card_dir = DATA_DIR / iccid
-        card_dir.mkdir(parents=True, exist_ok=True)
-
-        # Save dump.json
-        json_path = card_dir / "dump.json"
-        with open(json_path, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
-
-        # Convert to Excel (also creates decoded/ directory)
-        convert_to_excel(str(json_path))
-
-        return jsonify({'success': True, 'path': str(card_dir)})
-
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 if __name__ == '__main__':

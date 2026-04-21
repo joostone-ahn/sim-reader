@@ -2,6 +2,12 @@
 # SIM Card Reader - One-click launcher
 set -e
 
+echo ""
+echo "╔══════════════════════════════════════╗"
+echo "║  SIM Card Reader — Web UI            ║"
+echo "╚══════════════════════════════════════╝"
+echo ""
+
 DIR="$(cd "$(dirname "$0")" && pwd)"
 VENV="$DIR/.venv"
 PORT=8082

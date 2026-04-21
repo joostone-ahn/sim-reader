@@ -216,8 +216,20 @@ class SecurityAttribExpanded(BER_TLV_IE, tag=0xab):
 
 # ETSI TS 102 221 11.1.1.4.7.3
 class SecurityAttribReferenced(BER_TLV_IE, tag=0x8b):
-    # TODO: longer format with SEID
-    _construct = Struct('ef_arr_file_id'/Bytes(2), 'ef_arr_record_nr'/Int8ub)
+    # NOTE: Custom fix - handle both short (3-byte) and long (6-byte with SEID) formats
+    # Short format: EF_ARR_FID(2) + record_nr(1)
+    # Long format:  EF_ARR_FID(2) + SEID(1) + record_nr(1) + SEID_record_nr(1) + pad(1)
+
+    def _from_bytes(self, do: bytes):
+        if len(do) >= 6:
+            return {'ef_arr_file_id': b2h(do[0:2]), 'ef_arr_record_nr': do[3]}
+        else:
+            return {'ef_arr_file_id': b2h(do[0:2]), 'ef_arr_record_nr': do[2]}
+
+    def _to_bytes(self):
+        val = h2b(self.decoded['ef_arr_file_id'])
+        val += bytes([self.decoded['ef_arr_record_nr']])
+        return val
 
 # ETSI TS 102 221 11.1.1.4.8
 class ShortFileIdentifier(BER_TLV_IE, tag=0x88):
