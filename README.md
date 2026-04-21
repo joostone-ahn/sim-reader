@@ -80,7 +80,7 @@ The **File List** shows all files with the following columns:
 | Type | DF, TF (transparent), LF (linear fixed), CF (cyclic), BER-TLV |
 | ARR | Access Rule Reference record number |
 | Size | File size in bytes |
-| Rec# | Number of records (for record-based files) |
+| Rec# | Number of records (for linear fixed / cyclic files) |
 
 ### 6. View File Contents
 
