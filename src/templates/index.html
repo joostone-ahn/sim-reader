@@ -283,7 +283,7 @@ function _countReadFiles(){
     var c=0;for(var p in dumpData.files){var fd=dumpData.files[p];if(fd&&!fd.error&&fd.bytes)c++;}return c;
 }
 function _updateReadStatus(){
-    document.getElementById('readAllStatus').textContent='✅ '+_readCount+' files read'+(_readElapsed?' ('+_readElapsed+')':'');
+    document.getElementById('readAllStatus').textContent='✅ '+_readCount+' files'+(_readElapsed?' ('+_readElapsed+')':'');
 }
 /* Get best verified ADM key/value for the currently selected file's update condition */
 function _getVerifiedAdm(){
@@ -501,7 +501,7 @@ async function readAllFiles(){
     var startTime=Date.now();
     try{
         var r=await api('/sim/read_all',{});
-        var elapsed=((Date.now()-startTime)/1000).toFixed(1);
+        var elapsed=((Date.now()-startTime)/1000).toFixed(1)+'s elapsed';
         if(r.success){dumpData=r.data;sortedEntries=Object.entries(r.data.files).sort(function(a,b){return sortKey(a[0],a[1]).localeCompare(sortKey(b[0],b[1]));});
             renderFileList();setStatus('actionStatus','','');
             _readCount=_countReadFiles();_readElapsed=elapsed;_updateReadStatus();
