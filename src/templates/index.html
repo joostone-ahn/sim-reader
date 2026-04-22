@@ -486,7 +486,7 @@ async function connectReader(){
     }else{setStatus('connectStatus','❌ '+r.error,'err');}
 }
 
-const SMAP={transparent:'TF',linear_fixed:'LF',cyclic:'CF',ber_tlv:'BER-TLV',no_info_given:''};
+const SMAP={transparent:'Transparent',linear_fixed:'Linear Fixed',cyclic:'Cyclic',ber_tlv:'BER-TLV',no_info_given:''};
 function pathCols(fd){const p=fd.path||[];let d=p[0]==='MF'?p.slice(1):p;if(p.length===1&&p[0]==='MF')d=['MF'];while(d.length<3)d.push('');return d.slice(0,3);}
 function getStruct(fd){var fdb=((fd.fcp||{}).file_descriptor||{}).file_descriptor_byte||{};return fdb.structure||'';}
 function getFid(fd){return((fd.fcp||{}).file_identifier||'').toUpperCase();}

@@ -58,7 +58,7 @@ Click **Load Dump** to browse a previously exported `dump.json` without a SIM ca
 |--------|-------------|
 | Level 1/2/3 | File path hierarchy |
 | FID | File Identifier (hex) |
-| Type | DF, TF (transparent), LF (linear fixed), CF (cyclic), BER-TLV |
+| Type | DF, Transparent, Linear Fixed, Cyclic, BER-TLV |
 | ARR | Access Rule Reference record number |
 | Size | File size in bytes |
 | Rec# | Number of records (linear fixed / cyclic) |
