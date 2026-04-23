@@ -533,7 +533,7 @@ async function readAllFiles(){
         var r=await api('/sim/read_all',{});
         var elapsed=((Date.now()-startTime)/1000).toFixed(1)+'s elapsed';
         if(r.success){dumpData=r.data;sortedEntries=Object.entries(r.data.files).sort(function(a,b){return sortKey(a[0],a[1]).localeCompare(sortKey(b[0],b[1]));});
-            renderFileList();setStatus('actionStatus','','');
+            initCollapseState();renderFileList();setStatus('actionStatus','','');
             _readCount=_countReadFiles();_readElapsed=elapsed;_updateReadStatus();
             document.getElementById('readAllStatus').style.color='#888';
             document.getElementById('btnReadAll').disabled=true;
@@ -595,13 +595,21 @@ function renderFileList(){
             if(hidden)continue;
         }
         var tr=document.createElement('tr');
-        if(ft==='DF'){var depth=(fd.path||[]).length;tr.className=depth<=2?'df-row':'df-sub-row';}
+        var isAdf=ft==='DF'&&!!(fd.fcp||{}).df_name;
+        var isMf=path==='MF';
+        var isTopLevel=isMf||isAdf;
+        if(ft==='DF'){tr.className=isTopLevel?'df-row':'df-sub-row';}
         if(fd.error&&!fd.bytes)tr.style.color='#aaa';
-        // Build Name cell with collapse icon and indentation
+        // Indentation: MF/ADF=0, their children=1 level, deeper=+1
         var name=cols;
         var depth=(fd.path||[]).length;
-        var dfLevel=ft==='DF'?Math.max(0,depth-2):Math.max(0,depth-3);
-        var indent=dfLevel*16;
+        var parentIsAdf=depth>=2&&dumpData&&dumpData.files[path.split('/').slice(0,2).join('/')]&&(dumpData.files[path.split('/').slice(0,2).join('/')]||{}).fcp&&(dumpData.files[path.split('/').slice(0,2).join('/')]||{}).fcp.df_name;
+        var visualDepth;
+        if(isTopLevel){visualDepth=0;}
+        else if(parentIsAdf){visualDepth=depth-2;}
+        else{visualDepth=depth-1;}
+        var indent=visualDepth*16;
+        if(ft!=='DF')indent+=4;
         var nameHtml;
         if(ft==='DF'){
             var collapsed=!!_collapsedDFs[path];
@@ -648,6 +656,18 @@ function collapseAll(){
 function expandAll(){
     _collapsedDFs={};
     renderFileList();
+}
+function initCollapseState(){
+    _collapsedDFs={};
+    // Collapse MF sub-DFs (DF.GSM, DF.TELECOM etc.) but keep ADF expanded
+    for(var i=0;i<sortedEntries.length;i++){
+        var p=sortedEntries[i][0],fd=sortedEntries[i][1];
+        if(getFt(fd)!=='DF')continue;
+        var parts=p.split('/');
+        if(parts.length===2&&parts[0]==='MF'&&!(fd.fcp||{}).df_name){
+            _collapsedDFs[p]=true;
+        }
+    }
 }
 
 function showDetail(path,fd){
@@ -1819,7 +1839,7 @@ function loadDumpFile(input){
                 }
             }
             fillIsimInfo(data);
-            renderFileList();
+            initCollapseState();renderFileList();
             setStatus('actionStatus','','');
             document.getElementById('btnReadAll').disabled=true;
             document.getElementById('btnAdm').disabled=true;
