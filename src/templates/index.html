@@ -578,7 +578,7 @@ function renderFileList(){
     }
     for(var i=0;i<sortedEntries.length;i++){
         var path=sortedEntries[i][0],fd=sortedEntries[i][1];
-        var fid=getFidPath(path),ft=getFt(fd),typeCol=ft==='DF'?'DF':(SMAP[getStruct(fd)]||'');
+        var fid=getFidPath(path),ft=getFt(fd),typeCol=ft==='DF'?((fd.fcp||{}).df_name?'ADF':'DF'):(SMAP[getStruct(fd)]||'');
         var fcp=fd.fcp||{},size=fcp.file_size||'',numRec=(fcp.file_descriptor||{}).num_of_rec||'';
         var arrRec=((fcp.security_attrib_referenced||{}).ef_arr_record_nr);
         var arrVal=(arrRec!=null&&arrRec!==undefined)?arrRec:'';
