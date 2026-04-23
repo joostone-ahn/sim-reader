@@ -52,13 +52,18 @@ Click **VERIFY ADM** to verify ADM1~4 keys independently. Status dots show each 
 
 Click **Load Dump** to browse a previously exported `dump.json` without a SIM card. ADM verification state from the original session is restored.
 
-### 5. Browse Files
+### 5. File System
+
+The file tree shows all DFs and EFs with collapse/expand controls. MF sub-DFs (DF.GSM, DF.TELECOM) are collapsed by default; ADF.USIM and ADF.ISIM are expanded.
+
+- **▼ Expand All / ▶ Collapse All** — Toggle all DFs at once
+- **▼ 📂 / ▶ 📁** — Click to collapse/expand individual DFs (hides direct child EFs only)
 
 | Column | Description |
 |--------|-------------|
-| Level 1/2/3 | File path hierarchy |
-| FID | File Identifier (hex), AID for application DFs |
-| Type | DF, TF (transparent), LF (linear fixed), CF (cyclic), BER-TLV |
+| File Name | File/folder name with tree indentation |
+| FID | File Identifier (hex), "AID" for application DFs |
+| Type | DF, ADF, TF (transparent), LF (linear fixed), CF (cyclic), BER-TLV |
 | ARR | Access Rule Reference record number |
 | Size | File size in bytes |
 | Rec# | Number of records (linear fixed / cyclic) |
