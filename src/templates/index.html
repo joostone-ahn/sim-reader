@@ -507,14 +507,22 @@ function getFt(fd){var fdb=((fd.fcp||{}).file_descriptor||{}).file_descriptor_by
 
 function sortKey(path,fd){
     var group;
-    if(path==='MF')group='0';else if(path.startsWith('MF/EF.'))group='0b';
-    else if(path.startsWith('MF/ADF.USIM'))group='1';else if(path.startsWith('MF/ADF.ISIM'))group='2';
-    else if(path.startsWith('MF/DF.GSM'))group='3';else if(path.startsWith('MF/DF.TELECOM'))group='4';
-    else if(path.startsWith('MF/DF.'))group='5';else group='6';
+    if(path==='MF')group='0a';
+    else if(path.startsWith('MF/EF.'))group='0b';
+    else if(path.startsWith('MF/DF.GSM'))group='0c_gsm';
+    else if(path.startsWith('MF/DF.TELECOM'))group='0c_tel';
+    else if(path.startsWith('MF/DF.'))group='0c_zzz';
+    else if(path.startsWith('MF/ADF.USIM'))group='1';
+    else if(path.startsWith('MF/ADF.ISIM'))group='2';
+    else group='6';
     var parts=path.split('/'),depth=parts.length;
     var fid=((fd.fcp||{}).file_identifier||'ffff').toLowerCase();
     var sub='0_'+fid;
-    if(group>='1'&&group<='4'){
+    if(group>='1'&&group<='2'){
+        if(depth===2){sub='0_0000';}
+        else if(depth===3&&!parts[2].startsWith('DF.')){sub='1_'+fid;}
+        else{var subDf=parts[2]||'';if(depth===3){sub='2_'+subDf+'_0000';}else{sub='2_'+subDf+'_'+fid;}}
+    }else if(group.startsWith('0c')){
         if(depth===2){sub='0_0000';}
         else if(depth===3&&!parts[2].startsWith('DF.')){sub='1_'+fid;}
         else{var subDf=parts[2]||'';if(depth===3){sub='2_'+subDf+'_0000';}else{sub='2_'+subDf+'_'+fid;}}
