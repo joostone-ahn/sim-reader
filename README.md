@@ -54,11 +54,6 @@ Click **Load Dump** to browse a previously exported `dump.json` without a SIM ca
 
 ### 5. File System
 
-The file tree shows all DFs and EFs with collapse/expand controls. MF sub-DFs (DF.GSM, DF.TELECOM) are collapsed by default; ADF.USIM and ADF.ISIM are expanded.
-
-- **▼ Expand All / ▶ Collapse All** — Toggle all DFs at once
-- **▼ 📂 / ▶ 📁** — Click to collapse/expand individual DFs (hides direct child EFs only)
-
 | Column | Description |
 |--------|-------------|
 | File Name | File/folder name with tree indentation |
@@ -67,6 +62,8 @@ The file tree shows all DFs and EFs with collapse/expand controls. MF sub-DFs (D
 | ARR | Access Rule Reference record number |
 | Size | File size in bytes |
 | Rec# | Number of records (linear fixed / cyclic) |
+
+> **Note:** Click ▼ 📂 / ▶ 📁 icons to collapse/expand individual DFs (hides direct child EFs only). Use ▼ Expand All / ▶ Collapse All to toggle all at once. MF sub-DFs are collapsed by default; ADF.USIM and ADF.ISIM are expanded.
 
 ### 6. View File Contents
 
