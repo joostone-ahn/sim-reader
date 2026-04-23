@@ -1158,7 +1158,7 @@ function _parseArrRecord(rec){
         var label=_arrCondLabel(cond);
         for(var m=0;m<am.access_mode.length;m++){
             var mode=am.access_mode[m];
-            if(row[mode]==='-')row[mode]=label;
+            if(row[mode]==='NEVER')row[mode]=label;
         }
     }
     return row;
