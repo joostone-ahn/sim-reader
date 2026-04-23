@@ -131,7 +131,7 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
                 <div id="fileListScroll" style="flex:1;overflow:auto" tabindex="0">
                     <table class="file-table" style="table-layout:auto"><thead><tr>
                         <th>Level 1</th><th>Level 2</th><th>Level 3</th>
-                        <th>FID Path</th><th>Type</th><th>ARR</th><th>Size</th><th>Rec#</th>
+                        <th>FID</th><th>Type</th><th>ARR</th><th>Size</th><th>Rec#</th>
                     </tr></thead><tbody id="fileListBody"></tbody></table>
                 </div>
             </div>
@@ -495,19 +495,8 @@ function getFidPath(path){
     var fd=dumpData.files[path];
     if(!fd)return '';
     var fid=((fd.fcp||{}).file_identifier||'').toUpperCase();
-    // ADF itself: show "AID"
     if(fid==='7FFF')return 'AID';
-    // Build path excluding MF(3F00) and ADF(7FFF)
-    var parts=path.split('/');
-    var fids=[];
-    for(var i=0;i<parts.length;i++){
-        var subPath=parts.slice(0,i+1).join('/');
-        var sfd=dumpData.files[subPath];
-        if(!sfd)continue;
-        var sfid=((sfd.fcp||{}).file_identifier||'').toUpperCase();
-        if(sfid&&sfid!=='3F00'&&sfid!=='7FFF')fids.push(sfid);
-    }
-    return fids.join('/');
+    return fid;
 }
 function getFt(fd){var fdb=((fd.fcp||{}).file_descriptor||{}).file_descriptor_byte||{};var ft=fdb.file_type==='df'?'DF':(fdb.file_type?'EF':'');if(!ft){var p=fd.path||[];var last=p[p.length-1]||'';if(last.startsWith('EF.'))ft='EF';else if(last.startsWith('DF.'))ft='DF';}return ft;}
 

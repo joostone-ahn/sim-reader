@@ -57,7 +57,7 @@ Click **Load Dump** to browse a previously exported `dump.json` without a SIM ca
 | Column | Description |
 |--------|-------------|
 | Level 1/2/3 | File path hierarchy |
-| FID Path | File Identifier path (e.g. 3F00/7FFF/6F07) |
+| FID | File Identifier (hex), AID for application DFs |
 | Type | DF, TF (transparent), LF (linear fixed), CF (cyclic), BER-TLV |
 | ARR | Access Rule Reference record number |
 | Size | File size in bytes |
