@@ -1147,7 +1147,7 @@ var _ARR_COLS=['read_search_compare','update_erase','write_append','activate_fil
 var _ARR_HDR=['Read','Update','Write','Activate','Deactivate'];
 function _parseArrRecord(rec){
     var row={};
-    for(var i=0;i<_ARR_COLS.length;i++)row[_ARR_COLS[i]]='-';
+    for(var i=0;i<_ARR_COLS.length;i++)row[_ARR_COLS[i]]='NEVER';
     if(!rec||!Array.isArray(rec))return row;
     for(var r=0;r<rec.length;r++){
         var rule=rec[r];
