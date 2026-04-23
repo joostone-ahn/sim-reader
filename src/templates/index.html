@@ -488,7 +488,7 @@ async function connectReader(){
     }else{setStatus('connectStatus','❌ '+r.error,'err');}
 }
 
-const SMAP={transparent:'TF',linear_fixed:'LF',cyclic:'CF',ber_tlv:'BER-TLV',no_info_given:''};
+const SMAP={transparent:'Transparent',linear_fixed:'Linear Fixed',cyclic:'Cyclic',ber_tlv:'BER-TLV',no_info_given:''};
 function pathCols(fd){
     var p=fd.path||[];
     return p[p.length-1]||'MF';
