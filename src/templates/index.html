@@ -57,7 +57,7 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
 #btnRead:disabled,#btnWrite:disabled,#btnCopy:disabled,#btnAdm:disabled,#btnReadAll:disabled{opacity:0.4;cursor:not-allowed;pointer-events:auto}
 #btnWrite[data-tip]{position:relative}
 .custom-tooltip{position:fixed;background:linear-gradient(135deg,#e67e22,#d35400);color:#fff;font-size:0.68rem;font-weight:600;padding:5px 12px;border-radius:6px;white-space:nowrap;z-index:9999;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,0.2);display:none}
-.search-ph::placeholder{color:rgba(255,255,255,0.4);font-style:italic}
+.search-ph::placeholder{color:rgba(255,255,255,0.4);font-style:italic;font-size:0.72rem}
 .mono{font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;-webkit-text-size-adjust:100%}
 .toggle-switch{display:flex;background:#e9ecef;border-radius:4px;cursor:pointer;overflow:hidden;width:fit-content}
 .toggle-label{padding:4px 0;font-size:0.68rem;font-weight:600;color:#888;transition:all 0.2s;user-select:none;text-align:center;width:68px;border-right:1px solid #ccc;line-height:1.2}
@@ -119,13 +119,12 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
             <div id="leftPanel" class="card" style="flex:5;display:flex;flex-direction:column;min-width:200px">
                 <div class="panel-title" style="min-height:36px;padding:6px 12px">
                     <span>🗂️ File System</span>
+                    <span onclick="expandAll()" style="cursor:pointer;font-size:0.64rem;color:rgba(255,255,255,0.7);white-space:nowrap;padding:2px 6px;background:rgba(255,255,255,0.15);border-radius:3px;margin-left:8px">▼ Expand All</span>
+                    <span onclick="collapseAll()" style="cursor:pointer;font-size:0.64rem;color:rgba(255,255,255,0.7);white-space:nowrap;padding:2px 6px;background:rgba(255,255,255,0.15);border-radius:3px">▶ Collapse All</span>
                     <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-                        <span onclick="expandAll()" style="cursor:pointer;font-size:0.64rem;color:rgba(255,255,255,0.7);white-space:nowrap;padding:2px 6px;background:rgba(255,255,255,0.15);border-radius:3px">▼ Expand All</span>
-                        <span onclick="collapseAll()" style="cursor:pointer;font-size:0.64rem;color:rgba(255,255,255,0.7);white-space:nowrap;padding:2px 6px;background:rgba(255,255,255,0.15);border-radius:3px">▶ Collapse All</span>
-                        <div style="width:8px"></div>
                         <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.2);border-radius:5px;padding:2px 8px;height:24px;width:250px">
-                            <span style="font-size:0.72rem;font-weight:600;color:rgba(255,255,255,0.9);white-space:nowrap;min-width:48px">Search</span>
-                            <input type="text" id="fileFilter" oninput="applyFilter()" placeholder="FID or File Name" style="border:none;background:transparent;color:white;font-size:0.74rem;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;flex:1;min-width:0;outline:none" class="search-ph">
+                            <span style="font-size:0.72rem;font-weight:600;color:rgba(255,255,255,0.9);white-space:nowrap;min-width:56px;text-align:center">Search</span>
+                            <input type="text" id="fileFilter" oninput="applyFilter()" placeholder="FID or File Name" style="border:none;background:transparent;color:white;font-size:0.72rem;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;flex:1;min-width:0;outline:none" class="search-ph">
                             <span id="filterClear" onclick="clearFilter()" style="display:none;color:white;cursor:pointer;font-size:0.9rem;line-height:1;font-weight:700;flex-shrink:0">✕</span>
                         </div>
                     </div>
