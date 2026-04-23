@@ -32,7 +32,6 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
 .panel-title{background:linear-gradient(45deg,#667eea,#764ba2);color:white;padding:10px 12px;font-size:0.85rem;font-weight:700;display:flex;align-items:center}
 .file-table{width:100%;border-collapse:collapse;font-size:0.76rem;table-layout:auto}
 .file-table thead th{background:#a8c4e0;color:#1a3a5c;padding:3px 8px;position:sticky;top:0;z-index:2;font-weight:600;font-size:0.72rem;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;text-align:left}
-.file-table thead th:nth-child(-n+2){padding-left:4px;padding-right:4px}
 .file-table thead th:first-child{padding-left:12px}
 .file-table thead th:last-child{padding-right:12px}
 .file-table tbody tr{border-bottom:1px solid #eee;cursor:pointer}
@@ -41,7 +40,6 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
 .file-table tbody tr.df-row{background:#d4edda}
 .file-table tbody tr.df-sub-row{background:#fff8e1}
 .file-table td{padding:3px 8px;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;font-size:0.74rem}
-.file-table td:nth-child(-n+2){padding-left:4px;padding-right:4px}
 .file-table td:first-child{padding-left:12px}
 .file-table td:last-child{padding-right:12px}
 #fileListScroll:focus{outline:none}
@@ -131,7 +129,7 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
                 </div>
                 <div id="fileListScroll" style="flex:1;overflow:auto" tabindex="0">
                     <table class="file-table" style="table-layout:auto"><thead><tr>
-                        <th>DF</th><th>EF</th>
+                        <th>Name</th>
                         <th>FID</th><th>Type</th><th>ARR</th><th>Size</th><th>Rec#</th>
                     </tr></thead><tbody id="fileListBody"></tbody></table>
                 </div>
@@ -491,19 +489,7 @@ async function connectReader(){
 const SMAP={transparent:'TF',linear_fixed:'LF',cyclic:'CF',ber_tlv:'BER-TLV',no_info_given:''};
 function pathCols(fd){
     var p=fd.path||[];
-    if(p.length===1&&p[0]==='MF')return['MF',''];
-    var d=p[0]==='MF'?p.slice(1):p;
-    // Last element is the file itself
-    var last=d[d.length-1]||'';
-    var ft=getFt(fd);
-    if(ft==='DF'){
-        // DF row: show full DF path in col0, empty col1
-        return[d.join(' / '),''];
-    }else{
-        // EF row: parent DF path in col0, EF name in col1
-        var dfParts=d.slice(0,-1);
-        return[dfParts.join(' / ')||'MF',last];
-    }
+    return p[p.length-1]||'MF';
 }
 function getStruct(fd){var fdb=((fd.fcp||{}).file_descriptor||{}).file_descriptor_byte||{};return fdb.structure||'';}
 function getFid(fd){return((fd.fcp||{}).file_identifier||'').toUpperCase();}
@@ -579,7 +565,7 @@ function renderFileList(){
         var arrRec=((fcp.security_attrib_referenced||{}).ef_arr_record_nr);
         var arrVal=(arrRec!=null&&arrRec!==undefined)?arrRec:'';
         var cols=pathCols(fd);
-        if(q){var name=(cols[0]+' '+cols[1]).toUpperCase();if(name.indexOf(q)<0&&fid.indexOf(q)<0)continue;}
+        if(q){var name=cols.toUpperCase();if(name.indexOf(q)<0&&fid.indexOf(q)<0)continue;}
         // Check if hidden by collapsed parent DF (direct parent only)
         if(!q){
             var parts=path.split('/');
@@ -595,18 +581,19 @@ function renderFileList(){
         var tr=document.createElement('tr');
         if(ft==='DF'){var depth=(fd.path||[]).length;tr.className=depth<=2?'df-row':'df-sub-row';}
         if(fd.error&&!fd.bytes)tr.style.color='#aaa';
-        // Build DF cell with collapse icon and indentation
-        var col0=cols[0];
+        // Build Name cell with collapse icon and indentation
+        var name=cols;
         var depth=(fd.path||[]).length;
         var indent=Math.max(0,depth-2)*16;
+        var nameHtml;
         if(ft==='DF'){
             var collapsed=!!_collapsedDFs[path];
             var icon=collapsed?'▶ 📁':'▼ 📂';
-            col0='<span style="padding-left:'+indent+'px"><span class="df-toggle" data-path="'+path+'" style="cursor:pointer;user-select:none" onclick="toggleDF(event,this)">'+icon+'</span> '+col0+'</span>';
+            nameHtml='<span style="padding-left:'+indent+'px"><span class="df-toggle" data-path="'+path+'" style="cursor:pointer;user-select:none" onclick="toggleDF(event,this)">'+icon+'</span> '+name+'</span>';
         }else{
-            col0='<span style="padding-left:'+(indent+20)+'px">'+col0+'</span>';
+            nameHtml='<span style="padding-left:'+(indent+20)+'px">'+name+'</span>';
         }
-        tr.innerHTML='<td>'+col0+'</td><td>'+cols[1]+'</td><td class="cc">'+fid+'</td><td class="cc">'+typeCol+'</td><td class="cc">'+arrVal+'</td><td class="cr">'+size+'</td><td class="cr">'+numRec+'</td>';
+        tr.innerHTML='<td>'+nameHtml+'</td><td class="cc">'+fid+'</td><td class="cc">'+typeCol+'</td><td class="cc">'+arrVal+'</td><td class="cr">'+size+'</td><td class="cr">'+numRec+'</td>';
         tr.setAttribute('data-idx',i);
         tr.onclick=function(){
             document.querySelectorAll('#fileListBody tr.selected').forEach(function(r){r.classList.remove('selected');});
