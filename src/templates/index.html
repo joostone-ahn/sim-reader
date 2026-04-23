@@ -120,8 +120,9 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
                 <div class="panel-title" style="min-height:36px;padding:6px 12px">
                     <span>🗂️ File System</span>
                     <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-                        <span onclick="collapseAll()" style="cursor:pointer;font-size:0.68rem;color:rgba(255,255,255,0.7);white-space:nowrap" title="Collapse all">▶ All</span>
-                        <span onclick="expandAll()" style="cursor:pointer;font-size:0.68rem;color:rgba(255,255,255,0.7);white-space:nowrap" title="Expand all">▼ All</span>
+                        <span onclick="expandAll()" style="cursor:pointer;font-size:0.64rem;color:rgba(255,255,255,0.7);white-space:nowrap;padding:2px 6px;background:rgba(255,255,255,0.15);border-radius:3px">▼ Expand All</span>
+                        <span onclick="collapseAll()" style="cursor:pointer;font-size:0.64rem;color:rgba(255,255,255,0.7);white-space:nowrap;padding:2px 6px;background:rgba(255,255,255,0.15);border-radius:3px">▶ Collapse All</span>
+                        <div style="width:8px"></div>
                         <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.2);border-radius:5px;padding:2px 8px;height:24px;width:250px">
                             <span style="font-size:0.72rem;font-weight:600;color:rgba(255,255,255,0.9);white-space:nowrap;min-width:48px">Search</span>
                             <input type="text" id="fileFilter" oninput="applyFilter()" placeholder="FID or File Name" style="border:none;background:transparent;color:white;font-size:0.74rem;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;flex:1;min-width:0;outline:none" class="search-ph">
