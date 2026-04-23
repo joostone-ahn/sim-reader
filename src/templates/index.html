@@ -295,6 +295,7 @@ let dumpData=null,selectedPath=null,selectedFd=null,sortedEntries=[],writeOrigHe
 let admVerified={ADM1:false,ADM2:false,ADM3:false,ADM4:false};
 let admKeys={ADM1:'',ADM2:'',ADM3:'',ADM4:''};
 let isOfflineMode=false;
+let _collapsedDFs={};
 let _readCount=0,_readElapsed='';
 function _countReadFiles(){
     if(!dumpData||!dumpData.files)return 0;
@@ -564,10 +565,27 @@ function renderFileList(){
         var arrVal=(arrRec!=null&&arrRec!==undefined)?arrRec:'';
         var cols=pathCols(fd);
         if(q){var name=(cols[0]+' '+cols[1]+' '+cols[2]).toUpperCase();if(name.indexOf(q)<0&&fid.indexOf(q)<0)continue;}
+        // Check if hidden by collapsed parent DF
+        if(!q){
+            var parts=path.split('/');
+            var hidden=false;
+            for(var p=1;p<parts.length;p++){
+                var parentPath=parts.slice(0,p).join('/');
+                if(_collapsedDFs[parentPath]){hidden=true;break;}
+            }
+            if(hidden)continue;
+        }
         var tr=document.createElement('tr');
         if(ft==='DF'){var depth=(fd.path||[]).length;tr.className=depth<=2?'df-row':'df-sub-row';}
         if(fd.error&&!fd.bytes)tr.style.color='#aaa';
-        tr.innerHTML='<td>'+cols[0]+'</td><td>'+cols[1]+'</td><td>'+cols[2]+'</td><td class="cc">'+fid+'</td><td class="cc">'+typeCol+'</td><td class="cc">'+arrVal+'</td><td class="cr">'+size+'</td><td class="cr">'+numRec+'</td>';
+        // Build Level 1 cell with collapse icon for DF
+        var col0=cols[0];
+        if(ft==='DF'){
+            var collapsed=!!_collapsedDFs[path];
+            var icon=collapsed?'▶ 📁':'▼ 📂';
+            col0='<span class="df-toggle" data-path="'+path+'" style="cursor:pointer;user-select:none" onclick="toggleDF(event,this)">'+icon+'</span> '+col0;
+        }
+        tr.innerHTML='<td>'+col0+'</td><td>'+cols[1]+'</td><td>'+cols[2]+'</td><td class="cc">'+fid+'</td><td class="cc">'+typeCol+'</td><td class="cc">'+arrVal+'</td><td class="cr">'+size+'</td><td class="cr">'+numRec+'</td>';
         tr.setAttribute('data-idx',i);
         tr.onclick=function(){
             document.querySelectorAll('#fileListBody tr.selected').forEach(function(r){r.classList.remove('selected');});
@@ -588,6 +606,12 @@ function renderFileList(){
         };
         tbody.appendChild(tr);
     }
+}
+function toggleDF(e,el){
+    e.stopPropagation();
+    var path=el.getAttribute('data-path');
+    _collapsedDFs[path]=!_collapsedDFs[path];
+    renderFileList();
 }
 
 function showDetail(path,fd){
