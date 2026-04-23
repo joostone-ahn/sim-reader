@@ -491,14 +491,14 @@ function pathCols(fd){const p=fd.path||[];let d=p[0]==='MF'?p.slice(1):p;if(p.le
 function getStruct(fd){var fdb=((fd.fcp||{}).file_descriptor||{}).file_descriptor_byte||{};return fdb.structure||'';}
 function getFid(fd){return((fd.fcp||{}).file_identifier||'').toUpperCase();}
 function getFidPath(path){
-    if(!dumpData||!dumpData.files||!path)return getFid(dumpData.files[path]||{});
+    if(!dumpData||!dumpData.files||!path)return '';
     var parts=path.split('/');
     var fids=[];
     for(var i=0;i<parts.length;i++){
         var subPath=parts.slice(0,i+1).join('/');
         var fd=dumpData.files[subPath];
         var fid=fd?((fd.fcp||{}).file_identifier||'').toUpperCase():'';
-        if(fid)fids.push(fid);
+        if(fid&&fid!=='3F00'&&fid!=='7FFF')fids.push(fid);
     }
     return fids.join('/');
 }
