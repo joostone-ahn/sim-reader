@@ -616,8 +616,8 @@ function renderFileList(){
         if(isTopLevel){visualDepth=0;}
         else if(parentIsAdf){visualDepth=depth-2;}
         else{visualDepth=depth-1;}
-        var indent=visualDepth*16;
-        if(ft!=='DF')indent+=4;
+        var indent=visualDepth*12;
+        if(ft!=='DF')indent+=2;
         var nameHtml;
         if(ft==='DF'){
             var collapsed=!!_collapsedDFs[path];
