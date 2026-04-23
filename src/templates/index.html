@@ -593,12 +593,16 @@ function renderFileList(){
         var tr=document.createElement('tr');
         if(ft==='DF'){var depth=(fd.path||[]).length;tr.className=depth<=2?'df-row':'df-sub-row';}
         if(fd.error&&!fd.bytes)tr.style.color='#aaa';
-        // Build Level 1 cell with collapse icon for DF
+        // Build DF cell with collapse icon and indentation
         var col0=cols[0];
+        var depth=(fd.path||[]).length;
+        var indent=Math.max(0,depth-2)*16;
         if(ft==='DF'){
             var collapsed=!!_collapsedDFs[path];
             var icon=collapsed?'▶ 📁':'▼ 📂';
-            col0='<span class="df-toggle" data-path="'+path+'" style="cursor:pointer;user-select:none" onclick="toggleDF(event,this)">'+icon+'</span> '+col0;
+            col0='<span style="padding-left:'+indent+'px"><span class="df-toggle" data-path="'+path+'" style="cursor:pointer;user-select:none" onclick="toggleDF(event,this)">'+icon+'</span> '+col0+'</span>';
+        }else{
+            col0='<span style="padding-left:'+(indent+20)+'px">'+col0+'</span>';
         }
         tr.innerHTML='<td>'+col0+'</td><td>'+cols[1]+'</td><td class="cc">'+fid+'</td><td class="cc">'+typeCol+'</td><td class="cc">'+arrVal+'</td><td class="cr">'+size+'</td><td class="cr">'+numRec+'</td>';
         tr.setAttribute('data-idx',i);
