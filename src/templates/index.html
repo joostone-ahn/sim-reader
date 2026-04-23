@@ -497,8 +497,11 @@ function getFidPath(path){
     for(var i=0;i<parts.length;i++){
         var subPath=parts.slice(0,i+1).join('/');
         var fd=dumpData.files[subPath];
-        var fid=fd?((fd.fcp||{}).file_identifier||'').toUpperCase():'';
-        if(fid&&fid!=='3F00'&&fid!=='7FFF')fids.push(fid);
+        if(!fd)continue;
+        var fid=((fd.fcp||{}).file_identifier||'').toUpperCase();
+        // ADF: show "AID" instead of 7FFF
+        if(fid==='7FFF'){fids.push('AID');continue;}
+        if(fid)fids.push(fid);
     }
     return fids.join('/');
 }
