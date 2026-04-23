@@ -580,13 +580,15 @@ function renderFileList(){
         var arrVal=(arrRec!=null&&arrRec!==undefined)?arrRec:'';
         var cols=pathCols(fd);
         if(q){var name=(cols[0]+' '+cols[1]).toUpperCase();if(name.indexOf(q)<0&&fid.indexOf(q)<0)continue;}
-        // Check if hidden by collapsed parent DF
+        // Check if hidden by collapsed parent DF (direct parent only)
         if(!q){
             var parts=path.split('/');
             var hidden=false;
-            for(var p=1;p<parts.length;p++){
-                var parentPath=parts.slice(0,p).join('/');
-                if(_collapsedDFs[parentPath]){hidden=true;break;}
+            if(parts.length>=2){
+                var parentPath=parts.slice(0,-1).join('/');
+                // Only hide if direct parent is collapsed AND this is not a DF
+                // Or if direct parent is collapsed AND this is a DF but parent wants to hide sub-DFs too
+                if(_collapsedDFs[parentPath]&&ft!=='DF'){hidden=true;}
             }
             if(hidden)continue;
         }
