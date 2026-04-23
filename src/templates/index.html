@@ -416,9 +416,13 @@ function updateDetailButtons(opts){
     }
     var cond=getArrCondition(opts.path,'update_erase');
     var needsAdm=cond&&cond.type==='adm';
+    var isNever=cond&&cond.type==='never';
     if(!opts.is6982&&!opts.isOffline){
         btn.style.display='';
-        if(needsAdm&&!isAdmSatisfied(cond)){
+        if(isNever){
+            btn.disabled=true;
+            btn.setAttribute('data-tip','Write not allowed (NEVER)');
+        }else if(needsAdm&&!isAdmSatisfied(cond)){
             btn.disabled=true;
             var tip='🔐 '+( cond.value||'ADM')+' verification required';
             btn.setAttribute('data-tip',tip);
