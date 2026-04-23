@@ -492,16 +492,20 @@ function getStruct(fd){var fdb=((fd.fcp||{}).file_descriptor||{}).file_descripto
 function getFid(fd){return((fd.fcp||{}).file_identifier||'').toUpperCase();}
 function getFidPath(path){
     if(!dumpData||!dumpData.files||!path)return '';
+    var fd=dumpData.files[path];
+    if(!fd)return '';
+    var fid=((fd.fcp||{}).file_identifier||'').toUpperCase();
+    // ADF itself: show "AID"
+    if(fid==='7FFF')return 'AID';
+    // Build path excluding MF(3F00) and ADF(7FFF)
     var parts=path.split('/');
     var fids=[];
     for(var i=0;i<parts.length;i++){
         var subPath=parts.slice(0,i+1).join('/');
-        var fd=dumpData.files[subPath];
-        if(!fd)continue;
-        var fid=((fd.fcp||{}).file_identifier||'').toUpperCase();
-        // ADF: show "AID" instead of 7FFF
-        if(fid==='7FFF'){fids.push('AID');continue;}
-        if(fid)fids.push(fid);
+        var sfd=dumpData.files[subPath];
+        if(!sfd)continue;
+        var sfid=((sfd.fcp||{}).file_identifier||'').toUpperCase();
+        if(sfid&&sfid!=='3F00'&&sfid!=='7FFF')fids.push(sfid);
     }
     return fids.join('/');
 }
