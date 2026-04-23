@@ -39,6 +39,7 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
 .file-table tbody tr:hover{background:#eef2ff}
 .file-table tbody tr.selected{outline:2px solid #667eea}
 .file-table tbody tr.df-row{background:#d4edda}
+.file-table tbody tr.df-sub-row{background:#fff8e1}
 .file-table td{padding:3px 8px;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;font-size:0.74rem}
 .file-table td:nth-child(-n+3){padding-left:4px;padding-right:4px}
 .file-table td:first-child{padding-left:12px}
@@ -564,7 +565,7 @@ function renderFileList(){
         var cols=pathCols(fd);
         if(q){var name=(cols[0]+' '+cols[1]+' '+cols[2]).toUpperCase();if(name.indexOf(q)<0&&fid.indexOf(q)<0)continue;}
         var tr=document.createElement('tr');
-        if(ft==='DF')tr.className='df-row';
+        if(ft==='DF'){var depth=(fd.path||[]).length;tr.className=depth<=2?'df-row':'df-sub-row';}
         if(fd.error&&!fd.bytes)tr.style.color='#aaa';
         tr.innerHTML='<td>'+cols[0]+'</td><td>'+cols[1]+'</td><td>'+cols[2]+'</td><td class="cc">'+fid+'</td><td class="cc">'+typeCol+'</td><td class="cc">'+arrVal+'</td><td class="cr">'+size+'</td><td class="cr">'+numRec+'</td>';
         tr.setAttribute('data-idx',i);
