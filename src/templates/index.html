@@ -667,12 +667,15 @@ function expandAll(){
 }
 function initCollapseState(){
     _collapsedDFs={};
-    // Collapse MF sub-DFs (DF.GSM, DF.TELECOM etc.) but keep ADF expanded
+    // Collapse all DFs under MF (not ADF), keep ADF sub-DFs expanded
     for(var i=0;i<sortedEntries.length;i++){
         var p=sortedEntries[i][0],fd=sortedEntries[i][1];
         if(getFt(fd)!=='DF')continue;
+        if(p==='MF')continue; // MF itself stays expanded
+        if((fd.fcp||{}).df_name)continue; // ADF stays expanded
+        // Check if this DF is under MF (not under ADF)
         var parts=p.split('/');
-        if(parts.length===2&&parts[0]==='MF'&&!(fd.fcp||{}).df_name){
+        if(parts.length>=2&&parts[0]==='MF'&&!parts[1].startsWith('ADF.')){
             _collapsedDFs[p]=true;
         }
     }
