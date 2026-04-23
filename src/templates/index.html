@@ -29,17 +29,17 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
 .info-label{font-size:0.76rem;color:#888;font-weight:600;text-transform:uppercase;white-space:nowrap;padding-right:4px;display:inline-block;width:100px}
 .info-value{font-size:0.76rem;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;color:#2c3e50}
 .card{background:rgba(255,255,255,0.95);border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);overflow:hidden}
-.panel-title{background:linear-gradient(45deg,#667eea,#764ba2);color:white;padding:10px 12px;font-size:0.85rem;font-weight:700;display:flex;align-items:center}
+.panel-title{background:linear-gradient(45deg,#667eea,#764ba2);color:white;padding:10px 12px;font-size:0.85rem;font-weight:700;display:flex;align-items:center;min-height:36px;box-sizing:border-box}
 .file-table{width:100%;border-collapse:collapse;font-size:0.76rem;table-layout:auto}
-.file-table thead th{background:#a8c4e0;color:#1a3a5c;padding:3px 8px;position:sticky;top:0;z-index:2;font-weight:600;font-size:0.72rem;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;text-align:left}
+.file-table thead th{background:#a8c4e0;color:#1a3a5c;padding:4px 8px;position:sticky;top:0;z-index:2;font-weight:600;font-size:0.72rem;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;text-align:left;line-height:1.3}
 .file-table thead th:first-child{padding-left:12px}
 .file-table thead th:last-child{padding-right:12px}
 .file-table tbody tr{border-bottom:1px solid #eee;cursor:pointer}
 .file-table tbody tr:hover{background:#eef2ff}
 .file-table tbody tr.selected{outline:2px solid #667eea}
-.file-table tbody tr.df-row{background:#d4edda}
-.file-table tbody tr.df-sub-row{background:#fff8e1}
-.file-table td{padding:3px 8px;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;font-size:0.74rem}
+.file-table tbody tr.df-row{background:#d4edda;line-height:1.3}
+.file-table tbody tr.df-sub-row{background:#fff8e1;line-height:1.3}
+.file-table td{padding:3px 8px;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;font-size:0.74rem;line-height:1.3}
 .file-table td:first-child{padding-left:12px}
 .file-table td:last-child{padding-right:12px}
 #fileListScroll:focus{outline:none}
@@ -47,8 +47,8 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
 .file-table .cr{text-align:left}
 .data-pre{font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;font-size:0.74rem;white-space:pre-wrap;word-break:break-all;color:#333;background:#f8f9fa;padding:8px;margin:0}
 .rec-table{width:100%;border-collapse:collapse;font-size:0.74rem}
-.rec-table th{background:#a8c4e0;color:#1a3a5c;padding:4px 10px;font-size:0.72rem;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;font-weight:600;position:sticky;top:0;z-index:1;white-space:nowrap;text-align:left}
-.rec-table td{padding:3px 10px;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;font-size:0.74rem;border-bottom:1px solid #eee}
+.rec-table th{background:#a8c4e0;color:#1a3a5c;padding:4px 10px;font-size:0.72rem;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;font-weight:600;position:sticky;top:0;z-index:1;white-space:nowrap;text-align:left;line-height:1.3}
+.rec-table td{padding:3px 10px;font-family:'Menlo','Consolas','DejaVu Sans Mono','Courier New',monospace;font-size:0.74rem;border-bottom:1px solid #eee;line-height:1.3}
 .rec-table td:first-child{text-align:center;width:38px;white-space:nowrap;color:#667eea;font-weight:600}
 .rec-table th:first-child{text-align:center}
 .overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;justify-content:center;align-items:center}
@@ -592,7 +592,7 @@ function renderFileList(){
         if(ft==='DF'){
             var collapsed=!!_collapsedDFs[path];
             var icon=collapsed?'▶ 📁':'▼ 📂';
-            nameHtml='<span style="padding-left:'+indent+'px"><span class="df-toggle" data-path="'+path+'" style="cursor:pointer;user-select:none" onclick="toggleDF(event,this)">'+icon+'</span> '+name+'</span>';
+            nameHtml='<span style="padding-left:'+indent+'px"><span class="df-toggle" data-path="'+path+'" style="cursor:pointer;user-select:none;font-size:0.70rem;line-height:1" onclick="toggleDF(event,this)">'+icon+'</span> '+name+'</span>';
         }else{
             nameHtml='<span style="padding-left:'+(indent+20)+'px">'+name+'</span>';
         }
