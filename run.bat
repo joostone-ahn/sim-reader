@@ -40,7 +40,7 @@ if errorlevel 1 (
 )
 
 REM Kill existing process on the same port
-for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":%PORT% " ^| findstr "LISTENING"') do taskkill /F /PID %%a >nul 2>&1
+for /f "tokens=5" %%a in ('netstat -aon 2^>nul ^| findstr ":%PORT% " ^| findstr "LISTENING"') do taskkill /F /PID %%a >nul 2>&1
 
 REM Open browser after delay
 start "" "%URL%"
